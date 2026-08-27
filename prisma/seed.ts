@@ -36,6 +36,71 @@ async function main() {
   await prisma.membership.deleteMany();
   await prisma.business.deleteMany();
   await prisma.user.deleteMany();
+  // ── Plans ───────────────────────────────────────────────────────────────
+  const PLAN_DEFINITIONS = [
+    {
+      code: "FREE",
+      name: "BizPilot Free",
+      description: "For trying BizPilot and exploring core business operations.",
+      monthlyPrice: 0,
+      currency: "NGN",
+      aiMonthlyLimit: 25,
+      maxStaff: 2,
+    },
+    {
+      code: "STARTER",
+      name: "BizPilot Starter",
+      description: "For small businesses looking to streamline everyday sales and reporting.",
+      monthlyPrice: 5000,
+      currency: "NGN",
+      aiMonthlyLimit: 150,
+      maxStaff: 5,
+    },
+    {
+      code: "PRO",
+      name: "BizPilot Pro",
+      description: "For growing SMEs needing proactive AI business management and actions.",
+      monthlyPrice: 12000,
+      currency: "NGN",
+      aiMonthlyLimit: 500,
+      maxStaff: 10,
+    },
+    {
+      code: "BUSINESS",
+      name: "BizPilot Business",
+      description: "For established businesses with high transaction volume and multiple staff.",
+      monthlyPrice: 25000,
+      currency: "NGN",
+      aiMonthlyLimit: 1500,
+      maxStaff: 25,
+    },
+  ] as const;
+
+  for (const planDef of PLAN_DEFINITIONS) {
+    await prisma.plan.upsert({
+      where: { code: planDef.code },
+      create: {
+        code: planDef.code,
+        name: planDef.name,
+        description: planDef.description,
+        monthlyPrice: planDef.monthlyPrice,
+        currency: planDef.currency,
+        aiMonthlyLimit: planDef.aiMonthlyLimit,
+        maxStaff: planDef.maxStaff,
+        isActive: true,
+      },
+      update: {
+        name: planDef.name,
+        description: planDef.description,
+        monthlyPrice: planDef.monthlyPrice,
+        currency: planDef.currency,
+        aiMonthlyLimit: planDef.aiMonthlyLimit,
+        maxStaff: planDef.maxStaff,
+        isActive: true,
+      },
+    });
+  }
+  console.log(`✅ Plans seeded: ${PLAN_DEFINITIONS.length}`);
 
   const hashedPassword = await bcrypt.hash("DemoPassword123!", 10);
 
