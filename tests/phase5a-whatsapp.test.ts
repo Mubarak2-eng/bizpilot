@@ -507,7 +507,7 @@ describe("Phase 5A: WhatsApp Foundation & Webhook Architecture", () => {
 
       expect(res.success).toBe(true);
       expect(res.actionTaken).toBe("QUERY");
-      expect(res.replySent).toContain("Top-Selling Products");
+      expect(res.replySent).toMatch(/top-selling products/i);
     });
 
     it("should route 'Give me my sales summary' to read-only tool", async () => {

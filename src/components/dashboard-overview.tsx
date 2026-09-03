@@ -54,104 +54,157 @@ export default function DashboardOverview({
 }: DashboardOverviewProps) {
   const currency = business.currency;
 
+  // Dynamic time-based greeting
+  const currentHour = new Date().getHours();
+  const greeting =
+    currentHour < 12
+      ? "Good morning"
+      : currentHour < 18
+      ? "Good afternoon"
+      : "Good evening";
+
   return (
-    <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto w-full">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
-            {business.name}
+    <div className="p-5 md:p-8 space-y-8 max-w-7xl mx-auto w-full">
+      {/* AI Command Center Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-2">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-violet-500/15 text-violet-300 border border-violet-500/30 tracking-wide uppercase">
+              Command Center
+            </span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-beacon" />
+            <span className="text-[11px] text-slate-400 font-mono">Real-time Telemetry</span>
+          </div>
+
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight flex items-center gap-2">
+            <span>{greeting},</span>
+            <span className="gradient-text-ai">{business.name}</span>
+            <span>👋</span>
           </h1>
-          <p className="text-xs md:text-sm text-slate-400 mt-1">
-            Real-time business performance & Autopilot manager
+
+          <p className="text-xs md:text-sm text-slate-400">
+            Here&apos;s what&apos;s happening with your business today.
           </p>
         </div>
 
-        {/* Quick Actions */}
-        <div className="flex flex-wrap items-center gap-2.5">
+        {/* Futuristic Action Buttons */}
+        <div className="flex flex-wrap items-center gap-3">
           <Link
             href="/sales"
-            className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-indigo-600/30 transition flex items-center gap-1.5"
+            className="relative group px-4 py-2.5 bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 text-white rounded-xl text-xs font-bold shadow-[0_0_25px_-4px_rgba(99,102,241,0.5)] hover:shadow-[0_0_30px_rgba(99,102,241,0.7)] transition-all flex items-center gap-2 border border-violet-300/30 overflow-hidden"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+            <span className="absolute inset-0 w-full h-full bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <svg className="w-4 h-4 text-cyan-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
             </svg>
-            Record Sale
+            <span>Record Sale</span>
           </Link>
+
           <Link
             href="/products"
-            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl border border-slate-700 text-xs font-semibold transition"
+            className="px-3.5 py-2.5 bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 hover:text-white rounded-xl border border-white/[0.1] hover:border-violet-500/40 text-xs font-semibold backdrop-blur-md transition-all flex items-center gap-1.5 shadow-sm"
           >
-            + Add Product
+            <span className="text-violet-400 font-bold">+</span>
+            <span>Add Product</span>
           </Link>
+
           <Link
             href="/invoices"
-            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl border border-slate-700 text-xs font-semibold transition"
+            className="px-3.5 py-2.5 bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 hover:text-white rounded-xl border border-white/[0.1] hover:border-cyan-500/40 text-xs font-semibold backdrop-blur-md transition-all flex items-center gap-1.5 shadow-sm"
           >
-            + New Invoice
+            <span className="text-cyan-400 font-bold">+</span>
+            <span>New Invoice</span>
           </Link>
         </div>
       </div>
 
-      {/* 🚀 BizPilot Autopilot: Daily Action Plan & Opportunities Card */}
+      {/* 🚀 BizPilot Autopilot: Daily Action Plan & Opportunities Centerpiece */}
       {actionPlan && (
-        <div className="p-6 bg-gradient-to-br from-slate-900 via-slate-900/90 to-indigo-950/40 border border-indigo-500/30 rounded-2xl space-y-5 shadow-xl">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-xl">
-                🧠
+        <div className="relative p-6 sm:p-7 bg-[#0b1028]/80 border border-violet-500/30 hover:border-violet-500/50 rounded-3xl space-y-6 shadow-[0_0_40px_-10px_rgba(124,58,237,0.25)] backdrop-blur-xl overflow-hidden transition-all">
+          {/* Atmospheric background glow inside Autopilot card */}
+          <div className="absolute top-0 right-0 w-96 h-96 bg-violet-600/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Autopilot Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.08] pb-5 relative z-10">
+            <div className="flex items-center gap-3.5">
+              <div className="relative">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-violet-600 via-indigo-600 to-cyan-400 p-[1.5px] shadow-[0_0_20px_rgba(139,92,246,0.4)]">
+                  <div className="w-full h-full bg-[#090e24] rounded-[14px] flex items-center justify-center text-2xl">
+                    🧠
+                  </div>
+                </div>
+                <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-cyan-400 border-2 border-[#090e24] animate-beacon" />
               </div>
+
               <div>
-                <h2 className="text-base font-black text-white tracking-wide flex items-center gap-2">
-                  <span>BizPilot Autopilot: Today&apos;s Strategic Action Plan</span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                <div className="flex items-center gap-2.5">
+                  <h2 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2">
+                    <span>BIZPILOT AUTOPILOT</span>
+                  </h2>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 tracking-wider">
                     LIVE
                   </span>
-                </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
+                </div>
+                <p className="text-xs text-slate-300 mt-0.5 font-medium">
                   {actionPlan.headline}
                 </p>
               </div>
             </div>
-            <span className="text-xs font-mono text-slate-400">
-              {actionPlan.date}
-            </span>
+
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <span className="text-[11px] font-mono text-slate-400 px-3 py-1 bg-white/[0.04] border border-white/[0.08] rounded-xl">
+                📅 {actionPlan.date}
+              </span>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-            {/* Action Items List */}
-            <div className="lg:col-span-2 space-y-3">
-              <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                Prioritized Action Items ({actionPlan.actions.length})
-              </h3>
+          {/* Action Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
+            {/* Prioritized Action Items */}
+            <div className="lg:col-span-2 space-y-3.5">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-violet-400" />
+                  <span>Prioritized Action Items ({actionPlan.actions.length})</span>
+                </h3>
+                <span className="text-[10px] text-slate-400">Autonomous Business Diagnosis</span>
+              </div>
+
               {actionPlan.actions.length === 0 ? (
-                <div className="p-4 bg-slate-950/60 border border-slate-800 rounded-xl text-xs text-slate-400">
-                  ✅ Your business is operating normally today. No urgent action is required.
+                <div className="p-5 bg-white/[0.02] border border-white/[0.06] rounded-2xl text-xs text-slate-400 flex items-center gap-3">
+                  <span className="text-xl">✅</span>
+                  <div>
+                    <p className="font-semibold text-white">All systems optimal today.</p>
+                    <p className="text-[11px] text-slate-400">No urgent operational bottlenecks detected by the AI Autopilot engine.</p>
+                  </div>
                 </div>
               ) : (
-                <div className="space-y-2.5">
+                <div className="space-y-3">
                   {actionPlan.actions.map((item) => (
                     <div
                       key={item.priority}
-                      className="p-3.5 bg-slate-950/80 border border-slate-800/90 rounded-xl space-y-1.5 hover:border-slate-700 transition"
+                      className="p-4 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] hover:border-violet-500/40 rounded-2xl space-y-2 transition-all shadow-sm group"
                     >
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span>{item.badge}</span>
-                          <span className="text-xs font-bold text-white">
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-base">{item.badge}</span>
+                          <span className="text-xs font-bold text-white group-hover:text-cyan-200 transition-colors">
                             {item.title}
                           </span>
                         </div>
-                        <span className="text-[10px] font-semibold text-slate-400 px-2 py-0.5 rounded bg-slate-800">
+                        <span className="text-[10px] font-bold text-violet-300 px-2.5 py-0.5 rounded-full bg-violet-500/15 border border-violet-500/30">
                           Priority #{item.priority}
                         </span>
                       </div>
-                      <p className="text-xs text-indigo-300/90 font-medium pl-6">
-                        ↳ <strong>Recommended Action</strong>: {item.action}
+
+                      <p className="text-xs text-cyan-200/90 font-medium pl-6 leading-relaxed">
+                        ↳ <strong className="text-white">Recommended Action</strong>: {item.action}
                       </p>
+
                       {item.evidence && (
-                        <p className="text-[11px] text-slate-400 pl-6">
-                          ↳ <em>Evidence</em>: {item.evidence}
+                        <p className="text-[11px] text-slate-400 pl-6 leading-relaxed">
+                          ↳ <em className="text-slate-300 font-normal">Evidence</em>: {item.evidence}
                         </p>
                       )}
                     </div>
@@ -160,32 +213,42 @@ export default function DashboardOverview({
               )}
             </div>
 
-            {/* Opportunities Column */}
-            <div className="space-y-3">
-              <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                Commercial Opportunities
-              </h3>
+            {/* Commercial Opportunities Column */}
+            <div className="space-y-3.5">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                  <span>Commercial Opportunities</span>
+                </h3>
+              </div>
+
               {!opportunities || opportunities.length === 0 ? (
-                <div className="p-4 bg-slate-950/60 border border-slate-800 rounded-xl text-xs text-slate-400">
-                  💡 Keep logging sales and customer activity to surface new growth opportunities.
+                <div className="p-5 bg-white/[0.02] border border-white/[0.06] rounded-2xl text-xs text-slate-400 space-y-2">
+                  <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs">
+                    <span>💡</span>
+                    <span>AI Insight Engine</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    Keep logging sales and customer activity to surface high-margin opportunities and customer repeat patterns.
+                  </p>
                 </div>
               ) : (
-                <div className="space-y-2.5">
+                <div className="space-y-3">
                   {opportunities.slice(0, 2).map((opp) => (
                     <div
                       key={opp.id}
-                      className="p-3.5 bg-emerald-950/20 border border-emerald-500/20 rounded-xl space-y-1.5"
+                      className="p-4 bg-emerald-950/20 border border-emerald-500/25 hover:border-emerald-500/40 rounded-2xl space-y-2 shadow-[0_0_20px_-8px_rgba(16,185,129,0.2)] transition-all"
                     >
                       <div className="flex items-center gap-2">
-                        <span>🚀</span>
+                        <span className="text-sm">🚀</span>
                         <span className="text-xs font-bold text-emerald-300">
                           {opp.title}
                         </span>
                       </div>
-                      <p className="text-[11px] text-slate-300 leading-relaxed">
+                      <p className="text-[11px] text-slate-200 leading-relaxed font-medium">
                         {opp.recommendedNextStep}
                       </p>
-                      <p className="text-[10px] text-slate-400">
+                      <p className="text-[10px] text-emerald-400/80 font-mono">
                         {opp.evidence}
                       </p>
                     </div>
@@ -197,161 +260,222 @@ export default function DashboardOverview({
         </div>
       )}
 
-      {/* Primary KPI Stats Grid */}
+      {/* Primary KPI Stats Grid (4 Theme-Accented Glass Cards) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Sales */}
-        <div className="p-5 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-2">
+        {/* Card 1: Total Sales (Purple/Cyan Theme) */}
+        <div className="p-5 bg-[#0b0f24]/70 border border-violet-500/25 hover:border-violet-500/45 rounded-2xl space-y-3 backdrop-blur-xl shadow-[0_0_25px_-8px_rgba(139,92,246,0.18)] transition-all group">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">Total Sales (Completed)</span>
-            <span className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Sales</span>
+            <div className="w-8 h-8 rounded-xl bg-violet-500/15 border border-violet-500/30 flex items-center justify-center text-violet-300 group-hover:scale-110 transition-transform">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-            </span>
+            </div>
           </div>
-          <p className="text-xl font-bold text-white tracking-tight">
-            {formatMoney(stats.totalSales, currency)}
-          </p>
-          <div className="text-[11px] text-slate-400 flex items-center justify-between pt-1">
-            <span>Today: <strong className="text-slate-200">{formatMoney(stats.salesToday, currency)}</strong></span>
-            <span>This Month: <strong className="text-slate-200">{formatMoney(stats.salesThisMonth, currency)}</strong></span>
+
+          <div>
+            <p className="text-2xl font-black text-white tracking-tight">
+              {formatMoney(stats.totalSales, currency)}
+            </p>
+            <span className="text-[10px] text-cyan-300 font-medium">Completed Transactions</span>
+          </div>
+
+          <div className="text-[11px] text-slate-400 flex items-center justify-between pt-2 border-t border-white/[0.06]">
+            <span>Today: <strong className="text-white font-mono">{formatMoney(stats.salesToday, currency)}</strong></span>
+            <span>Month: <strong className="text-white font-mono">{formatMoney(stats.salesThisMonth, currency)}</strong></span>
           </div>
         </div>
 
-        {/* Operating Expenses */}
-        <div className="p-5 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-2">
+        {/* Card 2: Total Expenses & Net Profit (Magenta/Rose Theme) */}
+        <div className="p-5 bg-[#0b0f24]/70 border border-rose-500/25 hover:border-rose-500/45 rounded-2xl space-y-3 backdrop-blur-xl shadow-[0_0_25px_-8px_rgba(244,63,94,0.18)] transition-all group">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">Total Expenses</span>
-            <span className="p-2 rounded-xl bg-rose-500/10 text-rose-400">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Expenses</span>
+            <div className="w-8 h-8 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-300 group-hover:scale-110 transition-transform">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
-            </span>
+            </div>
           </div>
-          <p className="text-xl font-bold text-white tracking-tight">
-            {formatMoney(stats.totalExpenses, currency)}
-          </p>
-          <div className="text-[11px] text-slate-400 flex items-center justify-between pt-1">
-            <span>Est. Net Profit:</span>
-            <strong className={`font-semibold ${stats.netProfit >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+
+          <div>
+            <p className="text-2xl font-black text-white tracking-tight">
+              {formatMoney(stats.totalExpenses, currency)}
+            </p>
+            <span className="text-[10px] text-rose-300 font-medium">Logged Operating Outflows</span>
+          </div>
+
+          <div className="text-[11px] text-slate-400 flex items-center justify-between pt-2 border-t border-white/[0.06]">
+            <span>Net Profit:</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+              stats.netProfit >= 0
+                ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
+                : "bg-rose-500/15 text-rose-300 border-rose-500/30"
+            }`}>
               {formatMoney(stats.netProfit, currency)}
-            </strong>
+            </span>
           </div>
         </div>
 
-        {/* Inventory Items */}
-        <div className="p-5 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-2">
+        {/* Card 3: Inventory Status (Electric Blue Theme) */}
+        <div className="p-5 bg-[#0b0f24]/70 border border-cyan-500/25 hover:border-cyan-500/45 rounded-2xl space-y-3 backdrop-blur-xl shadow-[0_0_25px_-8px_rgba(6,182,212,0.18)] transition-all group">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">Inventory Status</span>
-            <span className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Inventory Status</span>
+            <div className="w-8 h-8 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-300 group-hover:scale-110 transition-transform">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
               </svg>
-            </span>
+            </div>
           </div>
-          <p className="text-xl font-bold text-white tracking-tight">
-            {stats.productCount} <span className="text-xs font-normal text-slate-400">Products</span>
-          </p>
-          <div className="text-[11px] text-slate-400 flex items-center justify-between pt-1">
-            <span>Low Stock Alerts:</span>
-            <strong className={stats.lowStockCount > 0 ? "text-amber-400" : "text-emerald-400"}>
-              {stats.lowStockCount} item{stats.lowStockCount !== 1 ? "s" : ""}
-            </strong>
+
+          <div>
+            <p className="text-2xl font-black text-white tracking-tight flex items-baseline gap-1.5">
+              <span>{stats.productCount}</span>
+              <span className="text-xs font-normal text-slate-400">Products</span>
+            </p>
+            <span className="text-[10px] text-slate-400 font-medium">Catalog Active SKUs</span>
+          </div>
+
+          <div className="text-[11px] text-slate-400 flex items-center justify-between pt-2 border-t border-white/[0.06]">
+            <span>Low Stock:</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+              stats.lowStockCount > 0
+                ? "bg-amber-500/15 text-amber-300 border-amber-500/30 animate-pulse"
+                : "bg-emerald-500/15 text-emerald-300 border-emerald-500/30"
+            }`}>
+              {stats.lowStockCount} {stats.lowStockCount === 1 ? "Item" : "Items"}
+            </span>
           </div>
         </div>
 
-        {/* Outstanding Receivables */}
-        <div className="p-5 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-2">
+        {/* Card 4: Unpaid Invoices (Amber/Orange Theme) */}
+        <div className="p-5 bg-[#0b0f24]/70 border border-amber-500/25 hover:border-amber-500/45 rounded-2xl space-y-3 backdrop-blur-xl shadow-[0_0_25px_-8px_rgba(245,158,11,0.18)] transition-all group">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">Unpaid Invoices</span>
-            <span className="p-2 rounded-xl bg-amber-500/10 text-amber-400">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Unpaid Invoices</span>
+            <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-300 group-hover:scale-110 transition-transform">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-            </span>
+            </div>
           </div>
-          <p className="text-xl font-bold text-white tracking-tight">
-            {formatMoney(stats.outstandingInvoicesAmount, currency)}
-          </p>
-          <div className="text-[11px] text-slate-400 flex items-center justify-between pt-1">
-            <span>Pending Payment:</span>
-            <strong className="text-slate-200">{stats.outstandingInvoicesCount} invoice{stats.outstandingInvoicesCount !== 1 ? "s" : ""}</strong>
+
+          <div>
+            <p className="text-2xl font-black text-white tracking-tight">
+              {formatMoney(stats.outstandingInvoicesAmount, currency)}
+            </p>
+            <span className="text-[10px] text-amber-300 font-medium">Pending Receivables</span>
+          </div>
+
+          <div className="text-[11px] text-slate-400 flex items-center justify-between pt-2 border-t border-white/[0.06]">
+            <span>Outstanding:</span>
+            <span className="font-bold text-white font-mono">
+              {stats.outstandingInvoicesCount} {stats.outstandingInvoicesCount === 1 ? "Invoice" : "Invoices"}
+            </span>
           </div>
         </div>
       </div>
 
       {/* Low Stock Urgent Items & Recent Sales Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Low Stock Alerts */}
-        <div className="p-6 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
-              Low Stock Warnings
-            </h2>
-            <Link href="/products" className="text-xs text-indigo-400 hover:text-indigo-300 font-medium">
-              Catalog →
-            </Link>
+        {/* Futuristic Inventory Intelligence Panel */}
+        <div className="p-6 bg-[#090d22]/80 border border-white/[0.08] hover:border-white/[0.15] rounded-3xl space-y-4 backdrop-blur-xl shadow-lg flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+              <div className="flex items-center gap-2">
+                <span className={`w-2.5 h-2.5 rounded-full ${lowStockItems.length > 0 ? "bg-rose-500 animate-beacon" : "bg-cyan-400"}`} />
+                <h2 className="text-xs font-bold text-white uppercase tracking-wider">
+                  Inventory Intelligence
+                </h2>
+              </div>
+              <Link href="/products" className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold transition">
+                Catalog →
+              </Link>
+            </div>
+
+            {lowStockItems.length === 0 ? (
+              <div className="py-8 flex flex-col items-center justify-center text-center space-y-3">
+                <div className="relative">
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-cyan-500/20 to-emerald-500/20 border border-cyan-400/30 flex items-center justify-center text-2xl shadow-[0_0_25px_rgba(6,182,212,0.3)]">
+                    📦
+                  </div>
+                  <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-400 border-2 border-[#090d22] flex items-center justify-center text-[9px] text-black font-bold">
+                    ✓
+                  </span>
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-white">Great! No low stock alerts</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">You&apos;re all stocked up.</p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2.5 pt-3">
+                {lowStockItems.map((p) => (
+                  <div
+                    key={p.id}
+                    className="p-3 bg-rose-500/[0.06] border border-rose-500/25 hover:border-rose-500/40 rounded-xl flex items-center justify-between transition-all"
+                  >
+                    <div className="truncate pr-2">
+                      <p className="text-xs font-bold text-white truncate">{p.name}</p>
+                      <p className="text-[10px] text-slate-400 font-mono">SKU: {p.sku}</p>
+                    </div>
+                    <div className="text-right whitespace-nowrap">
+                      <span className="inline-block px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 font-black text-[11px] border border-rose-500/30">
+                        {p.stockQuantity} left
+                      </span>
+                      <p className="text-[9px] text-slate-400 mt-0.5">Min: {p.lowStockThreshold}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {lowStockItems.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-400">
-              ✅ All products are adequately stocked above their thresholds.
-            </div>
-          ) : (
-            <div className="space-y-2.5">
-              {lowStockItems.map((p) => (
-                <div
-                  key={p.id}
-                  className="p-3 bg-slate-950 border border-rose-500/20 rounded-xl flex items-center justify-between"
-                >
-                  <div className="truncate pr-2">
-                    <p className="text-xs font-semibold text-white truncate">{p.name}</p>
-                    <p className="text-[11px] text-slate-400">SKU: {p.sku}</p>
-                  </div>
-                  <div className="text-right whitespace-nowrap">
-                    <span className="inline-block px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-bold text-xs">
-                      {p.stockQuantity} left
-                    </span>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Threshold: {p.lowStockThreshold}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="pt-3 border-t border-white/[0.04]">
+            <p className="text-[10px] text-slate-400 text-center">
+              Automated reorder thresholds continuously evaluated
+            </p>
+          </div>
         </div>
 
-        {/* Recent Sales Activity */}
-        <div className="lg:col-span-2 p-6 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-              Recent Sales Activity
-            </h2>
-            <Link href="/sales" className="text-xs text-indigo-400 hover:text-indigo-300 font-medium">
+        {/* Recent Sales Activity (Fintech Transaction Panel) */}
+        <div className="lg:col-span-2 p-6 bg-[#090d22]/80 border border-white/[0.08] hover:border-white/[0.15] rounded-3xl space-y-4 backdrop-blur-xl shadow-lg">
+          <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+              <h2 className="text-xs font-bold text-white uppercase tracking-wider">
+                Recent Sales Activity
+              </h2>
+            </div>
+            <Link href="/sales" className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition">
               View All Sales →
             </Link>
           </div>
 
           {recentSales.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-400">
-              No sales recorded yet. Click &quot;Record Sale&quot; to create your first transaction.
+            <div className="py-10 text-center space-y-2">
+              <p className="text-xs text-slate-400">No transactions recorded yet.</p>
+              <Link
+                href="/sales"
+                className="inline-block px-3.5 py-1.5 bg-violet-600/30 hover:bg-violet-600/50 text-violet-300 rounded-lg text-xs font-semibold border border-violet-500/30 transition"
+              >
+                Record First Sale →
+              </Link>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="border-b border-slate-800 text-slate-400 font-semibold">
-                    <th className="pb-2.5">Date</th>
-                    <th className="pb-2.5">Customer</th>
-                    <th className="pb-2.5">Items</th>
-                    <th className="pb-2.5">Payment</th>
-                    <th className="pb-2.5 text-right">Amount</th>
+                  <tr className="border-b border-white/[0.06] text-slate-400 font-semibold text-[10px] uppercase tracking-wider">
+                    <th className="pb-3">Date</th>
+                    <th className="pb-3">Customer</th>
+                    <th className="pb-3">Items</th>
+                    <th className="pb-3">Method</th>
+                    <th className="pb-3 text-right">Amount</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                <tbody className="divide-y divide-white/[0.04] text-slate-300">
                   {recentSales.map((sale) => (
-                    <tr key={sale.id} className="hover:bg-slate-800/30">
-                      <td className="py-3 text-slate-400">
+                    <tr key={sale.id} className="hover:bg-white/[0.02] transition-colors">
+                      <td className="py-3 text-slate-400 font-mono text-[11px]">
                         {new Date(sale.createdAt).toLocaleDateString("en-GB", {
                           day: "numeric",
                           month: "short",
@@ -359,18 +483,25 @@ export default function DashboardOverview({
                           minute: "2-digit",
                         })}
                       </td>
-                      <td className="py-3 font-medium text-white">
-                        {sale.customerName || <span className="text-slate-500">Walk-in</span>}
+                      <td className="py-3 font-semibold text-white">
+                        <div className="flex items-center gap-2">
+                          <span className="w-6 h-6 rounded-full bg-white/[0.06] border border-white/[0.1] flex items-center justify-center text-[10px] font-bold text-slate-300">
+                            {(sale.customerName || "W")[0].toUpperCase()}
+                          </span>
+                          <span className="truncate max-w-[120px]">
+                            {sale.customerName || <span className="text-slate-400 font-normal">Walk-in</span>}
+                          </span>
+                        </div>
                       </td>
-                      <td className="py-3 text-slate-400">
-                        {sale.itemCount} item{sale.itemCount !== 1 ? "s" : ""}
+                      <td className="py-3 text-slate-400 font-mono">
+                        {sale.itemCount} {sale.itemCount === 1 ? "item" : "items"}
                       </td>
                       <td className="py-3">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/[0.04] text-slate-300 border border-white/[0.1]">
                           {sale.paymentMethod}
                         </span>
                       </td>
-                      <td className="py-3 text-right font-bold text-emerald-400">
+                      <td className="py-3 text-right font-black text-emerald-400 font-mono text-sm">
                         {formatMoney(sale.totalAmount, currency)}
                       </td>
                     </tr>
