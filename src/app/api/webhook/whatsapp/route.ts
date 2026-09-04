@@ -73,11 +73,11 @@ export async function POST(req: NextRequest) {
             const messageId = msg.id;
 
             // Idempotency: Prevent duplicate message processing
-            if (isMessageProcessed(messageId)) {
+            if (await isMessageProcessed(messageId)) {
               console.log(`[WhatsApp Webhook] Deduplicated messageId=${messageId}`);
               continue;
             }
-            markMessageProcessed(messageId);
+            await markMessageProcessed(messageId);
 
             // Extract message text from text, interactive button reply, or quick reply
             let messageText = "";

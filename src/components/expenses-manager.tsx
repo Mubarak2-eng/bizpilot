@@ -130,15 +130,15 @@ export default function ExpensesManager({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
         <div>
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-300 border border-rose-500/30 uppercase tracking-wide">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/30 uppercase tracking-wide">
               Financial Outflows
             </span>
-            <span className="text-[11px] text-slate-400 font-mono">{expenses.length} Records Logged</span>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">{expenses.length} Records Logged</span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight mt-1">
+          <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight mt-1">
             Operating Expenses Tracker
           </h1>
-          <p className="text-xs md:text-sm text-slate-400">
+          <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400">
             Log overhead disbursements, categorize spending, and monitor business operational costs
           </p>
         </div>
@@ -148,7 +148,7 @@ export default function ExpensesManager({
             setFeedback(null);
             setIsCreateOpen(true);
           }}
-          className="px-4 py-2.5 bg-gradient-to-r from-rose-600 via-pink-600 to-indigo-600 hover:from-rose-500 hover:to-pink-500 text-white rounded-xl text-xs font-bold shadow-[0_0_25px_-5px_rgba(244,63,94,0.5)] transition-all flex items-center gap-2 cursor-pointer self-start sm:self-auto border border-rose-400/30"
+          className="px-4 py-2.5 bg-gradient-to-r from-rose-600 via-pink-600 to-indigo-600 hover:from-rose-500 hover:to-pink-500 text-white rounded-xl text-xs font-bold shadow-md shadow-rose-600/25 dark:shadow-[0_0_25px_-5px_rgba(244,63,94,0.5)] transition-all flex items-center gap-2 cursor-pointer self-start sm:self-auto border border-rose-400/30"
         >
           <svg className="w-4 h-4 text-rose-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
@@ -160,10 +160,10 @@ export default function ExpensesManager({
       {/* Feedback Banner */}
       {feedback && (
         <div
-          className={`p-4 rounded-2xl border text-xs font-medium transition-all flex items-center justify-between shadow-lg ${
+          className={`p-4 rounded-2xl border text-xs font-medium transition-all flex items-center justify-between shadow-md ${
             feedback.error
-              ? "bg-rose-950/20 border-rose-500/30 text-rose-300"
-              : "bg-emerald-950/20 border-emerald-500/30 text-emerald-300"
+              ? "bg-rose-50 dark:bg-rose-950/20 border-rose-500/30 text-rose-800 dark:text-rose-300"
+              : "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-500/30 text-emerald-800 dark:text-emerald-300"
           }`}
         >
           <span className="flex items-center gap-2">
@@ -185,14 +185,14 @@ export default function ExpensesManager({
           <button
             key={cat}
             onClick={() => setSelectedCategory(selectedCategory === cat ? "ALL" : cat)}
-            className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer shadow-sm ${
+            className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer shadow-xs ${
               selectedCategory === cat
-                ? "bg-rose-500/20 border-rose-500/60 text-white shadow-[0_0_20px_rgba(244,63,94,0.25)]"
-                : "bg-[#090e24]/70 border-white/[0.08] text-slate-300 hover:bg-white/[0.06] hover:border-white/[0.15]"
+                ? "bg-rose-100 dark:bg-rose-500/20 border-rose-400 dark:border-rose-500/60 text-slate-900 dark:text-white shadow-md shadow-rose-500/10"
+                : "bg-white/90 dark:bg-[#090e24]/70 border-slate-200/90 dark:border-white/[0.08] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.06]"
             }`}
           >
-            <span className="text-[10px] text-slate-400 block font-bold uppercase truncate tracking-wider">{cat}</span>
-            <span className="text-sm font-black text-rose-400 font-mono block mt-1">
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-bold uppercase truncate tracking-wider">{cat}</span>
+            <span className="text-sm font-black text-rose-600 dark:text-rose-400 font-mono block mt-1">
               {formatMoney(amt, business.currency)}
             </span>
           </button>
@@ -200,7 +200,7 @@ export default function ExpensesManager({
       </div>
 
       {/* Controls & Search */}
-      <div className="p-4 bg-[#090e24]/70 border border-white/[0.08] rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 backdrop-blur-xl shadow-md">
+      <div className="p-4 bg-white/90 dark:bg-[#090e24]/70 border border-slate-200/90 dark:border-white/[0.08] rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 backdrop-blur-xl shadow-md">
         <div className="relative flex-1">
           <svg
             className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5"
@@ -215,14 +215,15 @@ export default function ExpensesManager({
             placeholder="Search expenses by category or vendor description..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-[#060a1a] border border-white/[0.08] focus:border-rose-500 rounded-xl text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-rose-500 transition"
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-[#060a1a] border border-slate-300 dark:border-white/[0.08] focus:border-rose-500 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-rose-500 transition shadow-xs"
           />
         </div>
 
         <select
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
-          className="px-3 py-2 bg-[#060a1a] border border-white/[0.08] rounded-xl text-xs text-slate-300 focus:ring-1 focus:ring-rose-500 focus:outline-none transition cursor-pointer"
+          aria-label="Filter expenses by category"
+          className="px-3 py-2 bg-slate-50 dark:bg-[#060a1a] border border-slate-300 dark:border-white/[0.08] rounded-xl text-xs text-slate-800 dark:text-slate-300 focus:ring-1 focus:ring-rose-500 focus:outline-none transition cursor-pointer shadow-xs"
         >
           <option value="ALL">All Categories</option>
           {COMMON_CATEGORIES.map((cat) => (
@@ -234,19 +235,19 @@ export default function ExpensesManager({
       </div>
 
       {/* Expense Table */}
-      <div className="bg-[#090e24]/70 border border-white/[0.08] rounded-3xl overflow-hidden backdrop-blur-xl shadow-xl">
+      <div className="bg-white/90 dark:bg-[#090e24]/70 border border-slate-200/90 dark:border-white/[0.08] rounded-3xl overflow-hidden backdrop-blur-xl shadow-md dark:shadow-xl">
         {filteredExpenses.length === 0 ? (
           <div className="py-16 text-center space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-center mx-auto text-xl text-slate-400">
+            <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] flex items-center justify-center mx-auto text-xl text-slate-400">
               📊
             </div>
-            <p className="text-sm font-bold text-white">No expense entries found</p>
-            <p className="text-xs text-slate-400">Click &quot;Record Expense&quot; to log your business outflows.</p>
+            <p className="text-sm font-bold text-slate-900 dark:text-white">No expense entries found</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Click &quot;Record Expense&quot; to log your business outflows.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#060918]/80 border-b border-white/[0.06] text-slate-400 uppercase font-semibold text-[10px] tracking-wider">
+              <thead className="bg-slate-50 dark:bg-[#060918]/80 border-b border-slate-200 dark:border-white/[0.06] text-slate-500 dark:text-slate-400 uppercase font-semibold text-[10px] tracking-wider">
                 <tr>
                   <th className="py-3.5 px-4">Date</th>
                   <th className="py-3.5 px-4">Category</th>
@@ -255,25 +256,25 @@ export default function ExpensesManager({
                   <th className="py-3.5 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/[0.04] text-slate-300">
+              <tbody className="divide-y divide-slate-100 dark:divide-white/[0.04] text-slate-700 dark:text-slate-300">
                 {filteredExpenses.map((exp) => (
-                  <tr key={exp.id} className="hover:bg-white/[0.02] transition-colors">
-                    <td className="py-3.5 px-4 text-slate-400 font-mono text-[11px]">
+                  <tr key={exp.id} className="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors">
+                    <td className="py-3.5 px-4 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
                       {new Date(exp.createdAt).toLocaleDateString("en-GB", {
                         day: "numeric",
                         month: "short",
                         year: "numeric",
                       })}
                     </td>
-                    <td className="py-3.5 px-4 font-bold text-white">
-                      <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-white/[0.04] text-rose-300 border border-rose-500/25">
+                    <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-white">
+                      <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 dark:bg-white/[0.04] text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-500/25">
                         {exp.category}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 text-slate-300 max-w-sm truncate">
-                      {exp.description || <span className="text-slate-500">No description provided</span>}
+                    <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300 max-w-sm truncate">
+                      {exp.description || <span className="text-slate-400 dark:text-slate-500">No description provided</span>}
                     </td>
-                    <td className="py-3.5 px-4 text-right font-black text-rose-400 text-sm font-mono">
+                    <td className="py-3.5 px-4 text-right font-black text-rose-600 dark:text-rose-400 text-sm font-mono">
                       {formatMoney(exp.amount, business.currency)}
                     </td>
                     <td className="py-3.5 px-4 text-right space-x-2">
@@ -282,7 +283,7 @@ export default function ExpensesManager({
                           setFeedback(null);
                           setEditingExpense(exp);
                         }}
-                        className="px-2.5 py-1 bg-white/[0.04] hover:bg-rose-500/20 text-slate-200 hover:text-rose-300 rounded-lg text-xs font-medium border border-white/[0.08] hover:border-rose-500/30 transition cursor-pointer"
+                        className="px-2.5 py-1 bg-slate-100 hover:bg-rose-50 dark:bg-white/[0.04] dark:hover:bg-rose-500/20 text-slate-700 hover:text-rose-700 dark:text-slate-200 dark:hover:text-rose-300 rounded-lg text-xs font-medium border border-slate-200 dark:border-white/[0.08] hover:border-rose-300 dark:hover:border-rose-500/30 transition cursor-pointer shadow-xs"
                       >
                         Edit
                       </button>
@@ -290,7 +291,7 @@ export default function ExpensesManager({
                         <button
                           onClick={() => handleDelete(exp)}
                           disabled={isPending}
-                          className="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-xs font-medium border border-rose-500/30 transition cursor-pointer disabled:opacity-50"
+                          className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 dark:bg-rose-500/10 dark:hover:bg-rose-500/20 text-rose-700 dark:text-rose-400 rounded-lg text-xs font-medium border border-rose-200 dark:border-rose-500/30 transition cursor-pointer disabled:opacity-50 shadow-xs"
                         >
                           Delete
                         </button>
@@ -299,12 +300,12 @@ export default function ExpensesManager({
                   </tr>
                 ))}
               </tbody>
-              <tfoot className="bg-[#060918]/90 border-t border-white/[0.08] text-white font-bold">
+              <tfoot className="bg-slate-50 dark:bg-[#060918]/90 border-t border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white font-bold">
                 <tr>
-                  <td colSpan={3} className="py-3.5 px-4 text-slate-400 text-right uppercase text-[10px] tracking-wider">
+                  <td colSpan={3} className="py-3.5 px-4 text-slate-500 dark:text-slate-400 text-right uppercase text-[10px] tracking-wider">
                     Total Displayed Expenses:
                   </td>
-                  <td className="py-3.5 px-4 text-right text-rose-400 text-base font-black font-mono">
+                  <td className="py-3.5 px-4 text-right text-rose-600 dark:text-rose-400 text-base font-black font-mono">
                     {formatMoney(totalAmount, business.currency)}
                   </td>
                   <td></td>
@@ -317,18 +318,19 @@ export default function ExpensesManager({
 
       {/* Create Expense Modal */}
       {isCreateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
-          <div className="bg-[#090d24] border border-rose-500/30 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+          <div className="bg-white dark:bg-[#090d24] border border-slate-200 dark:border-rose-500/30 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/[0.08]">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-300">
+                <div className="w-8 h-8 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-700 dark:text-rose-300">
                   💸
                 </div>
-                <h2 className="text-base font-black text-white">Record Operating Expense</h2>
+                <h2 className="text-base font-black text-slate-900 dark:text-white">Record Operating Expense</h2>
               </div>
               <button
                 onClick={() => setIsCreateOpen(false)}
-                className="w-7 h-7 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-slate-400 hover:text-white flex items-center justify-center text-xs transition cursor-pointer"
+                aria-label="Close modal"
+                className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/[0.05] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center text-xs transition cursor-pointer"
               >
                 ✕
               </button>
@@ -336,16 +338,17 @@ export default function ExpensesManager({
 
             <form onSubmit={handleCreateSubmit} className="space-y-3.5">
               <div>
-                <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                <label htmlFor="create-expense-category" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                   Expense Category *
                 </label>
                 <input
+                  id="create-expense-category"
                   name="category"
                   type="text"
                   list="category-options"
                   required
                   placeholder="e.g. Electricity, Generator Fuel, Rent..."
-                  className="w-full px-3 py-2.5 bg-[#050816] border border-white/[0.1] focus:border-rose-500 rounded-xl text-xs text-white focus:outline-none"
+                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-rose-500 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none shadow-xs"
                 />
                 <datalist id="category-options">
                   {COMMON_CATEGORIES.map((c) => (
@@ -355,56 +358,59 @@ export default function ExpensesManager({
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                <label htmlFor="create-expense-amount" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                   Amount ({business.currency}) *
                 </label>
                 <input
+                  id="create-expense-amount"
                   name="amount"
                   type="number"
                   step="0.01"
                   min="0.01"
                   required
                   placeholder="15000.00"
-                  className="w-full px-3 py-2.5 bg-[#050816] border border-white/[0.1] focus:border-rose-500 rounded-xl text-xs text-white focus:outline-none font-mono"
+                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-rose-500 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none font-mono shadow-xs"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                <label htmlFor="create-expense-date" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                   Date of Expense
                 </label>
                 <input
+                  id="create-expense-date"
                   name="date"
                   type="date"
                   defaultValue={new Date().toISOString().split("T")[0]}
-                  className="w-full px-3 py-2.5 bg-[#050816] border border-white/[0.1] focus:border-rose-500 rounded-xl text-xs text-white focus:outline-none font-mono"
+                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-rose-500 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none font-mono shadow-xs"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                <label htmlFor="create-expense-description" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                   Description / Vendor Details
                 </label>
                 <textarea
+                  id="create-expense-description"
                   name="description"
                   rows={2}
                   placeholder="Optional details or vendor reference..."
-                  className="w-full px-3 py-2 bg-[#050816] border border-white/[0.1] focus:border-rose-500 rounded-xl text-xs text-white focus:outline-none"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-rose-500 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none shadow-xs"
                 />
               </div>
 
-              <div className="flex justify-end gap-2.5 pt-2 border-t border-white/[0.08]">
+              <div className="flex justify-end gap-2.5 pt-2 border-t border-slate-200 dark:border-white/[0.08]">
                 <button
                   type="button"
                   onClick={() => setIsCreateOpen(false)}
-                  className="px-4 py-2 bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 rounded-xl text-xs font-semibold transition cursor-pointer"
+                  className="px-4 py-2 bg-slate-100 dark:bg-white/[0.05] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="px-5 py-2.5 bg-gradient-to-r from-rose-600 via-pink-600 to-indigo-600 hover:from-rose-500 hover:to-pink-500 text-white rounded-xl text-xs font-bold transition disabled:opacity-50 cursor-pointer shadow-lg shadow-rose-600/30"
+                  className="px-5 py-2.5 bg-gradient-to-r from-rose-600 via-pink-600 to-indigo-600 hover:from-rose-500 hover:to-pink-500 text-white rounded-xl text-xs font-bold transition disabled:opacity-50 cursor-pointer shadow-md shadow-rose-600/25"
                 >
                   {isPending ? "Recording..." : "Save Expense"}
                 </button>
@@ -416,18 +422,19 @@ export default function ExpensesManager({
 
       {/* Edit Expense Modal */}
       {editingExpense && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
-          <div className="bg-[#090d24] border border-rose-500/30 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+          <div className="bg-white dark:bg-[#090d24] border border-slate-200 dark:border-rose-500/30 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/[0.08]">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-300">
+                <div className="w-8 h-8 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-700 dark:text-rose-300">
                   ✏️
                 </div>
-                <h2 className="text-base font-black text-white">Edit Expense Entry</h2>
+                <h2 className="text-base font-black text-slate-900 dark:text-white">Edit Expense Entry</h2>
               </div>
               <button
                 onClick={() => setEditingExpense(null)}
-                className="w-7 h-7 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-slate-400 hover:text-white flex items-center justify-center text-xs transition cursor-pointer"
+                aria-label="Close modal"
+                className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/[0.05] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center text-xs transition cursor-pointer"
               >
                 ✕
               </button>
@@ -435,69 +442,73 @@ export default function ExpensesManager({
 
             <form onSubmit={handleUpdateSubmit} className="space-y-3.5">
               <div>
-                <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                <label htmlFor="edit-expense-category" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                   Expense Category *
                 </label>
                 <input
+                  id="edit-expense-category"
                   name="category"
                   type="text"
                   required
                   defaultValue={editingExpense.category}
-                  className="w-full px-3 py-2.5 bg-[#050816] border border-white/[0.1] focus:border-rose-500 rounded-xl text-xs text-white focus:outline-none"
+                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-rose-500 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none shadow-xs"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                <label htmlFor="edit-expense-amount" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                   Amount ({business.currency}) *
                 </label>
                 <input
+                  id="edit-expense-amount"
                   name="amount"
                   type="number"
                   step="0.01"
                   min="0.01"
                   required
                   defaultValue={editingExpense.amount}
-                  className="w-full px-3 py-2.5 bg-[#050816] border border-white/[0.1] focus:border-rose-500 rounded-xl text-xs text-white focus:outline-none font-mono"
+                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-rose-500 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none font-mono shadow-xs"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                <label htmlFor="edit-expense-date" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                   Date
                 </label>
                 <input
+                  id="edit-expense-date"
                   name="date"
                   type="date"
                   defaultValue={new Date(editingExpense.createdAt).toISOString().split("T")[0]}
-                  className="w-full px-3 py-2.5 bg-[#050816] border border-white/[0.1] focus:border-rose-500 rounded-xl text-xs text-white focus:outline-none font-mono"
+                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-rose-500 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none font-mono shadow-xs"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                <label htmlFor="edit-expense-description" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                   Description
                 </label>
                 <textarea
+                  id="edit-expense-description"
                   name="description"
                   rows={2}
                   defaultValue={editingExpense.description || ""}
-                  className="w-full px-3 py-2 bg-[#050816] border border-white/[0.1] focus:border-rose-500 rounded-xl text-xs text-white focus:outline-none"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-rose-500 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none shadow-xs"
                 />
               </div>
 
-              <div className="flex justify-end gap-2.5 pt-2 border-t border-white/[0.08]">
+              <div className="flex justify-end gap-2.5 pt-2 border-t border-slate-200 dark:border-white/[0.08]">
                 <button
                   type="button"
                   onClick={() => setEditingExpense(null)}
-                  className="px-4 py-2 bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 rounded-xl text-xs font-semibold transition cursor-pointer"
+                  className="px-4 py-2 bg-slate-100 dark:bg-white/[0.05] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="px-5 py-2.5 bg-gradient-to-r from-rose-600 via-pink-600 to-indigo-600 hover:from-rose-500 hover:to-pink-500 text-white rounded-xl text-xs font-bold transition disabled:opacity-50 cursor-pointer shadow-lg shadow-rose-600/30"
+                  className="px-5 py-2.5 bg-gradient-to-r from-rose-600 via-pink-600 to-indigo-600 hover:from-rose-500 hover:to-pink-500 text-white rounded-xl text-xs font-bold transition disabled:opacity-50 cursor-pointer shadow-md shadow-rose-600/25"
                 >
                   {isPending ? "Saving..." : "Save Changes"}
                 </button>

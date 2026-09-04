@@ -1,76 +1,172 @@
+import { prisma } from "../prisma";
 import { ChatMessage } from "../ai/types";
 import { WhatsAppSession } from "./types";
 
-const sessionsMap = new Map<string, WhatsAppSession>();
-const SESSION_TTL_MS = 15 * 60 * 1000; // 15 minutes
-const MAX_HISTORY_LENGTH = 6;
+export const SESSION_TTL_MS = 15 * 60 * 1000; // 15 minutes
+export const MAX_HISTORY_LENGTH = 6;
 
 /**
- * Retrieves or initializes an active WhatsApp conversation session.
+ * Retrieves or initializes an active WhatsApp conversation session from PostgreSQL.
+ * If the session is older than 15 minutes, its conversation history and pending action token are reset.
  */
-export function getWhatsAppSession(phoneNumber: string): WhatsAppSession {
-  const existing = sessionsMap.get(phoneNumber);
-  const now = Date.now();
+export async function getWhatsAppSession(
+  phoneNumber: string,
+  businessId?: string
+): Promise<WhatsAppSession> {
+  const now = new Date();
+  const cutoff = new Date(Date.now() - SESSION_TTL_MS);
 
-  if (existing) {
-    // If expired, reset history and pending action
-    if (now - existing.lastActivity > SESSION_TTL_MS) {
-      existing.conversationHistory = [];
-      existing.activeActionToken = undefined;
+  try {
+    const existing = await prisma.whatsAppConversationSession.findUnique({
+      where: { phoneNumber },
+    });
+
+    if (existing) {
+      let history = Array.isArray(existing.history)
+        ? (existing.history as unknown as ChatMessage[])
+        : [];
+      let activeToken = existing.activeActionToken || undefined;
+
+      // Inactivity check: If inactive for > 15 minutes, reset history and pending action
+      if (existing.lastActivity < cutoff) {
+        history = [];
+        activeToken = undefined;
+
+        await prisma.whatsAppConversationSession.update({
+          where: { phoneNumber },
+          data: {
+            history: [],
+            activeActionToken: null,
+            lastActivity: now,
+            ...(businessId ? { businessId } : {}),
+          },
+        });
+      } else {
+        // Update lastActivity timestamp
+        await prisma.whatsAppConversationSession.update({
+          where: { phoneNumber },
+          data: {
+            lastActivity: now,
+            ...(businessId && !existing.businessId ? { businessId } : {}),
+          },
+        });
+      }
+
+      return {
+        phoneNumber,
+        conversationHistory: history,
+        activeActionToken: activeToken,
+        lastActivity: existing.lastActivity.getTime(),
+      };
     }
-    existing.lastActivity = now;
-    return existing;
-  }
 
-  const newSession: WhatsAppSession = {
-    phoneNumber,
-    conversationHistory: [],
-    lastActivity: now,
-  };
+    // Create new session in PostgreSQL
+    const created = await prisma.whatsAppConversationSession.create({
+      data: {
+        phoneNumber,
+        businessId: businessId || null,
+        history: [],
+        lastActivity: now,
+      },
+    });
 
-  sessionsMap.set(phoneNumber, newSession);
-  return newSession;
-}
-
-/**
- * Updates the active pending action token for a phone number.
- */
-export function setActiveActionToken(phoneNumber: string, token: string): void {
-  const session = getWhatsAppSession(phoneNumber);
-  session.activeActionToken = token;
-  session.lastActivity = Date.now();
-  sessionsMap.set(phoneNumber, session);
-}
-
-/**
- * Clears the active pending action token for a phone number.
- */
-export function clearActiveActionToken(phoneNumber: string): void {
-  const session = sessionsMap.get(phoneNumber);
-  if (session) {
-    session.activeActionToken = undefined;
-    session.lastActivity = Date.now();
+    return {
+      phoneNumber,
+      conversationHistory: [],
+      lastActivity: created.lastActivity.getTime(),
+    };
+  } catch (err) {
+    console.error("[WhatsApp Session] Error getting/creating session:", err);
+    return {
+      phoneNumber,
+      conversationHistory: [],
+      lastActivity: Date.now(),
+    };
   }
 }
 
 /**
- * Appends a message to the conversation history (capped at MAX_HISTORY_LENGTH).
+ * Updates the active pending action token for a phone number in PostgreSQL.
  */
-export function addMessageToSession(phoneNumber: string, message: ChatMessage): void {
-  const session = getWhatsAppSession(phoneNumber);
-  session.conversationHistory.push(message);
-
-  if (session.conversationHistory.length > MAX_HISTORY_LENGTH) {
-    session.conversationHistory = session.conversationHistory.slice(-MAX_HISTORY_LENGTH);
+export async function setActiveActionToken(
+  phoneNumber: string,
+  token: string
+): Promise<void> {
+  const now = new Date();
+  try {
+    await prisma.whatsAppConversationSession.upsert({
+      where: { phoneNumber },
+      create: {
+        phoneNumber,
+        activeActionToken: token,
+        history: [],
+        lastActivity: now,
+      },
+      update: {
+        activeActionToken: token,
+        lastActivity: now,
+      },
+    });
+  } catch (err) {
+    console.error("[WhatsApp Session] Error setting active action token:", err);
   }
-
-  session.lastActivity = Date.now();
-  sessionsMap.set(phoneNumber, session);
 }
 
 /**
- * Removes a WhatsApp session from memory (e.g. on unlinking).
+ * Clears the active pending action token for a phone number in PostgreSQL.
  */
-export function deleteWhatsAppSession(phoneNumber: string): void {
-  sessionsMap.delete(phoneNumber);
+export async function clearActiveActionToken(phoneNumber: string): Promise<void> {
+  const now = new Date();
+  try {
+    await prisma.whatsAppConversationSession.update({
+      where: { phoneNumber },
+      data: {
+        activeActionToken: null,
+        lastActivity: now,
+      },
+    });
+  } catch {
+    // If record doesn't exist, ignore
+  }
+}
+
+/**
+ * Appends a message to the conversation history in PostgreSQL (capped at MAX_HISTORY_LENGTH = 6).
+ */
+export async function addMessageToSession(
+  phoneNumber: string,
+  message: ChatMessage
+): Promise<void> {
+  try {
+    const session = await getWhatsAppSession(phoneNumber);
+    const updatedHistory = [...session.conversationHistory, message];
+
+    const cappedHistory =
+      updatedHistory.length > MAX_HISTORY_LENGTH
+        ? updatedHistory.slice(-MAX_HISTORY_LENGTH)
+        : updatedHistory;
+
+    await prisma.whatsAppConversationSession.update({
+      where: { phoneNumber },
+      data: {
+        history: cappedHistory as any,
+        lastActivity: new Date(),
+      },
+    });
+  } catch (err) {
+    console.error("[WhatsApp Session] Error adding message to session:", err);
+  }
+}
+
+/**
+ * Removes a WhatsApp session from PostgreSQL (e.g. on unlinking).
+ */
+export async function deleteWhatsAppSession(phoneNumber: string): Promise<void> {
+  try {
+    await prisma.whatsAppConversationSession.deleteMany({
+      where: { phoneNumber },
+    });
+  } catch (err) {
+    console.error("[WhatsApp Session] Error deleting session:", err);
+  }
 }

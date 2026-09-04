@@ -5,6 +5,12 @@ import { hashPassword } from "@/lib/password";
 import { signIn } from "@/auth";
 import { AuthError } from "next-auth";
 
+import {
+  createLoginChallenge,
+  resendLoginPin,
+  ResendPinResult,
+} from "@/lib/auth/login-pin";
+
 export interface RegisterState {
   success?: boolean;
   error?: string;
@@ -14,8 +20,97 @@ export interface LoginState {
   error?: string;
 }
 
+export interface LoginChallengeState {
+  success?: boolean;
+  challengeId?: string;
+  maskedEmail?: string;
+  error?: string;
+  cooldownSeconds?: number;
+  expiresAt?: string;
+}
+
+export interface VerifyPinState {
+  error?: string;
+}
+
 /**
- * Server Action for user credentials login.
+ * Step 1: Validates credentials and dispatches 6-digit email PIN.
+ */
+export async function initiateLoginAction(
+  prevState: LoginChallengeState | null | undefined,
+  formData: FormData
+): Promise<LoginChallengeState> {
+  const email = formData.get("email")?.toString().toLowerCase().trim();
+  const password = formData.get("password")?.toString();
+
+  if (!email || !password) {
+    return { error: "Please enter your email and password." };
+  }
+
+  const result = await createLoginChallenge(email, password);
+  if (!result.success) {
+    return { error: result.error || "Invalid email or password." };
+  }
+
+  return {
+    success: true,
+    challengeId: result.challengeId,
+    maskedEmail: result.email,
+    cooldownSeconds: result.cooldownSeconds,
+    expiresAt: result.expiresAt,
+  };
+}
+
+/**
+ * Step 2: Resends a new verification PIN (enforcing 60s cooldown).
+ */
+export async function resendLoginPinAction(
+  challengeId: string
+): Promise<ResendPinResult> {
+  return resendLoginPin(challengeId);
+}
+
+/**
+ * Step 3: Verifies the 6-digit PIN and establishes the final authenticated session.
+ */
+export async function verifyLoginPinAction(
+  prevState: VerifyPinState | null | undefined,
+  formData: FormData
+): Promise<VerifyPinState | undefined> {
+  const challengeId = formData.get("challengeId")?.toString().trim();
+  const pin = formData.get("pin")?.toString().trim();
+  const redirectTo = formData.get("redirectTo")?.toString() || "/dashboard";
+
+  if (!challengeId || !pin) {
+    return { error: "Please enter the 6-digit verification code." };
+  }
+
+  if (!/^\d{6}$/.test(pin)) {
+    return { error: "Verification code must be 6 digits." };
+  }
+
+  try {
+    await signIn("credentials", {
+      challengeId,
+      pin,
+      redirectTo,
+    });
+  } catch (error) {
+    if (error instanceof AuthError) {
+      switch (error.type) {
+        case "CredentialsSignin":
+          return { error: "Invalid, expired, or maximum attempts exceeded for this code." };
+        default:
+          return { error: "Verification failed. Please try again." };
+      }
+    }
+    // Next.js redirection in Server Actions throws a special NEXT_REDIRECT error which must be re-thrown
+    throw error;
+  }
+}
+
+/**
+ * Server Action for direct user credentials login (legacy/fallback).
  * Calls Auth.js signIn on the server with zero client-side CSRF dependencies.
  */
 export async function loginAction(

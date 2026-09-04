@@ -31,6 +31,9 @@ export default async function SalesPage() {
             product: { select: { name: true } },
           },
         },
+        creditPayments: {
+          orderBy: { createdAt: "desc" },
+        },
       },
       orderBy: { createdAt: "desc" },
     }),
@@ -55,6 +58,11 @@ export default async function SalesPage() {
   const formattedSales: SaleRecord[] = salesData.map((s) => ({
     id: s.id,
     totalAmount: s.totalAmount.toString(),
+    amountPaid: s.amountPaid.toString(),
+    outstandingBalance: s.outstandingBalance.toString(),
+    isCredit: s.isCredit,
+    creditStatus: s.creditStatus,
+    creditDueDate: s.creditDueDate ? s.creditDueDate.toISOString() : null,
     paymentMethod: s.paymentMethod,
     status: s.status,
     createdAt: s.createdAt.toISOString(),
@@ -66,6 +74,14 @@ export default async function SalesPage() {
       quantity: i.quantity,
       unitPrice: i.unitPrice.toString(),
       totalAmount: i.totalAmount.toString(),
+    })),
+    creditPayments: s.creditPayments.map((p) => ({
+      id: p.id,
+      amount: p.amount.toString(),
+      paymentMethod: p.paymentMethod,
+      note: p.note,
+      recordedBy: p.recordedBy,
+      createdAt: p.createdAt.toISOString(),
     })),
   }));
 

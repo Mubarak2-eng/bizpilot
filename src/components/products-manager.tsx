@@ -114,15 +114,15 @@ export default function ProductsManager({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
         <div>
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 uppercase tracking-wide">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/15 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 uppercase tracking-wide">
               Inventory Matrix
             </span>
-            <span className="text-[11px] text-slate-400 font-mono">{products.length} Total SKUs</span>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">{products.length} Total SKUs</span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight mt-1">
+          <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight mt-1">
             Products & Inventory Catalog
           </h1>
-          <p className="text-xs md:text-sm text-slate-400">
+          <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400">
             Manage catalog pricing, barcodes, and real-time inventory threshold telemetry
           </p>
         </div>
@@ -132,7 +132,7 @@ export default function ProductsManager({
             setFeedback(null);
             setIsCreateOpen(true);
           }}
-          className="px-4 py-2.5 bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 text-white rounded-xl text-xs font-bold shadow-[0_0_25px_-5px_rgba(99,102,241,0.5)] transition-all flex items-center gap-2 cursor-pointer self-start sm:self-auto border border-violet-300/30"
+          className="px-4 py-2.5 bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-600/25 dark:shadow-[0_0_25px_-5px_rgba(99,102,241,0.5)] transition-all flex items-center gap-2 cursor-pointer self-start sm:self-auto border border-violet-300/30"
         >
           <svg className="w-4 h-4 text-cyan-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
@@ -144,10 +144,10 @@ export default function ProductsManager({
       {/* Feedback Banner */}
       {feedback && (
         <div
-          className={`p-4 rounded-2xl border text-xs font-medium transition-all flex items-center justify-between shadow-lg ${
+          className={`p-4 rounded-2xl border text-xs font-medium transition-all flex items-center justify-between shadow-md ${
             feedback.error
-              ? "bg-rose-950/20 border-rose-500/30 text-rose-300"
-              : "bg-emerald-950/20 border-emerald-500/30 text-emerald-300"
+              ? "bg-rose-50 dark:bg-rose-950/20 border-rose-500/30 text-rose-800 dark:text-rose-300"
+              : "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-500/30 text-emerald-800 dark:text-emerald-300"
           }`}
         >
           <span className="flex items-center gap-2">
@@ -164,7 +164,7 @@ export default function ProductsManager({
       )}
 
       {/* Controls: Search and Low-stock filter */}
-      <div className="p-4 bg-[#090e24]/70 border border-white/[0.08] rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 backdrop-blur-xl shadow-md">
+      <div className="p-4 bg-white/90 dark:bg-[#090e24]/70 border border-slate-200/90 dark:border-white/[0.08] rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 backdrop-blur-xl shadow-md">
         <div className="relative flex-1">
           <svg
             className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5"
@@ -179,39 +179,39 @@ export default function ProductsManager({
             placeholder="Search products by title, SKU code, or barcode..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-[#060a1a] border border-white/[0.08] focus:border-cyan-500 rounded-xl text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition"
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-[#060a1a] border border-slate-300 dark:border-white/[0.08] focus:border-cyan-500 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition shadow-xs"
           />
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => setFilterLowStockOnly(!filterLowStockOnly)}
-            className={`px-3.5 py-2 rounded-xl text-xs font-semibold border transition cursor-pointer flex items-center gap-2 ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-semibold border transition cursor-pointer flex items-center gap-2 shadow-xs ${
               filterLowStockOnly
-                ? "bg-rose-500/20 border-rose-500/50 text-rose-300 shadow-[0_0_15px_rgba(244,63,94,0.3)]"
-                : "bg-[#060a1a] border-white/[0.08] text-slate-400 hover:text-white"
+                ? "bg-rose-50 dark:bg-rose-500/20 border-rose-300 dark:border-rose-500/50 text-rose-800 dark:text-rose-300"
+                : "bg-slate-50 dark:bg-[#060a1a] border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
-            <span className={`w-2 h-2 rounded-full ${filterLowStockOnly ? "bg-rose-400 animate-beacon" : "bg-slate-600"}`} />
+            <span className={`w-2 h-2 rounded-full ${filterLowStockOnly ? "bg-rose-500 dark:bg-rose-400 animate-beacon" : "bg-slate-400 dark:bg-slate-600"}`} />
             <span>Low Stock Alerts Only</span>
           </button>
         </div>
       </div>
 
       {/* Products Table (High-Tech Matrix) */}
-      <div className="bg-[#090e24]/70 border border-white/[0.08] rounded-3xl overflow-hidden backdrop-blur-xl shadow-xl">
+      <div className="bg-white/90 dark:bg-[#090e24]/70 border border-slate-200/90 dark:border-white/[0.08] rounded-3xl overflow-hidden backdrop-blur-xl shadow-md dark:shadow-xl">
         {filteredProducts.length === 0 ? (
           <div className="py-16 text-center space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-center mx-auto text-xl text-slate-400">
+            <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] flex items-center justify-center mx-auto text-xl text-slate-400">
               📦
             </div>
-            <p className="text-sm font-bold text-white">No products found</p>
-            <p className="text-xs text-slate-400">Try adjusting your search criteria or add a new SKU.</p>
+            <p className="text-sm font-bold text-slate-900 dark:text-white">No products found</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Try adjusting your search criteria or add a new SKU.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#060918]/80 border-b border-white/[0.06] text-slate-400 uppercase font-semibold text-[10px] tracking-wider">
+              <thead className="bg-slate-50 dark:bg-[#060918]/80 border-b border-slate-200 dark:border-white/[0.06] text-slate-500 dark:text-slate-400 uppercase font-semibold text-[10px] tracking-wider">
                 <tr>
                   <th className="py-3.5 px-4">Product Details</th>
                   <th className="py-3.5 px-4">SKU / Barcode</th>
@@ -221,43 +221,43 @@ export default function ProductsManager({
                   <th className="py-3.5 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/[0.04] text-slate-300">
+              <tbody className="divide-y divide-slate-100 dark:divide-white/[0.04] text-slate-700 dark:text-slate-300">
                 {filteredProducts.map((p) => {
                   const isLowStock = p.stockQuantity <= p.lowStockThreshold;
                   return (
-                    <tr key={p.id} className="hover:bg-white/[0.02] transition-colors">
+                    <tr key={p.id} className="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors">
                       <td className="py-3.5 px-4">
-                        <p className="font-bold text-white text-sm">{p.name}</p>
+                        <p className="font-bold text-slate-900 dark:text-white text-sm">{p.name}</p>
                         {p.description && (
-                          <p className="text-[11px] text-slate-400 truncate max-w-xs">{p.description}</p>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-xs">{p.description}</p>
                         )}
                       </td>
                       <td className="py-3.5 px-4">
-                        <code className="text-cyan-300 font-mono text-xs px-1.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20">
+                        <code className="text-cyan-700 dark:text-cyan-300 font-mono text-xs px-1.5 py-0.5 rounded bg-cyan-50 dark:bg-cyan-500/10 border border-cyan-200 dark:border-cyan-500/20 font-semibold">
                           {p.sku}
                         </code>
                         {p.barcode && (
-                          <p className="text-[10px] text-slate-400 font-mono mt-1">Barcode: {p.barcode}</p>
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-1">Barcode: {p.barcode}</p>
                         )}
                       </td>
-                      <td className="py-3.5 px-4 font-black text-white font-mono text-sm">
+                      <td className="py-3.5 px-4 font-black text-slate-900 dark:text-white font-mono text-sm">
                         {formatMoney(p.sellingPrice, business.currency)}
                       </td>
-                      <td className="py-3.5 px-4 text-slate-400 font-mono">
+                      <td className="py-3.5 px-4 text-slate-500 dark:text-slate-400 font-mono">
                         {formatMoney(p.costPrice, business.currency)}
                       </td>
                       <td className="py-3.5 px-4 text-center">
                         <span
                           className={`inline-block px-3 py-1 rounded-full text-xs font-bold font-mono ${
                             isLowStock
-                              ? "bg-rose-500/15 text-rose-300 border border-rose-500/30 animate-pulse"
-                              : "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
+                              ? "bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30 animate-pulse"
+                              : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30"
                           }`}
                         >
                           {p.stockQuantity} units
                         </span>
                         {isLowStock && (
-                          <p className="text-[9px] text-rose-400 font-semibold mt-0.5">Threshold: ≤{p.lowStockThreshold}</p>
+                          <p className="text-[9px] text-rose-600 dark:text-rose-400 font-semibold mt-0.5">Threshold: ≤{p.lowStockThreshold}</p>
                         )}
                       </td>
                       <td className="py-3.5 px-4 text-right space-x-2">
@@ -266,7 +266,7 @@ export default function ProductsManager({
                             setFeedback(null);
                             setEditingProduct(p);
                           }}
-                          className="px-2.5 py-1 bg-white/[0.04] hover:bg-violet-500/20 text-slate-200 hover:text-violet-300 rounded-lg text-xs font-medium border border-white/[0.08] hover:border-violet-500/30 transition cursor-pointer"
+                          className="px-2.5 py-1 bg-slate-100 hover:bg-violet-50 dark:bg-white/[0.04] dark:hover:bg-violet-500/20 text-slate-700 hover:text-violet-700 dark:text-slate-200 dark:hover:text-violet-300 rounded-lg text-xs font-medium border border-slate-200 dark:border-white/[0.08] hover:border-violet-300 dark:hover:border-violet-500/30 transition cursor-pointer shadow-xs"
                         >
                           Edit
                         </button>
@@ -274,7 +274,7 @@ export default function ProductsManager({
                           <button
                             onClick={() => handleDelete(p)}
                             disabled={isPending}
-                            className="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-xs font-medium border border-rose-500/30 transition cursor-pointer disabled:opacity-50"
+                            className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 dark:bg-rose-500/10 dark:hover:bg-rose-500/20 text-rose-700 dark:text-rose-400 rounded-lg text-xs font-medium border border-rose-200 dark:border-rose-500/30 transition cursor-pointer disabled:opacity-50 shadow-xs"
                           >
                             Delete
                           </button>
@@ -291,18 +291,19 @@ export default function ProductsManager({
 
       {/* Create Product Modal */}
       {isCreateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
-          <div className="bg-[#090d24] border border-violet-500/30 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+          <div className="bg-white dark:bg-[#090d24] border border-slate-200 dark:border-violet-500/30 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/[0.08]">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-300">
+                <div className="w-8 h-8 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-700 dark:text-cyan-300 font-bold">
                   +
                 </div>
-                <h2 className="text-base font-black text-white">Add New Product SKU</h2>
+                <h2 className="text-base font-black text-slate-900 dark:text-white">Add New Product SKU</h2>
               </div>
               <button
                 onClick={() => setIsCreateOpen(false)}
-                className="w-7 h-7 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-slate-400 hover:text-white flex items-center justify-center text-xs transition cursor-pointer"
+                aria-label="Close modal"
+                className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/[0.05] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center text-xs transition cursor-pointer"
               >
                 ✕
               </button>
@@ -310,127 +311,135 @@ export default function ProductsManager({
 
             <form onSubmit={handleCreateSubmit} className="space-y-3.5">
               <div>
-                <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                <label htmlFor="create-product-name" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                   Product Title *
                 </label>
                 <input
+                  id="create-product-name"
                   name="name"
                   type="text"
                   required
                   placeholder="e.g. Wireless Ergonomic Mouse"
-                  className="w-full px-3 py-2.5 bg-[#050816] border border-white/[0.1] focus:border-cyan-500 rounded-xl text-xs text-white placeholder:text-slate-500 focus:outline-none"
+                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-cyan-500 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none shadow-xs"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                  <label htmlFor="create-product-sku" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                     SKU Code (Unique) *
                   </label>
                   <input
+                    id="create-product-sku"
                     name="sku"
                     type="text"
                     required
                     placeholder="e.g. ELEC-MOU-001"
-                    className="w-full px-3 py-2.5 bg-[#050816] border border-white/[0.1] focus:border-cyan-500 rounded-xl text-xs text-white uppercase focus:outline-none font-mono"
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-cyan-500 rounded-xl text-xs text-slate-900 dark:text-white uppercase focus:outline-none font-mono shadow-xs"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                  <label htmlFor="create-product-barcode" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                     Barcode
                   </label>
                   <input
+                    id="create-product-barcode"
                     name="barcode"
                     type="text"
                     placeholder="e.g. 600123456789"
-                    className="w-full px-3 py-2.5 bg-[#050816] border border-white/[0.1] focus:border-cyan-500 rounded-xl text-xs text-white focus:outline-none font-mono"
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-cyan-500 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none font-mono shadow-xs"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                  <label htmlFor="create-product-selling-price" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                     Selling Price ({business.currency}) *
                   </label>
                   <input
+                    id="create-product-selling-price"
                     name="sellingPrice"
                     type="number"
                     step="0.01"
                     min="0"
                     required
                     placeholder="25000.00"
-                    className="w-full px-3 py-2.5 bg-[#050816] border border-white/[0.1] focus:border-cyan-500 rounded-xl text-xs text-white focus:outline-none font-mono"
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-cyan-500 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none font-mono shadow-xs"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                  <label htmlFor="create-product-cost-price" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                     Cost Price ({business.currency})
                   </label>
                   <input
+                    id="create-product-cost-price"
                     name="costPrice"
                     type="number"
                     step="0.01"
                     min="0"
                     defaultValue="0.00"
-                    className="w-full px-3 py-2.5 bg-[#050816] border border-white/[0.1] focus:border-cyan-500 rounded-xl text-xs text-white focus:outline-none font-mono"
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-cyan-500 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none font-mono shadow-xs"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                  <label htmlFor="create-product-stock-quantity" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                     Initial Stock Qty *
                   </label>
                   <input
+                    id="create-product-stock-quantity"
                     name="stockQuantity"
                     type="number"
                     min="0"
                     required
                     defaultValue="10"
-                    className="w-full px-3 py-2.5 bg-[#050816] border border-white/[0.1] focus:border-cyan-500 rounded-xl text-xs text-white focus:outline-none font-mono"
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-cyan-500 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none font-mono shadow-xs"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                  <label htmlFor="create-product-low-stock-threshold" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                     Low Stock Threshold *
                   </label>
                   <input
+                    id="create-product-low-stock-threshold"
                     name="lowStockThreshold"
                     type="number"
                     min="0"
                     required
                     defaultValue="5"
-                    className="w-full px-3 py-2.5 bg-[#050816] border border-white/[0.1] focus:border-cyan-500 rounded-xl text-xs text-white focus:outline-none font-mono"
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-cyan-500 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none font-mono shadow-xs"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                <label htmlFor="create-product-description" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                   Description
                 </label>
                 <textarea
+                  id="create-product-description"
                   name="description"
                   rows={2}
                   placeholder="Optional product description..."
-                  className="w-full px-3 py-2 bg-[#050816] border border-white/[0.1] focus:border-cyan-500 rounded-xl text-xs text-white focus:outline-none"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-cyan-500 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none shadow-xs"
                 />
               </div>
 
-              <div className="flex justify-end gap-2.5 pt-2 border-t border-white/[0.08]">
+              <div className="flex justify-end gap-2.5 pt-2 border-t border-slate-200 dark:border-white/[0.08]">
                 <button
                   type="button"
                   onClick={() => setIsCreateOpen(false)}
-                  className="px-4 py-2 bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 rounded-xl text-xs font-semibold transition cursor-pointer"
+                  className="px-4 py-2 bg-slate-100 dark:bg-white/[0.05] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="px-5 py-2 bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 text-white rounded-xl text-xs font-bold transition disabled:opacity-50 cursor-pointer shadow-lg shadow-indigo-600/30"
+                  className="px-5 py-2 bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 text-white rounded-xl text-xs font-bold transition disabled:opacity-50 cursor-pointer shadow-md shadow-indigo-600/25"
                 >
                   {isPending ? "Adding..." : "Add Product SKU"}
                 </button>
@@ -442,18 +451,19 @@ export default function ProductsManager({
 
       {/* Edit Product Modal */}
       {editingProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
-          <div className="bg-[#090d24] border border-violet-500/30 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+          <div className="bg-white dark:bg-[#090d24] border border-slate-200 dark:border-violet-500/30 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/[0.08]">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-violet-500/15 border border-violet-500/30 flex items-center justify-center text-violet-300">
+                <div className="w-8 h-8 rounded-xl bg-violet-500/15 border border-violet-500/30 flex items-center justify-center text-violet-700 dark:text-violet-300">
                   ✏️
                 </div>
-                <h2 className="text-base font-black text-white">Edit Product SKU</h2>
+                <h2 className="text-base font-black text-slate-900 dark:text-white">Edit Product SKU</h2>
               </div>
               <button
                 onClick={() => setEditingProduct(null)}
-                className="w-7 h-7 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-slate-400 hover:text-white flex items-center justify-center text-xs transition cursor-pointer"
+                aria-label="Close modal"
+                className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/[0.05] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center text-xs transition cursor-pointer"
               >
                 ✕
               </button>
@@ -461,127 +471,135 @@ export default function ProductsManager({
 
             <form onSubmit={handleUpdateSubmit} className="space-y-3.5">
               <div>
-                <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                <label htmlFor="edit-product-name" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                   Product Title *
                 </label>
                 <input
+                  id="edit-product-name"
                   name="name"
                   type="text"
                   required
                   defaultValue={editingProduct.name}
-                  className="w-full px-3 py-2.5 bg-[#050816] border border-white/[0.1] focus:border-violet-500 rounded-xl text-xs text-white focus:outline-none"
+                  className="w-full px-3 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-violet-500 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none shadow-xs"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                  <label htmlFor="edit-product-sku" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                     SKU Code (Unique) *
                   </label>
                   <input
+                    id="edit-product-sku"
                     name="sku"
                     type="text"
                     required
                     defaultValue={editingProduct.sku}
-                    className="w-full px-3 py-2.5 bg-[#050816] border border-white/[0.1] focus:border-violet-500 rounded-xl text-xs text-white uppercase focus:outline-none font-mono"
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-violet-500 rounded-xl text-xs text-slate-900 dark:text-white uppercase focus:outline-none font-mono shadow-xs"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                  <label htmlFor="edit-product-barcode" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                     Barcode
                   </label>
                   <input
+                    id="edit-product-barcode"
                     name="barcode"
                     type="text"
                     defaultValue={editingProduct.barcode || ""}
-                    className="w-full px-3 py-2.5 bg-[#050816] border border-white/[0.1] focus:border-violet-500 rounded-xl text-xs text-white focus:outline-none font-mono"
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-violet-500 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none font-mono shadow-xs"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                  <label htmlFor="edit-product-selling-price" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                     Selling Price ({business.currency}) *
                   </label>
                   <input
+                    id="edit-product-selling-price"
                     name="sellingPrice"
                     type="number"
                     step="0.01"
                     min="0"
                     required
                     defaultValue={editingProduct.sellingPrice}
-                    className="w-full px-3 py-2.5 bg-[#050816] border border-white/[0.1] focus:border-violet-500 rounded-xl text-xs text-white focus:outline-none font-mono"
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-violet-500 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none font-mono shadow-xs"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                  <label htmlFor="edit-product-cost-price" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                     Cost Price ({business.currency})
                   </label>
                   <input
+                    id="edit-product-cost-price"
                     name="costPrice"
                     type="number"
                     step="0.01"
                     min="0"
                     defaultValue={editingProduct.costPrice}
-                    className="w-full px-3 py-2.5 bg-[#050816] border border-white/[0.1] focus:border-violet-500 rounded-xl text-xs text-white focus:outline-none font-mono"
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-violet-500 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none font-mono shadow-xs"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                  <label htmlFor="edit-product-stock-quantity" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                     Stock Quantity *
                   </label>
                   <input
+                    id="edit-product-stock-quantity"
                     name="stockQuantity"
                     type="number"
                     min="0"
                     required
                     defaultValue={editingProduct.stockQuantity}
-                    className="w-full px-3 py-2.5 bg-[#050816] border border-white/[0.1] focus:border-violet-500 rounded-xl text-xs text-white focus:outline-none font-mono"
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-violet-500 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none font-mono shadow-xs"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                  <label htmlFor="edit-product-low-stock-threshold" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                     Low Stock Threshold *
                   </label>
                   <input
+                    id="edit-product-low-stock-threshold"
                     name="lowStockThreshold"
                     type="number"
                     min="0"
                     required
                     defaultValue={editingProduct.lowStockThreshold}
-                    className="w-full px-3 py-2.5 bg-[#050816] border border-white/[0.1] focus:border-violet-500 rounded-xl text-xs text-white focus:outline-none font-mono"
+                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-violet-500 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none font-mono shadow-xs"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                <label htmlFor="edit-product-description" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                   Description
                 </label>
                 <textarea
+                  id="edit-product-description"
                   name="description"
                   rows={2}
                   defaultValue={editingProduct.description || ""}
-                  className="w-full px-3 py-2 bg-[#050816] border border-white/[0.1] focus:border-violet-500 rounded-xl text-xs text-white focus:outline-none"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-violet-500 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none shadow-xs"
                 />
               </div>
 
-              <div className="flex justify-end gap-2.5 pt-2 border-t border-white/[0.08]">
+              <div className="flex justify-end gap-2.5 pt-2 border-t border-slate-200 dark:border-white/[0.08]">
                 <button
                   type="button"
                   onClick={() => setEditingProduct(null)}
-                  className="px-4 py-2 bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 rounded-xl text-xs font-semibold transition cursor-pointer"
+                  className="px-4 py-2 bg-slate-100 dark:bg-white/[0.05] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="px-5 py-2 bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 text-white rounded-xl text-xs font-bold transition disabled:opacity-50 cursor-pointer shadow-lg shadow-indigo-600/30"
+                  className="px-5 py-2 bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 text-white rounded-xl text-xs font-bold transition disabled:opacity-50 cursor-pointer shadow-md shadow-indigo-600/25"
                 >
                   {isPending ? "Saving..." : "Save Changes"}
                 </button>

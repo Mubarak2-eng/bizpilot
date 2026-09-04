@@ -23,6 +23,14 @@ enum PaymentMethod {
   CARD
   TRANSFER
   MOBILE_MONEY
+  CREDIT
+}
+
+enum CreditStatus {
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
 }
 
 enum SaleStatus {
@@ -49,6 +57,26 @@ enum BusinessType {
   SALON
   SUPERMARKET
   OTHER
+}
+
+enum NotificationType {
+  LOW_STOCK
+  SYSTEM
+}
+
+enum CampaignStatus {
+  DRAFT
+  SENDING
+  SENT
+  PARTIALLY_SENT
+  FAILED
+}
+
+enum RecipientStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
 }
 
 enum SubscriptionStatus {
@@ -90,6 +118,8 @@ model User {
   sessions            Session[]
   memberships         Membership[]
   whatsAppConnections WhatsAppConnection[]
+  loginPins           LoginPin[]
+  aiPendingActions    AIPendingAction[]
 
   @@index([email])
 }
@@ -105,17 +135,23 @@ model Business {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
-  memberships         Membership[]
-  products            Product[]
-  customers           Customer[]
-  sales               Sale[]
-  expenses            Expense[]
-  invoices            Invoice[]
-  whatsAppConnections WhatsAppConnection[]
-  subscription        Subscription?
-  payments            Payment[]
-  aiUsages            AIUsage[]
-  goals               BusinessGoal[]
+  memberships                  Membership[]
+  products                     Product[]
+  customers                    Customer[]
+  sales                        Sale[]
+  expenses                     Expense[]
+  invoices                     Invoice[]
+  whatsAppConnections          WhatsAppConnection[]
+  subscription                 Subscription?
+  payments                     Payment[]
+  creditPayments               CreditPayment[]
+  notifications                Notification[]
+  customerCampaigns            CustomerCampaign[]
+  aiUsages                     AIUsage[]
+  goals                        BusinessGoal[]
+  whatsAppProcessedMessages    WhatsAppProcessedMessage[]
+  whatsAppConversationSessions WhatsAppConversationSession[]
+  aiPendingActions             AIPendingAction[]
 
   @@index([slug])
 }
@@ -153,9 +189,10 @@ model Product {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  business     Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  saleItems    SaleItem[]
-  invoiceItems InvoiceItem[]
+  business      Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  saleItems     SaleItem[]
+  invoiceItems  InvoiceItem[]
+  notifications Notification[]
 
   @@unique([businessId, sku])
   @@unique([businessId, barcode])
@@ -174,9 +211,10 @@ model Customer {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  business Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  sales    Sale[]
-  invoices Invoice[]
+  business           Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  sales              Sale[]
+  invoices           Invoice[]
+  campaignRecipients CampaignRecipient[]
 
   @@index([businessId])
   @@index([businessId, email])
@@ -186,21 +224,135 @@ model Customer {
 // ─── Sale ────────────────────────────────────────────────────────────────────
 
 model Sale {
-  id            String        @id @default(cuid())
-  businessId    String
-  customerId    String?
-  totalAmount   Decimal       @db.Decimal(12, 2)
-  paymentMethod PaymentMethod
-  status        SaleStatus    @default(COMPLETED)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id                 String        @id @default(cuid())
+  businessId         String
+  customerId         String?
+  totalAmount        Decimal       @db.Decimal(12, 2)
+  paymentMethod      PaymentMethod
+  status             SaleStatus    @default(COMPLETED)
+  isCredit           Boolean       @default(false)
+  creditDueDate      DateTime?
+  creditStatus       CreditStatus?
+  amountPaid         Decimal       @default(0) @db.Decimal(12, 2)
+  outstandingBalance Decimal       @default(0) @db.Decimal(12, 2)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 
-  business Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  customer Customer?  @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  items    SaleItem[]
+  business       Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer       Customer?       @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  items          SaleItem[]
+  creditPayments CreditPayment[]
 
   @@index([businessId])
   @@index([businessId, createdAt])
+  @@index([businessId, isCredit])
+  @@index([businessId, creditStatus])
+  @@index([customerId])
+}
+
+// ─── CreditPayment ───────────────────────────────────────────────────────────
+
+model CreditPayment {
+  id            String        @id @default(cuid())
+  saleId        String
+  businessId    String
+  amount        Decimal       @db.Decimal(12, 2)
+  paymentMethod PaymentMethod @default(CASH)
+  note          String?
+  recordedBy    String?
+  createdAt     DateTime      @default(now())
+
+  sale     Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([saleId])
+  @@index([businessId])
+  @@index([businessId, createdAt])
+}
+
+// ─── Notification ────────────────────────────────────────────────────────────
+
+model Notification {
+  id         String           @id @default(cuid())
+  businessId String
+  type       NotificationType @default(LOW_STOCK)
+  title      String
+  message    String
+  read       Boolean          @default(false)
+  productId  String?
+  createdAt  DateTime         @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  product  Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([businessId])
+  @@index([businessId, read])
+  @@index([businessId, createdAt])
+}
+
+// ─── LoginPin (Email Verification Challenge) ─────────────────────────────────
+
+model LoginPin {
+  id                  String    @id @default(cuid())
+  userId              String
+  email               String
+  pinHash             String
+  expiresAt           DateTime
+  attempts            Int       @default(0)
+  maxAttempts         Int       @default(5)
+  resendCooldownUntil DateTime
+  consumedAt          DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([email])
+  @@index([expiresAt])
+}
+
+// ─── CustomerCampaign ────────────────────────────────────────────────────────
+
+model CustomerCampaign {
+  id             String         @id @default(cuid())
+  businessId     String
+  createdBy      String
+  subject        String
+  body           String         @db.Text
+  status         CampaignStatus @default(DRAFT)
+  recipientCount Int            @default(0)
+  sentCount      Int            @default(0)
+  failedCount    Int            @default(0)
+  createdAt      DateTime       @default(now())
+  sentAt         DateTime?
+  updatedAt      DateTime       @updatedAt
+
+  business   Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  recipients CampaignRecipient[]
+
+  @@index([businessId])
+  @@index([businessId, status])
+  @@index([businessId, createdAt])
+}
+
+// ─── CampaignRecipient ───────────────────────────────────────────────────────
+
+model CampaignRecipient {
+  id           String          @id @default(cuid())
+  campaignId   String
+  customerId   String?
+  email        String
+  status       RecipientStatus @default(PENDING)
+  errorMessage String?
+  sentAt       DateTime?
+  createdAt    DateTime        @default(now())
+
+  campaign CustomerCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  customer Customer?         @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@index([campaignId])
+  @@index([campaignId, status])
   @@index([customerId])
 }
 
@@ -446,3 +598,61 @@ model BusinessGoal {
   @@index([businessId])
   @@index([businessId, periodKey])
 }
+
+// ─── WhatsApp Processed Messages (Serverless Deduplication) ─────────────────
+
+model WhatsAppProcessedMessage {
+  id         String   @id @default(cuid())
+  messageId  String   @unique
+  businessId String?
+  createdAt  DateTime @default(now())
+
+  business Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@index([createdAt])
+  @@index([businessId])
+}
+
+// ─── WhatsApp Conversation Sessions (Serverless State) ──────────────────────
+
+model WhatsAppConversationSession {
+  id                String   @id @default(cuid())
+  phoneNumber       String   @unique
+  businessId        String?
+  activeActionToken String?
+  history           Json     @default("[]")
+  lastActivity      DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  business Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([phoneNumber])
+  @@index([businessId])
+  @@index([lastActivity])
+}
+
+// ─── AI Pending Actions (Serverless Confirmation Vouchers) ──────────────────
+
+model AIPendingAction {
+  id         String    @id @default(cuid())
+  token      String    @unique
+  userId     String
+  businessId String
+  actionType String
+  payload    Json
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@index([businessId])
+  @@index([expiresAt])
+}
+

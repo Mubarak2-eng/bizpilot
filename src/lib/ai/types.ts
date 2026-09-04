@@ -1,5 +1,5 @@
 import { Role } from "@/types/auth";
-import { PaymentMethod, InvoiceStatus } from "@prisma/client";
+import { PaymentMethod, InvoiceStatus, CreditStatus } from "@prisma/client";
 
 export type RoleType = Role;
 
@@ -127,4 +127,25 @@ export interface ProductQueryParams {
   sku?: string;
   barcode?: string;
   name?: string;
+}
+
+export interface DebtorsQueryParams {
+  businessId?: string;
+  limit?: number;
+  onlyOverdue?: boolean;
+}
+
+export interface CreditSalesQueryParams {
+  businessId?: string;
+  status?: CreditStatus;
+  customerName?: string;
+  datePhrase?: string;
+  limit?: number;
+}
+
+export interface CustomerDebtParams {
+  businessId?: string;
+  customerName?: string;
+  customerId?: string;
+  phone?: string;
 }

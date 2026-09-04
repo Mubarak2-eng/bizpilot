@@ -165,12 +165,12 @@ describe("Phase 5A: WhatsApp Foundation & Webhook Architecture", () => {
       expect(normalizePhoneNumber("2348012345678")).toBe("2348012345678");
     });
 
-    it("should prevent duplicate processing of the same messageId (idempotency)", () => {
+    it("should prevent duplicate processing of the same messageId (idempotency)", async () => {
       const messageId = `wamid.test_${Date.now()}`;
-      expect(isMessageProcessed(messageId)).toBe(false);
+      expect(await isMessageProcessed(messageId)).toBe(false);
 
-      markMessageProcessed(messageId);
-      expect(isMessageProcessed(messageId)).toBe(true);
+      await markMessageProcessed(messageId);
+      expect(await isMessageProcessed(messageId)).toBe(true);
     });
 
     it("should enforce sliding-window rate limit per phone number", () => {
@@ -232,7 +232,7 @@ describe("Phase 5A: WhatsApp Foundation & Webhook Architecture", () => {
       expect(result.replySent).toContain("Reply 2 to cancel");
 
       // Session should have active action token
-      const session = getWhatsAppSession(phone1);
+      const session = await getWhatsAppSession(phone1);
       expect(session.activeActionToken).toBeDefined();
     });
 
@@ -253,7 +253,7 @@ describe("Phase 5A: WhatsApp Foundation & Webhook Architecture", () => {
       expect(confirmRes.replySent).toContain("Invoice: INV-");
 
       // Token should be cleared from session
-      const session = getWhatsAppSession(phone1);
+      const session = await getWhatsAppSession(phone1);
       expect(session.activeActionToken).toBeUndefined();
     });
 
@@ -287,7 +287,7 @@ describe("Phase 5A: WhatsApp Foundation & Webhook Architecture", () => {
       expect(cancelRes.replySent).toContain("Action was cancelled");
 
       // Active token cleared
-      const session = getWhatsAppSession(phone1);
+      const session = await getWhatsAppSession(phone1);
       expect(session.activeActionToken).toBeUndefined();
     });
 
@@ -310,7 +310,7 @@ describe("Phase 5A: WhatsApp Foundation & Webhook Architecture", () => {
   describe("4. Security Invariants: Replay Protection, Expiration, and Stock Verification", () => {
     it("should reject expired pending action on WhatsApp confirmation", async () => {
       // Create expired token (-1000ms TTL)
-      const expiredToken = createPendingAction(
+      const expiredToken = await createPendingAction(
         testUser1.id,
         testBiz1.id,
         "CREATE_EXPENSE",
@@ -321,7 +321,7 @@ describe("Phase 5A: WhatsApp Foundation & Webhook Architecture", () => {
         -1000
       );
 
-      setActiveActionToken(phone1, expiredToken);
+      await setActiveActionToken(phone1, expiredToken);
 
       const res = await handleIncomingWhatsAppMessage(phone1, "1");
       expect(res.success).toBe(false);
@@ -335,7 +335,7 @@ describe("Phase 5A: WhatsApp Foundation & Webhook Architecture", () => {
         `Record ₦2,500 for generator fuel`
       );
 
-      const session = getWhatsAppSession(phone1);
+      const session = await getWhatsAppSession(phone1);
       const token = session.activeActionToken!;
 
       // 2. First confirm: success
@@ -343,7 +343,7 @@ describe("Phase 5A: WhatsApp Foundation & Webhook Architecture", () => {
       expect(res1.success).toBe(true);
 
       // 3. Simulated replay attack: Attacker resets session token and sends "1" again
-      setActiveActionToken(phone1, token);
+      await setActiveActionToken(phone1, token);
       const res2 = await handleIncomingWhatsAppMessage(phone1, "1");
       expect(res2.success).toBe(false);
       expect(res2.replySent).toContain("already been confirmed");
@@ -351,7 +351,7 @@ describe("Phase 5A: WhatsApp Foundation & Webhook Architecture", () => {
 
     it("should reject confirmation attempt from a different WhatsApp user / business context", async () => {
       // Token created for User 1 / Biz 1
-      const token = createPendingAction(
+      const token = await createPendingAction(
         testUser1.id,
         testBiz1.id,
         "CREATE_EXPENSE",
@@ -362,7 +362,7 @@ describe("Phase 5A: WhatsApp Foundation & Webhook Architecture", () => {
       );
 
       // Attacker on Phone 2 (Beta Retailers context) tries to confirm Phone 1's token
-      setActiveActionToken(phone2, token);
+      await setActiveActionToken(phone2, token);
       const res = await handleIncomingWhatsAppMessage(phone2, "1");
 
       expect(res.success).toBe(false);
@@ -537,7 +537,7 @@ describe("Phase 5A: WhatsApp Foundation & Webhook Architecture", () => {
       expect(res.replySent).toContain("Reply 2 to cancel");
 
       // Verify token created
-      const session = getWhatsAppSession(phone1);
+      const session = await getWhatsAppSession(phone1);
       expect(session.activeActionToken).toBeDefined();
     });
 

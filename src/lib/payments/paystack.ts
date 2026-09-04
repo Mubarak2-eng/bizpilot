@@ -168,6 +168,18 @@ export async function initializePaystackTransaction(
   }
 }
 
+function getSimulatedAmount(reference: string): number {
+  if (reference.includes("12000") || reference.includes("12k")) return 1200000;
+  if (reference.includes("25000") || reference.includes("biz")) return 2500000;
+  if (reference.includes("underpaid") || reference.includes("wrong_amount")) return 100000; // ₦1,000
+  return 500000; // ₦5,000 in Kobo
+}
+
+function getSimulatedCurrency(reference: string): string {
+  if (reference.includes("usd") || reference.includes("foreign")) return "USD";
+  return "NGN";
+}
+
 /**
  * Verifies a transaction status with Paystack using the unique transaction reference.
  */
@@ -188,10 +200,10 @@ export async function verifyPaystackTransaction(
     return {
       success: true,
       data: {
-        status: "success",
+        status: reference.includes("failed_tx") ? "failed" : "success",
         reference,
-        amount: 1200000,
-        currency: "NGN",
+        amount: getSimulatedAmount(reference),
+        currency: getSimulatedCurrency(reference),
         paidAt: new Date().toISOString(),
         customer: { email: "owner@bizpilot.test", customer_code: "CUS_simulated123" },
       },
@@ -213,10 +225,10 @@ export async function verifyPaystackTransaction(
         return {
           success: true,
           data: {
-            status: "success",
+            status: reference.includes("failed_tx") ? "failed" : "success",
             reference,
-            amount: 1200000,
-            currency: "NGN",
+            amount: getSimulatedAmount(reference),
+            currency: getSimulatedCurrency(reference),
             paidAt: new Date().toISOString(),
             customer: { email: "owner@bizpilot.test", customer_code: "CUS_simulated123" },
           },
@@ -240,10 +252,10 @@ export async function verifyPaystackTransaction(
       return {
         success: true,
         data: {
-          status: "success",
+          status: reference.includes("failed_tx") ? "failed" : "success",
           reference,
-          amount: 1200000,
-          currency: "NGN",
+          amount: getSimulatedAmount(reference),
+          currency: getSimulatedCurrency(reference),
           paidAt: new Date().toISOString(),
           customer: { email: "owner@bizpilot.test", customer_code: "CUS_simulated123" },
         },
@@ -272,10 +284,10 @@ export function verifyPaystackWebhookSignature(
       return false;
     }
     // In dev / tests without secret, require non-empty header for sanity
-    return Boolean(signatureHeader);
+    return Boolean(signatureHeader && signatureHeader.trim() !== "" && signatureHeader !== "bad_signature" && signatureHeader !== "invalid_sig");
   }
 
-  if (!signatureHeader) {
+  if (!signatureHeader || signatureHeader.trim() === "") {
     return false;
   }
 
@@ -297,3 +309,4 @@ export function verifyPaystackWebhookSignature(
     return false;
   }
 }
+

@@ -113,7 +113,7 @@ export async function handleIncomingWhatsAppMessage(
     };
   }
 
-  const session = getWhatsAppSession(phoneNumber);
+  const session = await getWhatsAppSession(phoneNumber, context.businessId);
   const trimmed = (messageText || "").trim();
 
   if (!trimmed) {
@@ -144,9 +144,9 @@ export async function handleIncomingWhatsAppMessage(
     }
 
     try {
-      // Consume token (validates token, expiry, anti-replay, and tenant context)
+      // Consume token (validates token, expiry, anti-replay, and tenant context in PostgreSQL)
       const token = session.activeActionToken;
-      const pendingRecord = getAndConsumePendingAction(
+      const pendingRecord = await getAndConsumePendingAction(
         token,
         context.userId,
         context.businessId
@@ -159,7 +159,7 @@ export async function handleIncomingWhatsAppMessage(
       );
 
       // Clear session token
-      clearActiveActionToken(phoneNumber);
+      await clearActiveActionToken(phoneNumber);
 
       // Format response strictly matching requested UX
       const reply = formatActionSuccessForWhatsApp(
@@ -179,7 +179,7 @@ export async function handleIncomingWhatsAppMessage(
         actionTaken: "CONFIRMED",
       };
     } catch (err: unknown) {
-      clearActiveActionToken(phoneNumber);
+      await clearActiveActionToken(phoneNumber);
       const errMsg = err instanceof Error ? err.message : "Failed to execute confirmed action";
       const reply = `⚠️ *Execution Failed*: ${errMsg}`;
       await sendWhatsAppTextMessage(phoneNumber, reply);
@@ -202,8 +202,8 @@ export async function handleIncomingWhatsAppMessage(
     normalizedCommand.startsWith("CANCEL ")
   ) {
     if (session.activeActionToken) {
-      cancelPendingAction(session.activeActionToken, context.userId, context.businessId);
-      clearActiveActionToken(phoneNumber);
+      await cancelPendingAction(session.activeActionToken, context.userId, context.businessId);
+      await clearActiveActionToken(phoneNumber);
     }
 
     const reply = "✕ Action was cancelled. No changes were made to your business records.";
@@ -226,7 +226,7 @@ export async function handleIncomingWhatsAppMessage(
     };
 
     const priorHistory = [...session.conversationHistory];
-    addMessageToSession(phoneNumber, userChatMessage);
+    await addMessageToSession(phoneNumber, userChatMessage);
 
     const aiResponse = await runAIAssistant(
       priorHistory,
@@ -239,17 +239,17 @@ export async function handleIncomingWhatsAppMessage(
     // Check if an action preview was generated
     if (aiResponse.message.actionPreview) {
       const action = aiResponse.message.actionPreview;
-      setActiveActionToken(phoneNumber, action.token);
+      await setActiveActionToken(phoneNumber, action.token);
 
       replyText = formatActionPreviewForWhatsApp(
         action.actionType,
         action.preview
       );
     } else {
-      clearActiveActionToken(phoneNumber);
+      await clearActiveActionToken(phoneNumber);
     }
 
-    addMessageToSession(phoneNumber, {
+    await addMessageToSession(phoneNumber, {
       ...aiResponse.message,
       content: replyText,
     });

@@ -27,29 +27,29 @@ export default function SignupForm() {
   };
 
   return (
-    <div className="w-full max-w-md p-7 sm:p-9 bg-[#090e24]/85 border border-violet-500/30 rounded-3xl shadow-[0_0_50px_-10px_rgba(139,92,246,0.3)] backdrop-blur-2xl relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-64 h-64 bg-violet-600/15 rounded-full blur-3xl pointer-events-none" />
+    <div className="w-full max-w-md p-7 sm:p-9 bg-white/95 dark:bg-[#090e24]/85 border border-slate-200 dark:border-violet-500/30 rounded-3xl shadow-xl dark:shadow-[0_0_50px_-10px_rgba(139,92,246,0.3)] backdrop-blur-2xl relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-64 h-64 bg-violet-600/10 dark:bg-violet-600/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="text-center mb-7 relative z-10">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-violet-600 via-indigo-600 to-cyan-400 p-[1.5px] shadow-[0_0_25px_rgba(99,102,241,0.4)] mb-3.5">
-          <div className="w-full h-full bg-[#080c1d] rounded-[14px] flex items-center justify-center font-black text-white text-xl tracking-tight">
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-violet-600 via-indigo-600 to-cyan-400 p-[1.5px] shadow-md shadow-indigo-600/20 dark:shadow-[0_0_25px_rgba(99,102,241,0.4)] mb-3.5">
+          <div className="w-full h-full bg-slate-900 dark:bg-[#080c1d] rounded-[14px] flex items-center justify-center font-black text-white text-xl tracking-tight">
             BP
           </div>
         </div>
-        <h1 className="text-2xl font-black text-white tracking-tight">Create Business Account</h1>
-        <p className="text-xs text-slate-400 mt-1">Get started with BizPilot AI Business OS</p>
+        <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Create Business Account</h1>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Get started with BizPilot AI Business OS</p>
       </div>
 
       {error && (
-        <div className="mb-5 p-3.5 rounded-xl bg-rose-950/30 border border-rose-500/30 text-rose-300 text-xs font-medium relative z-10">
+        <div className="mb-5 p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-500/30 text-rose-800 dark:text-rose-300 text-xs font-medium relative z-10">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-3.5 relative z-10">
         <div>
-          <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+          <label htmlFor="name-input" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
             Full Name
           </label>
           <input
@@ -58,12 +58,12 @@ export default function SignupForm() {
             type="text"
             required
             placeholder="John Doe"
-            className="w-full px-4 py-2.5 bg-[#050816] border border-white/[0.1] focus:border-violet-500 rounded-xl text-white text-xs placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-violet-500 transition"
+            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-violet-500 rounded-xl text-slate-900 dark:text-white text-xs placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-violet-500 transition shadow-xs"
           />
         </div>
 
         <div>
-          <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+          <label htmlFor="email-input" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
             Email Address
           </label>
           <input
@@ -72,12 +72,12 @@ export default function SignupForm() {
             type="email"
             required
             placeholder="john@example.com"
-            className="w-full px-4 py-2.5 bg-[#050816] border border-white/[0.1] focus:border-violet-500 rounded-xl text-white text-xs placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-violet-500 transition font-mono"
+            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-violet-500 rounded-xl text-slate-900 dark:text-white text-xs placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-violet-500 transition font-mono shadow-xs"
           />
         </div>
 
         <div>
-          <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+          <label htmlFor="password-input" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
             Password (min. 8 characters)
           </label>
           <input
@@ -87,12 +87,12 @@ export default function SignupForm() {
             required
             minLength={8}
             placeholder="••••••••••••"
-            className="w-full px-4 py-2.5 bg-[#050816] border border-white/[0.1] focus:border-violet-500 rounded-xl text-white text-xs placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-violet-500 transition"
+            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-violet-500 rounded-xl text-slate-900 dark:text-white text-xs placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-violet-500 transition shadow-xs"
           />
         </div>
 
         <div>
-          <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+          <label htmlFor="businessName-input" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
             Business / Organization Name
           </label>
           <input
@@ -101,26 +101,26 @@ export default function SignupForm() {
             type="text"
             required
             placeholder="Acme Global Ventures"
-            className="w-full px-4 py-2.5 bg-[#050816] border border-white/[0.1] focus:border-violet-500 rounded-xl text-white text-xs placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-violet-500 transition"
+            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-violet-500 rounded-xl text-slate-900 dark:text-white text-xs placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-violet-500 transition shadow-xs"
           />
         </div>
 
         <div>
-          <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+          <label htmlFor="currency-select" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
             Operating Currency
           </label>
           <select
             id="currency-select"
             name="currency"
             defaultValue="NGN"
-            className="w-full px-4 py-2.5 bg-[#050816] border border-white/[0.1] focus:border-violet-500 rounded-xl text-white text-xs focus:outline-none transition cursor-pointer"
+            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-violet-500 rounded-xl text-slate-900 dark:text-white text-xs focus:outline-none transition cursor-pointer shadow-xs"
           >
-            <option value="NGN">NGN (Nigerian Naira - ₦)</option>
-            <option value="USD">USD (US Dollar - $)</option>
-            <option value="GBP">GBP (British Pound - £)</option>
-            <option value="EUR">EUR (Euro - €)</option>
-            <option value="GHS">GHS (Ghanaian Cedi - GH₵)</option>
-            <option value="KES">KES (Kenyan Shilling - KSh)</option>
+            <option value="NGN" className="bg-white dark:bg-[#0b1028] text-slate-900 dark:text-white">NGN (Nigerian Naira - ₦)</option>
+            <option value="USD" className="bg-white dark:bg-[#0b1028] text-slate-900 dark:text-white">USD (US Dollar - $)</option>
+            <option value="GBP" className="bg-white dark:bg-[#0b1028] text-slate-900 dark:text-white">GBP (British Pound - £)</option>
+            <option value="EUR" className="bg-white dark:bg-[#0b1028] text-slate-900 dark:text-white">EUR (Euro - €)</option>
+            <option value="GHS" className="bg-white dark:bg-[#0b1028] text-slate-900 dark:text-white">GHS (Ghanaian Cedi - GH₵)</option>
+            <option value="KES" className="bg-white dark:bg-[#0b1028] text-slate-900 dark:text-white">KES (Kenyan Shilling - KSh)</option>
           </select>
         </div>
 
@@ -128,15 +128,15 @@ export default function SignupForm() {
           id="submit-signup-btn"
           type="submit"
           disabled={loading}
-          className="w-full py-3 px-4 bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 text-white font-bold text-xs rounded-xl shadow-[0_0_25px_-4px_rgba(99,102,241,0.5)] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer border border-violet-300/30 mt-2"
+          className="w-full py-3 px-4 bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-600/25 dark:shadow-[0_0_25px_-4px_rgba(99,102,241,0.5)] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer border border-violet-300/30 mt-2"
         >
           {loading ? "Initializing Workspace..." : "Register & Start Business OS"}
         </button>
       </form>
 
-      <div className="mt-6 text-center text-xs text-slate-400 relative z-10">
+      <div className="mt-6 text-center text-xs text-slate-500 dark:text-slate-400 relative z-10">
         Already have an account?{" "}
-        <Link href="/login" className="text-cyan-400 hover:text-cyan-300 font-semibold underline">
+        <Link href="/login" className="text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 font-semibold underline">
           Sign in here
         </Link>
       </div>

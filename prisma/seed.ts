@@ -28,6 +28,8 @@ async function main() {
   await prisma.verificationToken.deleteMany();
   await prisma.invoiceItem.deleteMany();
   await prisma.invoice.deleteMany();
+  await prisma.creditPayment.deleteMany();
+  await prisma.notification.deleteMany();
   await prisma.saleItem.deleteMany();
   await prisma.sale.deleteMany();
   await prisma.expense.deleteMany();
@@ -388,7 +390,54 @@ async function main() {
       },
     },
   });
-  console.log(`✅ Sales created: 4 (${[sale1, sale2, sale3, sale4].length} with items)`);
+
+  // Credit sale with partial payment
+  const creditDueDate = new Date();
+  creditDueDate.setDate(creditDueDate.getDate() + 10);
+
+  const creditSale = await prisma.sale.create({
+    data: {
+      businessId: business.id,
+      customerId: customers[0].id,
+      totalAmount: "43000.00",
+      paymentMethod: "CREDIT",
+      status: "COMPLETED",
+      isCredit: true,
+      creditDueDate,
+      creditStatus: "PARTIALLY_PAID",
+      amountPaid: "15000.00",
+      outstandingBalance: "28000.00",
+      items: {
+        create: [
+          {
+            productId: products[0].id,
+            quantity: 1,
+            unitPrice: "25000.00",
+            totalAmount: "25000.00",
+          },
+          {
+            productId: products[3].id,
+            quantity: 1,
+            unitPrice: "18000.00",
+            totalAmount: "18000.00",
+          },
+        ],
+      },
+      creditPayments: {
+        create: [
+          {
+            businessId: business.id,
+            amount: "15000.00",
+            paymentMethod: "TRANSFER",
+            note: "Initial down payment at checkout",
+            recordedBy: "Demo Owner",
+          },
+        ],
+      },
+    },
+  });
+
+  console.log(`✅ Sales created: 5 (${[sale1, sale2, sale3, sale4, creditSale].length} including credit sale)`);
 
   // ── Expenses ───────────────────────────────────────────────────────────
   const expenses = await Promise.all([

@@ -97,7 +97,7 @@ export async function updateCustomerAction(
     }
 
     await prisma.customer.update({
-      where: { id: customerId },
+      where: { id: existing.id },
       data: {
         name,
         phone,
@@ -158,7 +158,7 @@ export async function deleteCustomerAction(
     }
 
     await prisma.customer.delete({
-      where: { id: customerId },
+      where: { id: existing.id },
     });
 
     revalidatePath("/customers");

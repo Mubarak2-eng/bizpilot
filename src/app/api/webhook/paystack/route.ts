@@ -16,6 +16,10 @@ export async function POST(req: NextRequest) {
     const rawBody = await req.text();
     const signature = req.headers.get("x-paystack-signature");
 
+    if (!rawBody || rawBody.trim() === "") {
+      return NextResponse.json({ error: "Empty body" }, { status: 400 });
+    }
+
     // Cryptographic signature check (Fail-closed in production)
     const isValid = verifyPaystackWebhookSignature(rawBody, signature);
     if (!isValid) {
@@ -23,17 +27,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
-    if (!rawBody) {
-      return NextResponse.json({ error: "Empty body" }, { status: 400 });
+    let payload: Record<string, unknown>;
+    try {
+      payload = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
     }
 
-    const payload = JSON.parse(rawBody);
-    const eventType: string = payload.event;
-    const data = payload.data || {};
+    const eventType = payload.event as string;
+    const data = (payload.data as Record<string, unknown>) || {};
+    const metadata = (data.metadata as Record<string, unknown>) || {};
 
-    const reference: string = data.reference || `evt_${data.id || Date.now()}`;
-    const businessId: string | undefined = data.metadata?.businessId;
-    const planCode: PlanCode | undefined = data.metadata?.planCode;
+    const reference = (data.reference as string) || `evt_${data.id || Date.now()}`;
+    const businessId = metadata.businessId as string | undefined;
+    const planCodeRaw = metadata.planCode as string | undefined;
 
     // 1. Check for duplicate webhook processing (Idempotency Guard)
     const existingPayment = await prisma.payment.findUnique({
@@ -42,34 +49,83 @@ export async function POST(req: NextRequest) {
 
     if (existingPayment && existingPayment.status === "SUCCESS") {
       console.log(`[Paystack Webhook] Duplicate event skipped for reference ${reference}`);
-      return NextResponse.json({ status: "already_processed", reference });
+      return NextResponse.json({ status: "already_processed", reference }, { status: 200 });
     }
 
     await ensureDefaultPlans();
 
     // 2. Process specific Paystack lifecycle events
     if (eventType === "charge.success") {
-      if (businessId && planCode) {
-        const amountNaira = Number(data.amount) / 100;
+      // Validate payment status
+      if (data.status && data.status !== "success") {
+        console.warn(`[Paystack Webhook Security] Charge.success event with status '${data.status}' rejected.`);
+        return NextResponse.json({ error: "Transaction status is not successful" }, { status: 400 });
+      }
 
-        await recordSuccessfulPaymentAndActivate({
-          reference,
-          businessId,
-          planCode,
-          amountNaira,
-          currency: data.currency || "NGN",
-          customerCode: data.customer?.customer_code,
-          subscriptionCode: data.subscription_code,
-          planPaystackCode: data.plan?.plan_code || data.plan,
-          eventType,
-          metadata: data,
-        });
+      if (!businessId) {
+        console.warn("[Paystack Webhook Security] Missing businessId in transaction metadata.");
+        return NextResponse.json({ error: "Missing businessId in metadata" }, { status: 400 });
+      }
 
-        console.log(
-          `[Paystack Webhook] Successfully activated ${planCode} for business ${businessId} (Ref: ${reference})`
+      // Validate tenant exists in database
+      const business = await prisma.business.findUnique({
+        where: { id: businessId },
+      });
+      if (!business) {
+        console.warn(`[Paystack Webhook Security] Unknown businessId ${businessId} in metadata.`);
+        return NextResponse.json({ error: "Business not found" }, { status: 400 });
+      }
+
+      // Validate currency (Must be NGN)
+      const currency = ((data.currency as string) || "NGN").toUpperCase();
+      if (currency !== "NGN") {
+        console.warn(`[Paystack Webhook Security] Invalid currency ${currency} rejected.`);
+        return NextResponse.json({ error: "Invalid currency: Only NGN is supported" }, { status: 400 });
+      }
+
+      // Validate plan
+      const planCode = (planCodeRaw?.toUpperCase() || "PRO") as PlanCode;
+      const plan = await prisma.plan.findUnique({
+        where: { code: planCode },
+      });
+      if (!plan || !plan.isActive) {
+        return NextResponse.json({ error: `Plan ${planCode} is not available` }, { status: 400 });
+      }
+
+      // Validate amount vs plan monthly price (Zero Client Trust)
+      const amountNaira = Number(data.amount) / 100;
+      const expectedPrice = Number(plan.monthlyPrice);
+      if (amountNaira < expectedPrice) {
+        console.warn(
+          `[Paystack Webhook Security] Underpayment rejected: received ₦${amountNaira}, expected ₦${expectedPrice}`
+        );
+        return NextResponse.json(
+          { error: `Underpayment: received ₦${amountNaira}, expected ₦${expectedPrice}` },
+          { status: 400 }
         );
       }
-    } else if (eventType === "invoice.payment_failed") {
+
+      const customer = data.customer as Record<string, unknown> | undefined;
+      const planObj = data.plan as Record<string, unknown> | string | undefined;
+      const planPaystackCode = typeof planObj === "object" && planObj ? (planObj.plan_code as string) : (planObj as string);
+
+      await recordSuccessfulPaymentAndActivate({
+        reference,
+        businessId,
+        planCode,
+        amountNaira,
+        currency,
+        customerCode: customer?.customer_code as string | undefined,
+        subscriptionCode: data.subscription_code as string | undefined,
+        planPaystackCode,
+        eventType,
+        metadata: data,
+      });
+
+      console.log(
+        `[Paystack Webhook] Successfully activated ${planCode} for business ${businessId} (Ref: ${reference})`
+      );
+    } else if (eventType === "invoice.payment_failed" || eventType === "charge.failed") {
       if (businessId) {
         await prisma.subscription.updateMany({
           where: { businessId },

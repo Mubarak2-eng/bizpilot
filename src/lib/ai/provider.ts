@@ -580,6 +580,62 @@ export class LocalDeterministicAIProvider implements AIProvider {
 
     // ── 3. READ-ONLY BUSINESS QUERIES ────────────────────────────────────────
 
+    // 0. Credit & Debtor Queries
+    if (
+      query.includes("who owes") ||
+      query.includes("who is owing") ||
+      query.includes("debtors") ||
+      query.includes("debtor") ||
+      query.includes("owes me") ||
+      query.includes("owing me") ||
+      query.includes("unpaid debts") ||
+      query.includes("overdue debts") ||
+      query.includes("outstanding debt") ||
+      query.includes("who has not paid") ||
+      query.includes("who still owes")
+    ) {
+      return {
+        content: "Here are your customers with outstanding credit balances and debtor accounts:",
+        toolCalls: [{ toolName: "get_debtors", params: { limit: 20 } }],
+        modelName: "bizpilot-local-copilot",
+        provider: "local_fallback",
+      };
+    }
+
+    // Specific customer debt query: "How much does John owe?", "How much is Mary owing?"
+    const oweMatch =
+      query.match(/(?:how much does|how much is)\s+([a-zA-Z\s]+?)\s+(?:owe|owing)/i) ||
+      query.match(/(?:debt for|credit for|balance for|owes for)\s+([a-zA-Z\s]+)/i);
+
+    if (oweMatch && oweMatch[1].trim().length > 1 && !query.includes("all customers")) {
+      return {
+        content: `Checking debt balance and credit history for "${oweMatch[1].trim()}":`,
+        toolCalls: [{ toolName: "get_customer_debt", params: { customerName: oweMatch[1].trim() } }],
+        modelName: "bizpilot-local-copilot",
+        provider: "local_fallback",
+      };
+    }
+
+    // Credit sales queries: "credit sales", "how much credit did I give", "credit transactions"
+    if (
+      query.includes("credit sale") ||
+      query.includes("credit sales") ||
+      query.includes("credit given") ||
+      query.includes("sold on credit")
+    ) {
+      let datePhrase = "this_month";
+      if (query.includes("today")) datePhrase = "today";
+      else if (query.includes("last month")) datePhrase = "last_month";
+      else if (query.includes("30 days")) datePhrase = "last_30_days";
+
+      return {
+        content: "Here is your credit sales report and receivables status:",
+        toolCalls: [{ toolName: "get_credit_sales", params: { datePhrase, limit: 15 } }],
+        modelName: "bizpilot-local-copilot",
+        provider: "local_fallback",
+      };
+    }
+
     // 1. Business summary / executive overview / financial overview
     if (
       query.includes("summary") ||

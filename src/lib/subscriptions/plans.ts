@@ -49,7 +49,7 @@ export const PLAN_DEFINITIONS: Record<PlanCode, PlanDefinition> = {
     code: "PRO",
     name: "BizPilot Pro",
     description: "For growing SMEs needing proactive AI business management and actions.",
-    monthlyPrice: 12000,
+    monthlyPrice: 5000,
     currency: "NGN",
     aiMonthlyLimit: 500,
     maxStaff: 10,

@@ -214,7 +214,7 @@ export async function updateProductAction(
     }
 
     await prisma.product.update({
-      where: { id: productId },
+      where: { id: existing.id },
       data: {
         name,
         sku,
@@ -279,7 +279,7 @@ export async function deleteProductAction(
     }
 
     await prisma.product.delete({
-      where: { id: productId },
+      where: { id: existing.id },
     });
 
     revalidatePath("/products");

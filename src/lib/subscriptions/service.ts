@@ -54,6 +54,28 @@ export async function recordSuccessfulPaymentAndActivate(params: PaymentSuccessA
     throw new Error(`Plan definition for ${params.planCode} not found.`);
   }
 
+  // Validate Currency (NGN only)
+  const currency = (params.currency || "NGN").toUpperCase();
+  if (currency !== "NGN") {
+    throw new Error(`Invalid payment currency: ${params.currency}. Only NGN is supported.`);
+  }
+
+  // Validate Amount vs Plan Price (Zero Client Trust)
+  const expectedPrice = Number(plan.monthlyPrice);
+  if (params.amountNaira < expectedPrice) {
+    throw new Error(
+      `Invalid payment amount: received ₦${params.amountNaira}, expected ₦${expectedPrice} for plan ${params.planCode}.`
+    );
+  }
+
+  // Validate Business Existence
+  const business = await prisma.business.findUnique({
+    where: { id: params.businessId },
+  });
+  if (!business) {
+    throw new Error(`Business with ID ${params.businessId} not found.`);
+  }
+
   const now = new Date();
   const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
@@ -64,7 +86,7 @@ export async function recordSuccessfulPaymentAndActivate(params: PaymentSuccessA
       businessId: params.businessId,
       paystackReference: params.reference,
       amount: params.amountNaira.toFixed(2),
-      currency: params.currency || "NGN",
+      currency,
       status: "SUCCESS",
       eventType: params.eventType || "charge.success",
       metadata: (params.metadata as Prisma.InputJsonValue) || undefined,

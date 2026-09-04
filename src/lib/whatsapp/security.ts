@@ -77,53 +77,67 @@ export function verifyWhatsAppSignature(
   }
 }
 
-// ─── 3. Message Deduplication / Idempotency Store ─────────────────────────────
+import { prisma } from "../prisma";
 
-interface DeduplicationEntry {
-  messageId: string;
-  processedAt: number;
-}
+// ─── 3. Persistent Message Deduplication / Idempotency Store ─────────────────
 
-const processedMessagesMap = new Map<string, DeduplicationEntry>();
-const DEDUPLICATION_TTL_MS = 60 * 60 * 1000; // 1 hour
+export const DEDUPLICATION_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 /**
- * Checks if an incoming WhatsApp message ID was already processed.
+ * Checks if an incoming WhatsApp message ID was already processed within the 1-hour window.
+ * Persisted in PostgreSQL (WhatsAppProcessedMessage).
  */
-export function isMessageProcessed(messageId: string): boolean {
-  if (!messageId) return false;
-  const entry = processedMessagesMap.get(messageId);
-  if (!entry) return false;
+export async function isMessageProcessed(messageId: string): Promise<boolean> {
+  if (!messageId || messageId.trim() === "") return false;
 
-  // If expired, clean up
-  if (Date.now() - entry.processedAt > DEDUPLICATION_TTL_MS) {
-    processedMessagesMap.delete(messageId);
+  const cutoff = new Date(Date.now() - DEDUPLICATION_TTL_MS);
+
+  try {
+    const existing = await prisma.whatsAppProcessedMessage.findUnique({
+      where: { messageId },
+    });
+
+    if (!existing) return false;
+
+    // If older than 1 hour, treat as expired
+    if (existing.createdAt < cutoff) {
+      return false;
+    }
+
+    return true;
+  } catch (err) {
+    console.error("[WhatsApp Security] Error checking message deduplication:", err);
     return false;
   }
-
-  return true;
 }
 
 /**
- * Marks a message ID as processed.
+ * Marks a message ID as processed in PostgreSQL.
+ * Uses upsert to guarantee safety under concurrent webhook deliveries.
  */
-export function markMessageProcessed(messageId: string): void {
-  if (!messageId) return;
-  processedMessagesMap.set(messageId, {
-    messageId,
-    processedAt: Date.now(),
-  });
+export async function markMessageProcessed(
+  messageId: string,
+  businessId?: string
+): Promise<void> {
+  if (!messageId || messageId.trim() === "") return;
 
-  // Periodic cleanup if map grows
-  if (processedMessagesMap.size > 1000) {
-    const cutoff = Date.now() - DEDUPLICATION_TTL_MS;
-    for (const [k, v] of processedMessagesMap.entries()) {
-      if (v.processedAt < cutoff) {
-        processedMessagesMap.delete(k);
-      }
-    }
+  try {
+    await prisma.whatsAppProcessedMessage.upsert({
+      where: { messageId },
+      create: {
+        messageId,
+        businessId: businessId || null,
+        createdAt: new Date(),
+      },
+      update: {
+        createdAt: new Date(),
+      },
+    });
+  } catch (err) {
+    console.error("[WhatsApp Security] Error marking message processed:", err);
   }
 }
+
 
 // ─── 4. Sliding-Window Rate Limiter ──────────────────────────────────────────
 

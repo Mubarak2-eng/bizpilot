@@ -49,29 +49,43 @@ export default async function SettingsPage(props: SettingsPageProps) {
 
         // Zero-trust check: verify transaction metadata matches active business
         if (!metaBizId || metaBizId === activeContext.business.id) {
-          const resolvedPlanCode: PlanCode = metaPlanCode || "STARTER";
+          const resolvedPlanCode: PlanCode = metaPlanCode || "PRO";
           const amountNaira = (data.amount || 0) / 100;
+          const currency = (data.currency || "NGN").toUpperCase();
 
-          await recordSuccessfulPaymentAndActivate({
-            reference: data.reference || queryRef,
-            businessId: activeContext.business.id,
-            planCode: resolvedPlanCode,
-            amountNaira,
-            currency: data.currency || "NGN",
-            customerCode: data.customer?.customer_code,
-            subscriptionCode: data.subscription_code,
-            planPaystackCode: data.plan,
-            eventType: "charge.success",
-            metadata: data.metadata,
-          });
+          if (currency === "NGN") {
+            await recordSuccessfulPaymentAndActivate({
+              reference: data.reference || queryRef,
+              businessId: activeContext.business.id,
+              planCode: resolvedPlanCode,
+              amountNaira,
+              currency,
+              customerCode: data.customer?.customer_code,
+              subscriptionCode: data.subscription_code,
+              planPaystackCode: data.plan,
+              eventType: "charge.success",
+              metadata: data.metadata,
+            });
 
+            initialFeedback = {
+              message: `🎉 Payment confirmed! Your ${resolvedPlanCode} subscription is now ACTIVE.`,
+            };
+          }
+        } else {
           initialFeedback = {
-            message: `🎉 Payment confirmed! Your ${resolvedPlanCode} subscription is now ACTIVE.`,
+            error: "Payment verification failed: Transaction belongs to another business workspace.",
           };
         }
+      } else if (verifyRes.data && verifyRes.data.status !== "success") {
+        initialFeedback = {
+          error: `Payment status is ${verifyRes.data.status}. Subscription could not be activated.`,
+        };
       }
     } catch (err: unknown) {
       console.error("[Settings Page Payment Verification Error]", err);
+      initialFeedback = {
+        error: err instanceof Error ? err.message : "Failed to verify transaction with payment provider.",
+      };
     }
   }
 

@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { prisma } from "../../../../lib/prisma";
 import { getBusinessSubscription } from "../../../../lib/subscriptions/service";
 import { sendMorningBriefToWhatsApp } from "../../../../lib/autopilot/delivery";
+import { cleanupExpiredServerlessState } from "../../../../lib/cleanup";
 
 /**
  * Validates the Cron Secret from the Authorization header.
@@ -49,6 +50,14 @@ function verifyCronAuthorization(req: NextRequest): boolean {
 }
 
 /**
+ * GET /api/cron/morning-brief
+ * Vercel Cron support (Vercel Cron invokes GET requests with Authorization: Bearer <CRON_SECRET>).
+ */
+export async function GET(req: NextRequest) {
+  return POST(req);
+}
+
+/**
  * POST /api/cron/morning-brief
  * Daily scheduled background worker to dispatch Morning Business Briefings to active businesses.
  */
@@ -66,8 +75,12 @@ export async function POST(req: NextRequest) {
   let failed = 0;
 
   try {
-    // 2. Fetch all verified WhatsApp connections
+    // 2. Storage Maintenance: Clean expired serverless state rows
+    await cleanupExpiredServerlessState();
+
+    // 3. Fetch all verified WhatsApp connections
     const verifiedConnections = await prisma.whatsAppConnection.findMany({
+
       where: { verified: true },
       include: {
         business: {

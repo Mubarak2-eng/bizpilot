@@ -277,8 +277,8 @@ export async function draft_invoice(
     dueDate: dueDateStr,
   };
 
-  // Create secure pending action token
-  const token = createPendingAction(
+  // Create secure pending action token in PostgreSQL
+  const token = await createPendingAction(
     context.userId,
     businessId,
     "CREATE_INVOICE",
@@ -337,7 +337,7 @@ export async function prepare_expense(
     date,
   };
 
-  const token = createPendingAction(
+  const token = await createPendingAction(
     context.userId,
     businessId,
     "CREATE_EXPENSE",
@@ -438,7 +438,7 @@ export async function prepare_sale(
     paymentMethod,
   };
 
-  const token = createPendingAction(
+  const token = await createPendingAction(
     context.userId,
     businessId,
     "CREATE_SALE",

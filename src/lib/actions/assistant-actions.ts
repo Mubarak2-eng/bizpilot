@@ -45,8 +45,8 @@ export async function confirmAIAction(
       return { error: "No active business context found. Please log in again." };
     }
 
-    // 1. Consume pending action token (validates token, expiry, anti-replay, and tenant scope)
-    const pendingRecord = getAndConsumePendingAction(
+    // 1. Consume pending action token in PostgreSQL (validates token, expiry, anti-replay, and tenant scope)
+    const pendingRecord = await getAndConsumePendingAction(
       token,
       user.id,
       activeContext.business.id
@@ -111,7 +111,7 @@ export async function cancelAIAction(token: string): Promise<{ success: boolean 
     const activeContext = await getActiveBusiness();
     if (!activeContext) return { success: false };
 
-    const cancelled = cancelPendingAction(token, user.id, activeContext.business.id);
+    const cancelled = await cancelPendingAction(token, user.id, activeContext.business.id);
     return { success: cancelled };
   } catch {
     return { success: false };

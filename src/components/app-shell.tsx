@@ -6,6 +6,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { BusinessSummary, Role } from "@/types/auth";
 import { switchActiveBusinessAction } from "@/lib/actions/business";
+import NotificationCenter from "@/components/notification-center";
+import ThemeToggle from "@/components/theme-toggle";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -131,26 +133,26 @@ export default function AppShell({
 
   const roleStyles: Record<Role, { bg: string; text: string; border: string; glow: string }> = {
     OWNER: {
-      bg: "bg-emerald-500/10",
-      text: "text-emerald-400",
+      bg: "bg-emerald-500/10 dark:bg-emerald-500/15",
+      text: "text-emerald-700 dark:text-emerald-400",
       border: "border-emerald-500/30",
-      glow: "shadow-[0_0_12px_-2px_rgba(16,185,129,0.3)]",
+      glow: "shadow-[0_0_12px_-2px_rgba(16,185,129,0.25)]",
     },
     ADMIN: {
-      bg: "bg-amber-500/10",
-      text: "text-amber-400",
+      bg: "bg-amber-500/10 dark:bg-amber-500/15",
+      text: "text-amber-700 dark:text-amber-400",
       border: "border-amber-500/30",
-      glow: "shadow-[0_0_12px_-2px_rgba(245,158,11,0.3)]",
+      glow: "shadow-[0_0_12px_-2px_rgba(245,158,11,0.25)]",
     },
     STAFF: {
-      bg: "bg-blue-500/10",
-      text: "text-blue-400",
+      bg: "bg-blue-500/10 dark:bg-blue-500/15",
+      text: "text-blue-700 dark:text-blue-400",
       border: "border-blue-500/30",
-      glow: "shadow-[0_0_12px_-2px_rgba(59,130,246,0.3)]",
+      glow: "shadow-[0_0_12px_-2px_rgba(59,130,246,0.25)]",
     },
     MEMBER: {
       bg: "bg-slate-500/10",
-      text: "text-slate-400",
+      text: "text-slate-700 dark:text-slate-400",
       border: "border-slate-500/30",
       glow: "shadow-none",
     },
@@ -165,17 +167,17 @@ export default function AppShell({
     .toUpperCase();
 
   return (
-    <div className="min-h-screen bg-mesh-dark text-slate-100 flex flex-col md:flex-row antialiased">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#050711] text-slate-900 dark:text-slate-100 flex flex-col md:flex-row antialiased">
       {/* Mobile Top Navigation Bar */}
-      <header className="md:hidden flex items-center justify-between px-4 py-3 bg-[#080c1d]/90 border-b border-white/[0.08] backdrop-blur-xl sticky top-0 z-50">
+      <header className="md:hidden flex items-center justify-between px-4 py-3 bg-white/95 dark:bg-[#080c1d]/95 border-b border-slate-200 dark:border-white/[0.08] backdrop-blur-xl sticky top-0 z-50">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-violet-600 via-indigo-600 to-cyan-500 p-0.5 shadow-[0_0_15px_rgba(99,102,241,0.4)]">
-            <div className="w-full h-full bg-[#070914] rounded-[6px] flex items-center justify-center font-black text-white text-xs tracking-tighter">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-violet-600 via-indigo-600 to-cyan-500 p-0.5 shadow-md shadow-indigo-500/20 dark:shadow-[0_0_15px_rgba(99,102,241,0.4)]">
+            <div className="w-full h-full bg-slate-900 dark:bg-[#070914] rounded-[6px] flex items-center justify-center font-black text-white text-xs tracking-tighter">
               BP
             </div>
           </div>
           <div>
-            <span className="font-bold text-xs text-white block truncate max-w-[140px]">
+            <span className="font-bold text-xs text-slate-900 dark:text-white block truncate max-w-[120px] sm:max-w-[160px]">
               {activeBusiness.name}
             </span>
             <span className={`text-[10px] font-semibold tracking-wider ${currentRoleStyle.text}`}>
@@ -185,14 +187,12 @@ export default function AppShell({
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] text-emerald-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-beacon" />
-            <span>Live</span>
-          </div>
+          <ThemeToggle />
+          <NotificationCenter businessId={activeBusiness.id} />
 
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-slate-300 hover:text-white transition"
+            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.05] dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
             aria-label="Toggle navigation menu"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -206,41 +206,41 @@ export default function AppShell({
         </div>
       </header>
 
-      {/* Futuristic Sidebar for Desktop & Mobile Overlay */}
+      {/* Sidebar for Desktop & Mobile Overlay */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 bg-[#080d21]/90 md:bg-[#070b1e]/75 border-r border-white/[0.08] backdrop-blur-2xl flex flex-col justify-between transition-all duration-300 ease-out md:static md:translate-x-0 ${
-          mobileMenuOpen ? "translate-x-0 shadow-2xl shadow-indigo-950/80" : "-translate-x-full"
+        className={`fixed inset-y-0 left-0 z-40 w-64 bg-white/95 dark:bg-[#080d21]/90 md:bg-white/85 md:dark:bg-[#070b1e]/75 border-r border-slate-200/90 dark:border-white/[0.08] backdrop-blur-2xl flex flex-col justify-between transition-all duration-300 ease-out md:static md:translate-x-0 ${
+          mobileMenuOpen ? "translate-x-0 shadow-2xl shadow-slate-900/20 dark:shadow-indigo-950/80" : "-translate-x-full"
         }`}
       >
         <div className="p-5 space-y-6 flex-1 overflow-y-auto">
           {/* Logo & Platform Name */}
           <Link href="/dashboard" className="flex items-center gap-3 group">
             <div className="relative">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-600 via-indigo-600 to-cyan-400 p-[1.5px] shadow-[0_0_20px_rgba(99,102,241,0.35)] group-hover:shadow-[0_0_25px_rgba(139,92,246,0.5)] transition-all">
-                <div className="w-full h-full bg-[#080c1d] rounded-[10px] flex items-center justify-center font-black text-white text-base tracking-tighter">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-600 via-indigo-600 to-cyan-400 p-[1.5px] shadow-md shadow-indigo-500/20 dark:shadow-[0_0_20px_rgba(99,102,241,0.35)] group-hover:shadow-[0_0_25px_rgba(139,92,246,0.5)] transition-all">
+                <div className="w-full h-full bg-slate-900 dark:bg-[#080c1d] rounded-[10px] flex items-center justify-center font-black text-white text-base tracking-tighter">
                   BP
                 </div>
               </div>
-              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-cyan-400 border-2 border-[#080c1d] animate-beacon" />
+              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-cyan-400 border-2 border-white dark:border-[#080c1d] animate-beacon" />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-black text-base tracking-tight text-white block">BizPilot AI</span>
-                <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-violet-500/20 text-violet-300 border border-violet-500/30">
+                <span className="font-black text-base tracking-tight text-slate-900 dark:text-white block">BizPilot AI</span>
+                <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-violet-500/15 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300 border border-violet-500/30">
                   OS
                 </span>
               </div>
-              <span className="text-[10px] text-slate-400 font-medium tracking-wider uppercase block">
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium tracking-wider uppercase block">
                 Business Intelligence
               </span>
             </div>
           </Link>
 
           {/* Active Business Switcher Panel */}
-          <div className="p-3.5 bg-white/[0.03] border border-white/[0.08] rounded-xl space-y-2 backdrop-blur-md relative overflow-hidden">
+          <div className="p-3.5 bg-slate-50/80 dark:bg-white/[0.03] border border-slate-200/90 dark:border-white/[0.08] rounded-2xl space-y-2 backdrop-blur-md relative overflow-hidden shadow-xs">
             <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl pointer-events-none" />
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Active Workspace</span>
+              <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Active Workspace</span>
               <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${currentRoleStyle.bg} ${currentRoleStyle.text} ${currentRoleStyle.border} ${currentRoleStyle.glow}`}>
                 {role}
               </span>
@@ -251,24 +251,25 @@ export default function AppShell({
                 value={activeBusiness.id}
                 onChange={(e) => handleSwitchBusiness(e.target.value)}
                 disabled={isPending}
-                className="w-full px-2.5 py-1.5 bg-[#0a0f26] border border-white/[0.12] rounded-lg text-white text-xs font-medium focus:ring-2 focus:ring-violet-500 focus:outline-none truncate transition cursor-pointer"
+                aria-label="Switch active business workspace"
+                className="w-full px-2.5 py-1.5 bg-white dark:bg-[#0a0f26] border border-slate-300 dark:border-white/[0.12] rounded-xl text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-violet-500 focus:outline-none truncate transition cursor-pointer shadow-xs"
               >
                 {memberships.map((m) => (
-                  <option key={m.id} value={m.id} className="bg-[#0b1028] text-white">
+                  <option key={m.id} value={m.id} className="bg-white dark:bg-[#0b1028] text-slate-900 dark:text-white">
                     {m.name} ({m.role})
                   </option>
                 ))}
               </select>
             ) : (
-              <p className="text-xs font-bold text-white truncate flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+              <p className="text-xs font-bold text-slate-800 dark:text-white truncate flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 dark:bg-cyan-400" />
                 {activeBusiness.name}
               </p>
             )}
 
-            <div className="text-[11px] text-slate-400 flex justify-between items-center pt-0.5 border-t border-white/[0.04]">
-              <span className="text-slate-400 text-[10px]">Currency:</span>
-              <span className="font-mono text-xs font-semibold text-cyan-300">{activeBusiness.currency}</span>
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 flex justify-between items-center pt-1 border-t border-slate-200/80 dark:border-white/[0.04]">
+              <span className="text-[10px]">Currency:</span>
+              <span className="font-mono text-xs font-semibold text-cyan-600 dark:text-cyan-300">{activeBusiness.currency}</span>
             </div>
           </div>
 
@@ -286,19 +287,19 @@ export default function AppShell({
                   onClick={() => setMobileMenuOpen(false)}
                   className={`relative flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all group ${
                     isActive
-                      ? "bg-gradient-to-r from-violet-600/90 to-indigo-600/90 text-white font-semibold shadow-[0_0_20px_rgba(99,102,241,0.3)] border border-violet-400/30"
-                      : "text-slate-400 hover:text-white hover:bg-white/[0.05] border border-transparent"
+                      ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-semibold shadow-md shadow-indigo-600/20 dark:shadow-[0_0_20px_rgba(99,102,241,0.3)] border border-violet-400/30"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.05] border border-transparent"
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className={`transition-transform duration-200 group-hover:scale-110 ${isActive ? "text-cyan-200" : "text-slate-400 group-hover:text-indigo-400"}`}>
+                    <span className={`transition-transform duration-200 group-hover:scale-110 ${isActive ? "text-cyan-200" : "text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400"}`}>
                       {item.icon}
                     </span>
                     <span>{item.label}</span>
                   </div>
 
                   {item.badge && (
-                    <span className="px-1.5 py-0.2 text-[9px] font-black rounded-full bg-cyan-400/20 text-cyan-300 border border-cyan-400/40 animate-pulse">
+                    <span className="px-1.5 py-0.2 text-[9px] font-black rounded-full bg-cyan-400/20 text-cyan-700 dark:text-cyan-300 border border-cyan-400/40">
                       {item.badge}
                     </span>
                   )}
@@ -312,20 +313,21 @@ export default function AppShell({
         </div>
 
         {/* User Footer & Sign Out Capsule */}
-        <div className="p-3.5 m-3 rounded-2xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-md flex items-center justify-between gap-2.5">
+        <div className="p-3.5 m-3 rounded-2xl bg-slate-100/90 dark:bg-white/[0.03] border border-slate-200/90 dark:border-white/[0.08] backdrop-blur-md flex items-center justify-between gap-2.5 shadow-xs">
           <div className="flex items-center gap-2.5 truncate flex-1">
             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-violet-600 to-cyan-500 flex items-center justify-center font-bold text-white text-xs shadow-md shadow-indigo-600/20 shrink-0">
               {userInitials}
             </div>
             <div className="truncate">
-              <p className="text-xs font-bold text-white truncate leading-snug">{user.name || "User"}</p>
-              <p className="text-[10px] text-slate-400 truncate font-mono">{user.email}</p>
+              <p className="text-xs font-bold text-slate-800 dark:text-white truncate leading-snug">{user.name || "User"}</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate font-mono">{user.email}</p>
             </div>
           </div>
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             title="Sign Out"
-            className="p-2 rounded-xl bg-white/[0.05] hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 border border-white/[0.06] hover:border-rose-500/30 transition cursor-pointer shrink-0"
+            aria-label="Sign out of BizPilot"
+            className="p-2 rounded-xl bg-white dark:bg-white/[0.05] hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-300 border border-slate-200 dark:border-white/[0.06] hover:border-rose-300 dark:hover:border-rose-500/30 transition cursor-pointer shrink-0 shadow-xs"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -338,14 +340,14 @@ export default function AppShell({
       {mobileMenuOpen && (
         <div
           onClick={() => setMobileMenuOpen(false)}
-          className="fixed inset-0 bg-black/70 backdrop-blur-xs z-30 md:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-30 md:hidden"
         />
       )}
 
       {/* Main Content Area + Top Command Bar */}
-      <div className="flex-1 flex flex-col min-w-0 bg-[#050711] overflow-hidden">
-        {/* Desktop Futuristic Top Command Bar */}
-        <div className="hidden md:flex items-center justify-between px-8 py-3.5 bg-[#070b1e]/60 border-b border-white/[0.06] backdrop-blur-xl sticky top-0 z-20">
+      <div className="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-[#050711] overflow-hidden">
+        {/* Desktop Top Command Bar */}
+        <div className="hidden md:flex items-center justify-between px-8 py-3.5 bg-white/80 dark:bg-[#070b1e]/60 border-b border-slate-200/80 dark:border-white/[0.06] backdrop-blur-xl sticky top-0 z-20">
           {/* Command Center Search Bar */}
           <div className="relative flex-1 max-w-md">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -358,29 +360,36 @@ export default function AppShell({
               readOnly
               onClick={() => router.push("/assistant")}
               placeholder="Search anything with AI... (Ask 'sales today', 'low stock', etc.)"
-              className="w-full pl-10 pr-12 py-1.5 bg-[#0a0f26]/80 border border-white/[0.08] hover:border-white/[0.15] rounded-xl text-xs text-slate-300 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-violet-500 transition cursor-pointer"
+              aria-label="AI Command Search"
+              className="w-full pl-10 pr-12 py-1.5 bg-slate-100/90 dark:bg-[#0a0f26]/80 border border-slate-200 dark:border-white/[0.08] hover:border-slate-300 dark:hover:border-white/[0.15] rounded-xl text-xs text-slate-800 dark:text-slate-300 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-violet-500 transition cursor-pointer shadow-xs"
             />
             <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
-              <kbd className="px-1.5 py-0.5 text-[9px] font-mono text-slate-400 bg-white/[0.06] border border-white/[0.1] rounded">
+              <kbd className="px-1.5 py-0.5 text-[9px] font-mono text-slate-500 dark:text-slate-400 bg-white dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.1] rounded shadow-xs">
                 ⌘K
               </kbd>
             </div>
           </div>
 
-          {/* Right Status Indicators & Profile Pill */}
+          {/* Right Status Indicators, Theme Toggle & Profile Pill */}
           <div className="flex items-center gap-3">
+            {/* Visual Theme Switcher */}
+            <ThemeToggle />
+
+            {/* Notification Bell Center */}
+            <NotificationCenter businessId={activeBusiness.id} />
+
             {/* Live Autopilot Status */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-violet-500/10 border border-violet-500/20 text-xs font-medium text-violet-300">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-beacon" />
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-violet-500/10 dark:bg-violet-500/15 border border-violet-500/20 text-xs font-medium text-violet-700 dark:text-violet-300">
+              <span className="w-2 h-2 rounded-full bg-cyan-500 dark:bg-cyan-400 animate-beacon" />
               <span className="text-[11px] font-semibold">BizPilot Autopilot Active</span>
             </div>
 
             {/* Quick Action Assistant Link */}
             <Link
               href="/assistant"
-              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-violet-600/80 to-indigo-600/80 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/20 border border-violet-400/30 transition flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/20 border border-violet-400/30 transition flex items-center gap-1.5"
             >
-              <svg className="w-3.5 h-3.5 text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5 text-cyan-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
               <span>Ask AI</span>

@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { prisma } from "../prisma";
 
 export type AIActionType = "CREATE_INVOICE" | "CREATE_SALE" | "CREATE_EXPENSE";
 
@@ -57,102 +58,136 @@ export interface PendingActionRecord {
   used: boolean;
 }
 
-// In-memory store for pending action tokens with TTL
-const pendingActionsMap = new Map<string, PendingActionRecord>();
-
 // Expiration time: 5 minutes
-const ACTION_TTL_MS = 5 * 60 * 1000;
+export const ACTION_TTL_MS = 5 * 60 * 1000;
 
 /**
- * Creates and stores a secure, short-lived pending action token.
+ * Creates and stores a secure, short-lived pending action token in PostgreSQL (AIPendingAction).
  */
-export function createPendingAction(
+export async function createPendingAction(
   userId: string,
   businessId: string,
   actionType: AIActionType,
   payload: PendingActionPayload,
   ttlMs = ACTION_TTL_MS
-): string {
+): Promise<string> {
   const token = `act_${crypto.randomBytes(24).toString("hex")}`;
-  const now = Date.now();
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + ttlMs);
 
-  const record: PendingActionRecord = {
-    token,
-    userId,
-    businessId,
-    actionType,
-    payload,
-    createdAt: now,
-    expiresAt: now + ttlMs,
-    used: false,
-  };
-
-  pendingActionsMap.set(token, record);
-
-  // Periodic cleanup of expired tokens (older than 10 mins)
-  if (pendingActionsMap.size > 200) {
-    const cutoff = Date.now();
-    for (const [k, v] of pendingActionsMap.entries()) {
-      if (v.expiresAt < cutoff || v.used) {
-        pendingActionsMap.delete(k);
-      }
-    }
-  }
+  await prisma.aIPendingAction.create({
+    data: {
+      token,
+      userId,
+      businessId,
+      actionType,
+      payload: payload as any,
+      expiresAt,
+    },
+  });
 
   return token;
 }
 
 /**
- * Validates and consumes a pending action token atomically.
- * Prevents replay attacks, expired actions, and cross-tenant tampering.
+ * Validates and consumes a pending action token atomically in PostgreSQL.
+ * Uses atomic UPDATE conditions (consumedAt: null, expiresAt > now, userId, businessId)
+ * to prevent race conditions, replay attacks, expired actions, and cross-tenant tampering.
  */
-export function getAndConsumePendingAction(
+export async function getAndConsumePendingAction(
   token: string,
   userId: string,
   businessId: string
-): PendingActionRecord {
-  if (!token || !pendingActionsMap.has(token)) {
+): Promise<PendingActionRecord> {
+  if (!token || token.trim() === "") {
     throw new Error("Action not found or expired. Please ask the assistant again.");
   }
 
-  const record = pendingActionsMap.get(token)!;
+  const now = new Date();
 
-  // 1. Check if already used
-  if (record.used) {
-    throw new Error("This action has already been confirmed and executed.");
+  // 1. Fetch the raw record to inspect state if atomic consume fails
+  const existing = await prisma.aIPendingAction.findUnique({
+    where: { token },
+  });
+
+  if (!existing) {
+    throw new Error("Action not found or expired. Please ask the assistant again.");
   }
 
-  // 2. Check if expired
-  if (Date.now() > record.expiresAt) {
-    pendingActionsMap.delete(token);
-    throw new Error("This action preview has expired (5 minute limit). Please try again.");
-  }
-
-  // 3. Check tenant & user isolation
-  if (record.businessId !== businessId) {
+  // 2. Check tenant & user isolation
+  if (existing.businessId !== businessId) {
     throw new Error("Security violation: Action does not belong to the active business.");
   }
 
-  if (record.userId !== userId) {
+  if (existing.userId !== userId) {
     throw new Error("Security violation: Action was initiated by another user.");
   }
 
-  // Atomically mark as used
-  record.used = true;
-  pendingActionsMap.set(token, record);
+  // 3. Check if already consumed
+  if (existing.consumedAt !== null) {
+    throw new Error("This action has already been confirmed and executed.");
+  }
 
-  return record;
+  // 4. Check if expired
+  if (existing.expiresAt < now) {
+    throw new Error("This action preview has expired (5 minute limit). Please try again.");
+  }
+
+  // 5. ATOMIC CONSUMPTION: Update consumedAt only if still null and not expired
+  const updateResult = await prisma.aIPendingAction.updateMany({
+    where: {
+      id: existing.id,
+      token,
+      userId,
+      businessId,
+      consumedAt: null,
+      expiresAt: { gt: now },
+    },
+    data: {
+      consumedAt: now,
+    },
+  });
+
+  if (updateResult.count === 0) {
+    // A concurrent request consumed it at the exact same millisecond
+    throw new Error("This action has already been confirmed and executed.");
+  }
+
+  return {
+    token: existing.token,
+    userId: existing.userId,
+    businessId: existing.businessId,
+    actionType: existing.actionType as AIActionType,
+    payload: existing.payload as unknown as PendingActionPayload,
+    createdAt: existing.createdAt.getTime(),
+    expiresAt: existing.expiresAt.getTime(),
+    used: true,
+  };
 }
 
 /**
- * Cancels a pending action token.
+ * Cancels a pending action token in PostgreSQL.
  */
-export function cancelPendingAction(token: string, userId: string, businessId: string): boolean {
-  if (!token || !pendingActionsMap.has(token)) return false;
-  const record = pendingActionsMap.get(token)!;
-  if (record.userId === userId && record.businessId === businessId) {
-    pendingActionsMap.delete(token);
-    return true;
+export async function cancelPendingAction(
+  token: string,
+  userId: string,
+  businessId: string
+): Promise<boolean> {
+  if (!token || token.trim() === "") return false;
+
+  try {
+    const result = await prisma.aIPendingAction.deleteMany({
+      where: {
+        token,
+        userId,
+        businessId,
+        consumedAt: null,
+      },
+    });
+
+    return result.count > 0;
+  } catch (err) {
+    console.error("[AI Pending Actions] Error cancelling action:", err);
+    return false;
   }
-  return false;
 }

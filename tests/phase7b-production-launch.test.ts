@@ -260,8 +260,8 @@ describe("Phase 7B: Production Launch Preparation & Cron Tests", () => {
 
   // ── 3. Action Execution & Single-Use Consumption ───────────────────────────
   describe("AI Action Confirmation Security", () => {
-    it("should prevent double-execution replay on consumed action tokens", () => {
-      const token = createPendingAction(
+    it("should prevent double-execution replay on consumed action tokens", async () => {
+      const token = await createPendingAction(
         userOwnerA.id,
         bizActive.id,
         "CREATE_EXPENSE",

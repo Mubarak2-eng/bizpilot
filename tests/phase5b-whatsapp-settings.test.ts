@@ -205,14 +205,14 @@ describe("Phase 5B: WhatsApp Settings UI Integration & Management", () => {
         },
       });
 
-      // 2. Populate an active in-memory session
-      const session = getWhatsAppSession(testPhoneAcme);
-      addMessageToSession(testPhoneAcme, {
+      // 2. Populate an active session
+      await addMessageToSession(testPhoneAcme, {
         id: "msg-test-1",
         role: "user",
         content: "What are my sales today?",
         timestamp: new Date().toISOString(),
       });
+      const session = await getWhatsAppSession(testPhoneAcme);
       expect(session.conversationHistory.length).toBeGreaterThan(0);
 
       // 3. Unlink connection from DB
@@ -220,8 +220,8 @@ describe("Phase 5B: WhatsApp Settings UI Integration & Management", () => {
         where: { id: conn.id },
       });
 
-      // 4. Clean in-memory session
-      deleteWhatsAppSession(testPhoneAcme);
+      // 4. Clean session
+      await deleteWhatsAppSession(testPhoneAcme);
 
       // 5. Verify DB record is gone
       const checkDb = await prisma.whatsAppConnection.findUnique({

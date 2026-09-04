@@ -21,8 +21,11 @@ import {
   SalesQueryParams,
   ToolDefinition,
   TopProductsParams,
+  DebtorsQueryParams,
+  CreditSalesQueryParams,
+  CustomerDebtParams,
 } from "./types";
-import { PaymentMethod, InvoiceStatus } from "@prisma/client";
+import { PaymentMethod, InvoiceStatus, CreditStatus } from "@prisma/client";
 
 // Maximum result limit for any tool query
 const MAX_QUERY_LIMIT = 50;
@@ -856,6 +859,301 @@ export async function get_morning_brief(
 }
 
 /**
+ * 14. get_debtors
+ * Retrieves all customers who currently owe money to the business on credit sales.
+ */
+export async function get_debtors(
+  params: DebtorsQueryParams,
+  context: AuthenticatedAIContext
+) {
+  const membership = await verifyBusinessMembership(context.businessId, context.userId);
+  const businessId = membership.business.id;
+  const currency = membership.business.currency;
+
+  const now = new Date();
+
+  const customersWithDebt = await prisma.customer.findMany({
+    where: {
+      businessId,
+      sales: {
+        some: {
+          isCredit: true,
+          status: { notIn: ["CANCELLED", "REFUNDED"] },
+          outstandingBalance: { gt: 0 },
+        },
+      },
+    },
+    include: {
+      sales: {
+        where: {
+          isCredit: true,
+          status: { notIn: ["CANCELLED", "REFUNDED"] },
+          outstandingBalance: { gt: 0 },
+        },
+        orderBy: { creditDueDate: "asc" },
+      },
+    },
+    take: params.limit || MAX_QUERY_LIMIT,
+  });
+
+  let totalReceivables = 0;
+  let totalOverdue = 0;
+
+  const debtorsList = customersWithDebt.map((c) => {
+    let customerDebt = 0;
+    let customerOverdue = 0;
+
+    const creditSales = c.sales.map((s) => {
+      const bal = Number(s.outstandingBalance.toString());
+      const total = Number(s.totalAmount.toString());
+      const paid = Number(s.amountPaid.toString());
+      const isOverdue = s.creditDueDate ? s.creditDueDate < now : false;
+
+      customerDebt += bal;
+      if (isOverdue) customerOverdue += bal;
+
+      return {
+        saleId: s.id,
+        receiptNumber: `#${s.id.slice(-6).toUpperCase()}`,
+        totalAmount: total,
+        formattedTotalAmount: formatMoney(total, currency),
+        amountPaid: paid,
+        formattedAmountPaid: formatMoney(paid, currency),
+        outstandingBalance: bal,
+        formattedOutstandingBalance: formatMoney(bal, currency),
+        creditDueDate: s.creditDueDate ? s.creditDueDate.toISOString().split("T")[0] : null,
+        isOverdue,
+        creditStatus: s.creditStatus,
+        saleDate: s.createdAt.toISOString().split("T")[0],
+      };
+    });
+
+    totalReceivables += customerDebt;
+    totalOverdue += customerOverdue;
+
+    return {
+      customerId: c.id,
+      customerName: c.name,
+      phone: c.phone,
+      email: c.email,
+      totalOutstandingDebt: customerDebt,
+      formattedTotalOutstandingDebt: formatMoney(customerDebt, currency),
+      overdueDebt: customerOverdue,
+      formattedOverdueDebt: formatMoney(customerOverdue, currency),
+      activeCreditSalesCount: creditSales.length,
+      creditSales,
+    };
+  });
+
+  return {
+    totalDebtors: debtorsList.length,
+    totalReceivables,
+    formattedTotalReceivables: formatMoney(totalReceivables, currency),
+    totalOverdue,
+    formattedTotalOverdue: formatMoney(totalOverdue, currency),
+    debtors: debtorsList,
+  };
+}
+
+/**
+ * 15. get_credit_sales
+ * Queries credit sales records with status, customer, and date filtering.
+ */
+export async function get_credit_sales(
+  params: CreditSalesQueryParams,
+  context: AuthenticatedAIContext
+) {
+  const membership = await verifyBusinessMembership(context.businessId, context.userId);
+  const businessId = membership.business.id;
+  const currency = membership.business.currency;
+
+  const now = new Date();
+  const dateRange = resolveDateRange(params.datePhrase, null, null, now);
+
+  const whereClause: Record<string, unknown> = {
+    businessId,
+    isCredit: true,
+    status: { notIn: ["CANCELLED", "REFUNDED"] },
+  };
+
+  if (dateRange.startDate && dateRange.endDate) {
+    whereClause.createdAt = {
+      gte: dateRange.startDate,
+      lte: dateRange.endDate,
+    };
+  }
+
+  if (params.status) {
+    whereClause.creditStatus = params.status;
+  }
+
+  if (params.customerName) {
+    whereClause.customer = {
+      name: { contains: params.customerName, mode: "insensitive" },
+    };
+  }
+
+  const sales = await prisma.sale.findMany({
+    where: whereClause,
+    include: {
+      customer: { select: { id: true, name: true, phone: true } },
+      items: { include: { product: { select: { name: true } } } },
+      creditPayments: { orderBy: { createdAt: "desc" } },
+    },
+    orderBy: { createdAt: "desc" },
+    take: params.limit || MAX_QUERY_LIMIT,
+  });
+
+  let totalCreditGranted = 0;
+  let totalCollected = 0;
+  let totalOutstanding = 0;
+
+  const formattedSales = sales.map((s) => {
+    const tot = Number(s.totalAmount.toString());
+    const paid = Number(s.amountPaid.toString());
+    const bal = Number(s.outstandingBalance.toString());
+    const isOverdue = bal > 0 && s.creditDueDate && s.creditDueDate < now;
+
+    totalCreditGranted += tot;
+    totalCollected += paid;
+    totalOutstanding += bal;
+
+    return {
+      saleId: s.id,
+      receiptNumber: `#${s.id.slice(-6).toUpperCase()}`,
+      customer: s.customer ? s.customer.name : "Unknown Customer",
+      customerPhone: s.customer?.phone || null,
+      totalAmount: tot,
+      formattedTotalAmount: formatMoney(tot, currency),
+      amountPaid: paid,
+      formattedAmountPaid: formatMoney(paid, currency),
+      outstandingBalance: bal,
+      formattedOutstandingBalance: formatMoney(bal, currency),
+      creditStatus: isOverdue && s.creditStatus !== "PAID" ? "OVERDUE" : s.creditStatus,
+      creditDueDate: s.creditDueDate ? s.creditDueDate.toISOString().split("T")[0] : null,
+      saleDate: s.createdAt.toISOString().split("T")[0],
+      itemsSummary: s.items.map((i) => `${i.product.name} (x${i.quantity})`).join(", "),
+      installmentCount: s.creditPayments.length,
+    };
+  });
+
+  return {
+    dateRangeDescription: dateRange.description,
+    totalRecords: sales.length,
+    totalCreditGranted,
+    formattedTotalCreditGranted: formatMoney(totalCreditGranted, currency),
+    totalCollected,
+    formattedTotalCollected: formatMoney(totalCollected, currency),
+    totalOutstanding,
+    formattedTotalOutstanding: formatMoney(totalOutstanding, currency),
+    sales: formattedSales,
+  };
+}
+
+/**
+ * 16. get_customer_debt
+ * Retrieves full credit breakdown and repayment history for a specific customer.
+ */
+export async function get_customer_debt(
+  params: CustomerDebtParams,
+  context: AuthenticatedAIContext
+) {
+  const membership = await verifyBusinessMembership(context.businessId, context.userId);
+  const businessId = membership.business.id;
+  const currency = membership.business.currency;
+
+  const now = new Date();
+
+  const customer = await prisma.customer.findFirst({
+    where: {
+      businessId,
+      ...(params.customerId ? { id: params.customerId } : {}),
+      ...(params.customerName ? { name: { contains: params.customerName, mode: "insensitive" } } : {}),
+      ...(params.phone ? { phone: { contains: params.phone } } : {}),
+    },
+    include: {
+      sales: {
+        where: {
+          isCredit: true,
+          status: { notIn: ["CANCELLED", "REFUNDED"] },
+        },
+        include: {
+          items: { include: { product: { select: { name: true } } } },
+          creditPayments: { orderBy: { createdAt: "desc" } },
+        },
+        orderBy: { createdAt: "desc" },
+      },
+    },
+  });
+
+  if (!customer) {
+    return { error: `Customer "${params.customerName || params.phone || "specified"}" not found in your business directory.` };
+  }
+
+  let totalCreditGiven = 0;
+  let totalAmountPaid = 0;
+  let totalOutstanding = 0;
+  let totalOverdue = 0;
+
+  const creditSales = customer.sales.map((s) => {
+    const tot = Number(s.totalAmount.toString());
+    const paid = Number(s.amountPaid.toString());
+    const bal = Number(s.outstandingBalance.toString());
+    const isOverdue = bal > 0 && s.creditDueDate && s.creditDueDate < now;
+
+    totalCreditGiven += tot;
+    totalAmountPaid += paid;
+    totalOutstanding += bal;
+    if (isOverdue) totalOverdue += bal;
+
+    return {
+      saleId: s.id,
+      receiptNumber: `#${s.id.slice(-6).toUpperCase()}`,
+      saleDate: s.createdAt.toISOString().split("T")[0],
+      totalAmount: tot,
+      formattedTotalAmount: formatMoney(tot, currency),
+      amountPaid: paid,
+      formattedAmountPaid: formatMoney(paid, currency),
+      outstandingBalance: bal,
+      formattedOutstandingBalance: formatMoney(bal, currency),
+      creditStatus: isOverdue && s.creditStatus !== "PAID" ? "OVERDUE" : s.creditStatus,
+      creditDueDate: s.creditDueDate ? s.creditDueDate.toISOString().split("T")[0] : null,
+      isOverdue,
+      items: s.items.map((i) => `${i.product.name} (x${i.quantity})`).join(", "),
+      payments: s.creditPayments.map((p) => ({
+        id: p.id,
+        amount: Number(p.amount.toString()),
+        formattedAmount: formatMoney(p.amount.toString(), currency),
+        paymentMethod: p.paymentMethod,
+        note: p.note,
+        date: p.createdAt.toISOString().split("T")[0],
+      })),
+    };
+  });
+
+  return {
+    customer: {
+      id: customer.id,
+      name: customer.name,
+      phone: customer.phone,
+      email: customer.email,
+      address: customer.address,
+    },
+    totalCreditGiven,
+    formattedTotalCreditGiven: formatMoney(totalCreditGiven, currency),
+    totalAmountPaid,
+    formattedTotalAmountPaid: formatMoney(totalAmountPaid, currency),
+    totalOutstanding,
+    formattedTotalOutstanding: formatMoney(totalOutstanding, currency),
+    totalOverdue,
+    formattedTotalOverdue: formatMoney(totalOverdue, currency),
+    hasDebt: totalOutstanding > 0,
+    creditSalesCount: creditSales.length,
+    creditSales,
+  };
+}
+
+/**
  * Tool metadata and JSON schemas for LLM function calling
  */
 export const BIZPILOT_AI_TOOLS: ToolDefinition[] = [
@@ -1023,6 +1321,48 @@ export const BIZPILOT_AI_TOOLS: ToolDefinition[] = [
         name: { type: "string", description: "Product name to search for" },
         sku: { type: "string", description: "Exact product SKU" },
         barcode: { type: "string", description: "Product barcode" },
+      },
+    },
+  },
+  {
+    name: "get_debtors",
+    description:
+      "List all customers who currently owe money to the business on credit sales, their outstanding balances, overdue debts, and due dates.",
+    parameters: {
+      type: "object",
+      properties: {
+        limit: { type: "number", description: "Maximum debtor accounts to return (default 20)" },
+      },
+    },
+  },
+  {
+    name: "get_credit_sales",
+    description:
+      "Query credit sales history, unpaid receivables, partially paid debts, and overdue credit sales by status or date.",
+    parameters: {
+      type: "object",
+      properties: {
+        status: {
+          type: "string",
+          description: "Filter by credit status: UNPAID, PARTIALLY_PAID, PAID, OVERDUE",
+          enum: ["UNPAID", "PARTIALLY_PAID", "PAID", "OVERDUE"],
+        },
+        customerName: { type: "string", description: "Name of customer to filter credit sales for" },
+        datePhrase: { type: "string", description: "Date range phrase: this_month, last_month, last_30_days" },
+        limit: { type: "number", description: "Maximum records to return (default 10)" },
+      },
+    },
+  },
+  {
+    name: "get_customer_debt",
+    description:
+      "Get detailed credit breakdown and repayment history for a specific debtor customer by name or phone number.",
+    parameters: {
+      type: "object",
+      properties: {
+        customerName: { type: "string", description: "Customer name or partial name" },
+        phone: { type: "string", description: "Customer phone number" },
+        customerId: { type: "string", description: "Unique customer ID" },
       },
     },
   },

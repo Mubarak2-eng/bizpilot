@@ -197,8 +197,8 @@ describe("Phase 4B: Controlled AI Business Actions", () => {
   });
 
   describe("4. Pending Action Security: Anti-Replay, Expiration & Tenant Isolation", () => {
-    it("should prevent replaying a confirmed action token (single-use enforcement)", () => {
-      const token = createPendingAction(
+    it("should prevent replaying a confirmed action token (single-use enforcement)", async () => {
+      const token = await createPendingAction(
         primaryContext.userId,
         primaryContext.businessId,
         "CREATE_EXPENSE",
@@ -209,18 +209,18 @@ describe("Phase 4B: Controlled AI Business Actions", () => {
       );
 
       // First consumption: success
-      const record = getAndConsumePendingAction(token, primaryContext.userId, primaryContext.businessId);
+      const record = await getAndConsumePendingAction(token, primaryContext.userId, primaryContext.businessId);
       expect(record.used).toBe(true);
 
       // Second consumption: MUST throw replay attack error
-      expect(() =>
+      await expect(
         getAndConsumePendingAction(token, primaryContext.userId, primaryContext.businessId)
-      ).toThrow("already been confirmed");
+      ).rejects.toThrow("already been confirmed");
     });
 
-    it("should reject expired pending action tokens", () => {
+    it("should reject expired pending action tokens", async () => {
       // Create an action with 1ms TTL
-      const expiredToken = createPendingAction(
+      const expiredToken = await createPendingAction(
         primaryContext.userId,
         primaryContext.businessId,
         "CREATE_EXPENSE",
@@ -231,13 +231,13 @@ describe("Phase 4B: Controlled AI Business Actions", () => {
         -1000 // already expired
       );
 
-      expect(() =>
+      await expect(
         getAndConsumePendingAction(expiredToken, primaryContext.userId, primaryContext.businessId)
-      ).toThrow("expired");
+      ).rejects.toThrow("expired");
     });
 
-    it("should reject action token if executed by a different user or different business", () => {
-      const token = createPendingAction(
+    it("should reject action token if executed by a different user or different business", async () => {
+      const token = await createPendingAction(
         primaryContext.userId,
         primaryContext.businessId,
         "CREATE_EXPENSE",
@@ -248,18 +248,18 @@ describe("Phase 4B: Controlled AI Business Actions", () => {
       );
 
       // Attempting to consume under secondary business MUST throw
-      expect(() =>
+      await expect(
         getAndConsumePendingAction(token, primaryContext.userId, secondaryContext.businessId)
-      ).toThrow("Security violation");
+      ).rejects.toThrow("Security violation");
 
       // Attempting to consume with a different userId MUST throw
-      expect(() =>
+      await expect(
         getAndConsumePendingAction(token, "other-attacker-user", primaryContext.businessId)
-      ).toThrow("Security violation");
+      ).rejects.toThrow("Security violation");
     });
 
-    it("should support voluntary action cancellation", () => {
-      const token = createPendingAction(
+    it("should support voluntary action cancellation", async () => {
+      const token = await createPendingAction(
         primaryContext.userId,
         primaryContext.businessId,
         "CREATE_EXPENSE",
@@ -269,13 +269,13 @@ describe("Phase 4B: Controlled AI Business Actions", () => {
         }
       );
 
-      const cancelled = cancelPendingAction(token, primaryContext.userId, primaryContext.businessId);
+      const cancelled = await cancelPendingAction(token, primaryContext.userId, primaryContext.businessId);
       expect(cancelled).toBe(true);
 
       // After cancellation, token cannot be consumed
-      expect(() =>
+      await expect(
         getAndConsumePendingAction(token, primaryContext.userId, primaryContext.businessId)
-      ).toThrow("not found");
+      ).rejects.toThrow("not found");
     });
   });
 
@@ -291,7 +291,7 @@ describe("Phase 4B: Controlled AI Business Actions", () => {
       );
 
       // Consume token
-      const record = getAndConsumePendingAction(draft.token, primaryContext.userId, primaryContext.businessId);
+      const record = await getAndConsumePendingAction(draft.token, primaryContext.userId, primaryContext.businessId);
       expect(record.actionType).toBe("CREATE_INVOICE");
 
       const invData = record.payload.data as { customerId: string; dueDate: string; taxPercent: number; subtotal: number; taxAmount: number; total: number; items: { productId?: string; productName: string; quantity: number; unitPrice: number; totalAmount: number }[] };
@@ -351,7 +351,7 @@ describe("Phase 4B: Controlled AI Business Actions", () => {
       );
 
       // Consume token
-      const record = getAndConsumePendingAction(preview.token, primaryContext.userId, primaryContext.businessId);
+      const record = await getAndConsumePendingAction(preview.token, primaryContext.userId, primaryContext.businessId);
       const saleData = record.payload.data as { customerId?: string; items: { productId: string; quantity: number; unitPrice: number; totalAmount: number }[]; totalAmount: number; paymentMethod: "CASH" | "CARD" | "TRANSFER" | "MOBILE_MONEY" };
 
       // Execute transactional database write

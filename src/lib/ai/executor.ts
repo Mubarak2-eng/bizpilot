@@ -18,6 +18,9 @@ import {
   get_product,
   get_sales,
   get_top_products,
+  get_debtors,
+  get_credit_sales,
+  get_customer_debt,
 } from "./tools";
 import {
   draft_invoice,
@@ -108,6 +111,18 @@ export async function executeToolCall(
 
       case "get_product":
         resultData = await get_product(params, context);
+        break;
+
+      case "get_debtors":
+        resultData = await get_debtors(params, context);
+        break;
+
+      case "get_credit_sales":
+        resultData = await get_credit_sales(params, context);
+        break;
+
+      case "get_customer_debt":
+        resultData = await get_customer_debt(params, context);
         break;
 
       case "draft_invoice":
@@ -532,6 +547,131 @@ function formatToolResultsSummary(
             `- **In Stock**: **${prod.stockQuantity} units** (Threshold: ${prod.lowStockThreshold}) ${prod.isLowStock ? "⚠️ _LOW STOCK_" : "✅"}\n` +
             `- **All-Time Sold**: ${prod.totalUnitsSold} units (Revenue: ${prod.totalRevenueGenerated})`
         );
+        break;
+      }
+
+      case "get_debtors": {
+        const debtorsData = data as {
+          totalDebtors: number;
+          formattedTotalReceivables: string;
+          formattedTotalOverdue: string;
+          debtors: {
+            customerName: string;
+            phone: string | null;
+            formattedTotalOutstandingDebt: string;
+            formattedOverdueDebt: string;
+            activeCreditSalesCount: number;
+          }[];
+        };
+
+        if (debtorsData.debtors.length === 0) {
+          parts.push(`🎉 **No outstanding customer debts!** All credit sales have been fully paid.`);
+        } else {
+          parts.push(
+            `### 📜 Customer Debt Ledger & Receivables\n` +
+              `- **Total Customers with Debt**: ${debtorsData.totalDebtors}\n` +
+              `- **Total Outstanding Balance**: **${debtorsData.formattedTotalReceivables}**\n` +
+              (debtorsData.formattedTotalOverdue !== "₦0.00" && debtorsData.formattedTotalOverdue !== "0.00"
+                ? `- **Total Overdue Debt**: ⚠️ **${debtorsData.formattedTotalOverdue}**\n\n`
+                : "\n") +
+              `**Debtor Accounts:**\n` +
+              debtorsData.debtors
+                .slice(0, 10)
+                .map(
+                  (d, i) =>
+                    `${i + 1}. **${d.customerName}** ${d.phone ? `(${d.phone})` : ""}: owes **${d.formattedTotalOutstandingDebt}** across ${d.activeCreditSalesCount} credit sale(s)`
+                )
+                .join("\n")
+          );
+        }
+        break;
+      }
+
+      case "get_credit_sales": {
+        const creditData = data as {
+          dateRangeDescription: string;
+          totalRecords: number;
+          formattedTotalCreditGranted: string;
+          formattedTotalCollected: string;
+          formattedTotalOutstanding: string;
+          sales: {
+            receiptNumber: string;
+            customer: string;
+            formattedTotalAmount: string;
+            formattedAmountPaid: string;
+            formattedOutstandingBalance: string;
+            creditStatus: string;
+            creditDueDate: string | null;
+            saleDate: string;
+          }[];
+        };
+
+        if (creditData.sales.length === 0) {
+          parts.push(`No credit sales recorded for **${creditData.dateRangeDescription}**.`);
+        } else {
+          parts.push(
+            `### 📜 Credit Sales Transactions (${creditData.dateRangeDescription})\n` +
+              `- **Total Credit Granted**: ${creditData.formattedTotalCreditGranted} (${creditData.totalRecords} sales)\n` +
+              `- **Collected Down/Repayments**: ${creditData.formattedTotalCollected}\n` +
+              `- **Total Outstanding Balance**: **${creditData.formattedTotalOutstanding}**\n\n` +
+              `**Recent Credit Sales:**\n` +
+              creditData.sales
+                .slice(0, 5)
+                .map(
+                  (s, i) =>
+                    `${i + 1}. **${s.receiptNumber}** - ${s.customer}: ${s.formattedTotalAmount} (Owes: **${s.formattedOutstandingBalance}**, [${s.creditStatus}], Due: ${s.creditDueDate || "N/A"})`
+                )
+                .join("\n")
+          );
+        }
+        break;
+      }
+
+      case "get_customer_debt": {
+        const custDebt = data as {
+          error?: string;
+          customer?: { name: string; phone: string | null };
+          formattedTotalCreditGiven: string;
+          formattedTotalAmountPaid: string;
+          formattedTotalOutstanding: string;
+          formattedTotalOverdue: string;
+          hasDebt: boolean;
+          creditSales: {
+            receiptNumber: string;
+            formattedTotalAmount: string;
+            formattedOutstandingBalance: string;
+            creditStatus: string;
+            creditDueDate: string | null;
+            payments: { formattedAmount: string; paymentMethod: string; date: string }[];
+          }[];
+        };
+
+        if (custDebt.error) {
+          parts.push(custDebt.error);
+        } else if (custDebt.customer) {
+          parts.push(
+            `### 👤 Customer Debt Profile: ${custDebt.customer.name}\n` +
+              `- **Contact**: ${custDebt.customer.phone || "No phone"}\n` +
+              `- **Total Lifetime Credit**: ${custDebt.formattedTotalCreditGiven}\n` +
+              `- **Total Settled/Paid**: ${custDebt.formattedTotalAmountPaid}\n` +
+              `- **Current Outstanding Balance**: **${custDebt.formattedTotalOutstanding}**\n` +
+              (custDebt.formattedTotalOverdue !== "₦0.00" && custDebt.formattedTotalOverdue !== "0.00"
+                ? `- **Overdue Amount**: ⚠️ **${custDebt.formattedTotalOverdue}**\n\n`
+                : "\n") +
+              (custDebt.creditSales.length > 0
+                ? `**Credit Transactions:**\n` +
+                  custDebt.creditSales
+                    .map(
+                      (s) =>
+                        `- **${s.receiptNumber}**: Total ${s.formattedTotalAmount}, Balance: **${s.formattedOutstandingBalance}** [${s.creditStatus}] (Due: ${s.creditDueDate || "N/A"})` +
+                        (s.payments.length > 0
+                          ? `\n  - *Repayments*: ${s.payments.map((p) => `+${p.formattedAmount} (${p.paymentMethod}) on ${p.date}`).join(", ")}`
+                          : "")
+                    )
+                    .join("\n")
+                : "No credit transactions on file.")
+          );
+        }
         break;
       }
 

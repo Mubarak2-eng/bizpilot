@@ -185,7 +185,7 @@ export async function updateInvoiceStatusAction(
     }
 
     await prisma.invoice.update({
-      where: { id: invoiceId },
+      where: { id: existing.id },
       data: { status: newStatus },
     });
 
@@ -226,7 +226,7 @@ export async function deleteInvoiceAction(
     }
 
     await prisma.invoice.delete({
-      where: { id: invoiceId },
+      where: { id: existing.id },
     });
 
     revalidatePath("/invoices");

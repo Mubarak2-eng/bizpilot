@@ -102,7 +102,7 @@ export async function updateExpenseAction(
     const createdAt = dateRaw ? new Date(dateRaw) : existing.createdAt;
 
     await prisma.expense.update({
-      where: { id: expenseId },
+      where: { id: existing.id },
       data: {
         category,
         description,
@@ -147,7 +147,7 @@ export async function deleteExpenseAction(
     }
 
     await prisma.expense.delete({
-      where: { id: expenseId },
+      where: { id: existing.id },
     });
 
     revalidatePath("/expenses");

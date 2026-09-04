@@ -89,7 +89,7 @@ export async function requestWhatsAppLinkAction(
       await prisma.whatsAppConnection.delete({
         where: { id: existingCurrent.id },
       });
-      deleteWhatsAppSession(existingCurrent.phoneNumber);
+      await deleteWhatsAppSession(existingCurrent.phoneNumber);
     }
 
     // Upsert pending connection (verified = false)
@@ -287,7 +287,7 @@ export async function unlinkWhatsAppNumberAction(
       where: { id: connection.id },
     });
 
-    deleteWhatsAppSession(connection.phoneNumber);
+    await deleteWhatsAppSession(connection.phoneNumber);
 
     revalidatePath("/settings");
 
