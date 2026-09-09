@@ -73,61 +73,64 @@ export async function checkAndIncrementAIQuota(
 ): Promise<AIQuotaCheckResult> {
   const periodKey = getCurrentPeriodKey(referenceDate);
 
-  return prisma.$transaction(async (tx) => {
-    // 1. Resolve business plan limit
-    const subState = await getBusinessSubscription(businessId, referenceDate);
-    const limit = subState.plan.aiMonthlyLimit;
+  // 1. Resolve business plan limit before transaction
+  const subState = await getBusinessSubscription(businessId, referenceDate);
+  const limit = subState.plan.aiMonthlyLimit;
 
-    // 2. Fetch current usage record
-    const usage = await tx.aIUsage.findUnique({
-      where: {
-        businessId_periodKey: {
+  return prisma.$transaction(
+    async (tx) => {
+      // 2. Fetch current usage record
+      const usage = await tx.aIUsage.findUnique({
+        where: {
+          businessId_periodKey: {
+            businessId,
+            periodKey,
+          },
+        },
+      });
+
+      const currentCount = usage?.queryCount ?? 0;
+
+      // 3. Enforce quota ceiling
+      if (currentCount >= limit) {
+        return {
+          allowed: false,
+          queryCount: currentCount,
+          limit,
+          remaining: 0,
+          planCode: subState.planCode,
+          message: `You've reached your ${limit} AI queries for this month.\n\nYour Business Brain and core business data are still available.\n\nUpgrade your plan to continue using BizPilot AI.`,
+        };
+      }
+
+      // 4. Atomically increment usage
+      const updated = await tx.aIUsage.upsert({
+        where: {
+          businessId_periodKey: {
+            businessId,
+            periodKey,
+          },
+        },
+        create: {
           businessId,
           periodKey,
+          queryCount: 1,
         },
-      },
-    });
+        update: {
+          queryCount: { increment: 1 },
+        },
+      });
 
-    const currentCount = usage?.queryCount ?? 0;
+      const remaining = Math.max(0, limit - updated.queryCount);
 
-    // 3. Enforce quota ceiling
-    if (currentCount >= limit) {
       return {
-        allowed: false,
-        queryCount: currentCount,
+        allowed: true,
+        queryCount: updated.queryCount,
         limit,
-        remaining: 0,
+        remaining,
         planCode: subState.planCode,
-        message: `You've reached your ${limit} AI queries for this month.\n\nYour Business Brain and core business data are still available.\n\nUpgrade your plan to continue using BizPilot AI.`,
       };
-    }
-
-    // 4. Atomically increment usage
-    const updated = await tx.aIUsage.upsert({
-      where: {
-        businessId_periodKey: {
-          businessId,
-          periodKey,
-        },
-      },
-      create: {
-        businessId,
-        periodKey,
-        queryCount: 1,
-      },
-      update: {
-        queryCount: { increment: 1 },
-      },
-    });
-
-    const remaining = Math.max(0, limit - updated.queryCount);
-
-    return {
-      allowed: true,
-      queryCount: updated.queryCount,
-      limit,
-      remaining,
-      planCode: subState.planCode,
-    };
-  });
+    },
+    { maxWait: 15000, timeout: 20000 }
+  );
 }

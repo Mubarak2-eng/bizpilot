@@ -12,6 +12,7 @@ import {
 import * as authHelpers from "@/lib/auth-helpers";
 import * as emailModule from "@/lib/email";
 import { Role } from "@/types/auth";
+import { Business, Customer, Membership, User } from "@prisma/client";
 
 // Mock next/cache revalidatePath
 vi.mock("next/cache", () => ({
@@ -20,19 +21,19 @@ vi.mock("next/cache", () => ({
 }));
 
 describe("Phase 11: Customer Email Campaigns & Announcements", () => {
-  let businessA: any;
-  let businessB: any;
-  let ownerUserA: any;
-  let staffUserA: any;
-  let ownerUserB: any;
+  let businessA: Business;
+  let businessB: Business;
+  let ownerUserA: User;
+  let staffUserA: User;
+  let ownerUserB: User;
 
-  let customerA1: any;
-  let customerA2: any;
-  let customerA_NoEmail: any;
-  let customerA_InvalidEmail: any;
-  let customerA_DuplicateEmail: any;
+  let customerA1: Customer;
+  let customerA2: Customer;
+  let customerA_NoEmail: Customer;
+  let customerA_InvalidEmail: Customer;
+  let customerA_DuplicateEmail: Customer;
 
-  let customerB1: any;
+  let customerB1: Customer;
 
   beforeEach(async () => {
     // Upsert Business A
@@ -175,7 +176,7 @@ describe("Phase 11: Customer Email Campaigns & Announcements", () => {
     it("should reject campaign creation when subject is empty", async () => {
       vi.spyOn(authHelpers, "requireBusinessRole").mockResolvedValue({
         user: ownerUserA,
-        membership: { role: "OWNER" } as any,
+        membership: { role: "OWNER" } as unknown as Membership,
         business: businessA,
         role: Role.OWNER,
       });
@@ -191,7 +192,7 @@ describe("Phase 11: Customer Email Campaigns & Announcements", () => {
     it("should reject campaign creation when message body is empty", async () => {
       vi.spyOn(authHelpers, "requireBusinessRole").mockResolvedValue({
         user: ownerUserA,
-        membership: { role: "OWNER" } as any,
+        membership: { role: "OWNER" } as unknown as Membership,
         business: businessA,
         role: Role.OWNER,
       });
@@ -207,7 +208,7 @@ describe("Phase 11: Customer Email Campaigns & Announcements", () => {
     it("should correctly preview eligible recipients and skip missing, invalid, and duplicate emails", async () => {
       vi.spyOn(authHelpers, "requireBusinessRole").mockResolvedValue({
         user: ownerUserA,
-        membership: { role: "OWNER" } as any,
+        membership: { role: "OWNER" } as unknown as Membership,
         business: businessA,
         role: Role.OWNER,
       });
@@ -230,7 +231,7 @@ describe("Phase 11: Customer Email Campaigns & Announcements", () => {
     it("should only evaluate customers belonging to the active business", async () => {
       vi.spyOn(authHelpers, "requireBusinessRole").mockResolvedValue({
         user: ownerUserA,
-        membership: { role: "OWNER" } as any,
+        membership: { role: "OWNER" } as unknown as Membership,
         business: businessA,
         role: Role.OWNER,
       });
@@ -260,7 +261,7 @@ describe("Phase 11: Customer Email Campaigns & Announcements", () => {
     it("should allow OWNER or ADMIN to create draft campaigns", async () => {
       vi.spyOn(authHelpers, "requireBusinessRole").mockResolvedValue({
         user: ownerUserA,
-        membership: { role: "OWNER" } as any,
+        membership: { role: "OWNER" } as unknown as Membership,
         business: businessA,
         role: Role.OWNER,
       });
@@ -298,7 +299,7 @@ describe("Phase 11: Customer Email Campaigns & Announcements", () => {
       // User B attempts to access campaign A details
       vi.spyOn(authHelpers, "requireBusinessMembership").mockResolvedValue({
         user: ownerUserB,
-        membership: { role: "OWNER" } as any,
+        membership: { role: "OWNER" } as unknown as Membership,
         business: businessB,
         role: Role.OWNER,
       });
@@ -311,7 +312,7 @@ describe("Phase 11: Customer Email Campaigns & Announcements", () => {
     it("should reject cross-tenant customer IDs when user specifies selected recipients", async () => {
       vi.spyOn(authHelpers, "requireBusinessRole").mockResolvedValue({
         user: ownerUserA,
-        membership: { role: "OWNER" } as any,
+        membership: { role: "OWNER" } as unknown as Membership,
         business: businessA,
         role: Role.OWNER,
       });
@@ -326,7 +327,7 @@ describe("Phase 11: Customer Email Campaigns & Announcements", () => {
     it("should transition DRAFT -> SENDING and record successful delivery as SENT", async () => {
       vi.spyOn(authHelpers, "requireBusinessRole").mockResolvedValue({
         user: ownerUserA,
-        membership: { role: "OWNER" } as any,
+        membership: { role: "OWNER" } as unknown as Membership,
         business: businessA,
         role: Role.OWNER,
       });
@@ -377,7 +378,7 @@ describe("Phase 11: Customer Email Campaigns & Announcements", () => {
     it("should prevent duplicate sends if campaign is already SENT", async () => {
       vi.spyOn(authHelpers, "requireBusinessRole").mockResolvedValue({
         user: ownerUserA,
-        membership: { role: "OWNER" } as any,
+        membership: { role: "OWNER" } as unknown as Membership,
         business: businessA,
         role: Role.OWNER,
       });
@@ -401,7 +402,7 @@ describe("Phase 11: Customer Email Campaigns & Announcements", () => {
     it("should enforce atomic state acquisition so concurrent send calls cannot double-send", async () => {
       vi.spyOn(authHelpers, "requireBusinessRole").mockResolvedValue({
         user: ownerUserA,
-        membership: { role: "OWNER" } as any,
+        membership: { role: "OWNER" } as unknown as Membership,
         business: businessA,
         role: Role.OWNER,
       });
@@ -442,7 +443,7 @@ describe("Phase 11: Customer Email Campaigns & Announcements", () => {
     it("should record PARTIALLY_SENT when some recipients fail and some succeed", async () => {
       vi.spyOn(authHelpers, "requireBusinessRole").mockResolvedValue({
         user: ownerUserA,
-        membership: { role: "OWNER" } as any,
+        membership: { role: "OWNER" } as unknown as Membership,
         business: businessA,
         role: Role.OWNER,
       });
@@ -495,7 +496,7 @@ describe("Phase 11: Customer Email Campaigns & Announcements", () => {
     it("should record FAILED when all recipients fail", async () => {
       vi.spyOn(authHelpers, "requireBusinessRole").mockResolvedValue({
         user: ownerUserA,
-        membership: { role: "OWNER" } as any,
+        membership: { role: "OWNER" } as unknown as Membership,
         business: businessA,
         role: Role.OWNER,
       });
@@ -528,7 +529,7 @@ describe("Phase 11: Customer Email Campaigns & Announcements", () => {
     it("should preserve historical snapshot email even if customer email is subsequently modified", async () => {
       vi.spyOn(authHelpers, "requireBusinessRole").mockResolvedValue({
         user: ownerUserA,
-        membership: { role: "OWNER" } as any,
+        membership: { role: "OWNER" } as unknown as Membership,
         business: businessA,
         role: Role.OWNER,
       });
@@ -596,7 +597,7 @@ describe("Phase 11: Customer Email Campaigns & Announcements", () => {
 
       vi.spyOn(authHelpers, "requireBusinessMembership").mockResolvedValue({
         user: ownerUserA,
-        membership: { role: "OWNER" } as any,
+        membership: { role: "OWNER" } as unknown as Membership,
         business: businessA,
         role: Role.OWNER,
       });
@@ -610,7 +611,7 @@ describe("Phase 11: Customer Email Campaigns & Announcements", () => {
     it("should allow deleting DRAFT campaign and forbid deleting SENT campaign", async () => {
       vi.spyOn(authHelpers, "requireBusinessRole").mockResolvedValue({
         user: ownerUserA,
-        membership: { role: "OWNER" } as any,
+        membership: { role: "OWNER" } as unknown as Membership,
         business: businessA,
         role: Role.OWNER,
       });
@@ -648,7 +649,7 @@ describe("Phase 11: Customer Email Campaigns & Announcements", () => {
     it("should return campaign details and individual recipient breakdown for authorized user", async () => {
       vi.spyOn(authHelpers, "requireBusinessMembership").mockResolvedValue({
         user: ownerUserA,
-        membership: { role: "OWNER" } as any,
+        membership: { role: "OWNER" } as unknown as Membership,
         business: businessA,
         role: Role.OWNER,
       });
@@ -686,7 +687,7 @@ describe("Phase 11: Customer Email Campaigns & Announcements", () => {
       const originalApiKey = process.env.RESEND_API_KEY;
 
       try {
-        (process.env as any).NODE_ENV = "production";
+        (process.env as Record<string, string | undefined>).NODE_ENV = "production";
         delete process.env.RESEND_API_KEY;
 
         const result = await emailModule.sendCustomerCampaignEmail({
@@ -699,7 +700,7 @@ describe("Phase 11: Customer Email Campaigns & Announcements", () => {
         expect(result.success).toBe(false);
         expect(result.error).toMatch(/not configured in production/i);
       } finally {
-        (process.env as any).NODE_ENV = originalNodeEnv;
+        (process.env as Record<string, string | undefined>).NODE_ENV = originalNodeEnv;
         if (originalApiKey) process.env.RESEND_API_KEY = originalApiKey;
       }
     });
@@ -716,7 +717,7 @@ describe("Phase 11: Customer Email Campaigns & Announcements", () => {
 
       vi.spyOn(authHelpers, "requireBusinessRole").mockResolvedValue({
         user: ownerUserA,
-        membership: { role: "OWNER" } as any,
+        membership: { role: "OWNER" } as unknown as Membership,
         business: emptyBusiness,
         role: Role.OWNER,
       });
@@ -731,8 +732,8 @@ describe("Phase 11: Customer Email Campaigns & Announcements", () => {
   });
 
   describe("6. Hard Server-Side 500-Recipient Limit Enforcement", () => {
-    let largeBiz: any;
-    let largeOwner: any;
+    let largeBiz: Business;
+    let largeOwner: User;
 
     beforeEach(async () => {
       // Clean up and create a large business
@@ -773,7 +774,7 @@ describe("Phase 11: Customer Email Campaigns & Announcements", () => {
     it("should allow campaign creation when eligible recipients count is exactly 500", async () => {
       vi.spyOn(authHelpers, "requireBusinessRole").mockResolvedValue({
         user: largeOwner,
-        membership: { role: "OWNER" } as any,
+        membership: { role: "OWNER" } as unknown as Membership,
         business: largeBiz,
         role: Role.OWNER,
       });
@@ -799,7 +800,7 @@ describe("Phase 11: Customer Email Campaigns & Announcements", () => {
     it("should reject campaign creation when eligible recipients count is 501", async () => {
       vi.spyOn(authHelpers, "requireBusinessRole").mockResolvedValue({
         user: largeOwner,
-        membership: { role: "OWNER" } as any,
+        membership: { role: "OWNER" } as unknown as Membership,
         business: largeBiz,
         role: Role.OWNER,
       });
@@ -825,7 +826,7 @@ describe("Phase 11: Customer Email Campaigns & Announcements", () => {
     it("should reject sendCampaignAction when eligible recipients count is 501, keep campaign in DRAFT, and send ZERO emails", async () => {
       vi.spyOn(authHelpers, "requireBusinessRole").mockResolvedValue({
         user: largeOwner,
-        membership: { role: "OWNER" } as any,
+        membership: { role: "OWNER" } as unknown as Membership,
         business: largeBiz,
         role: Role.OWNER,
       });
@@ -873,7 +874,7 @@ describe("Phase 11: Customer Email Campaigns & Announcements", () => {
     it("should reject selected-customer campaign when selected list exceeds 500 eligible recipients", async () => {
       vi.spyOn(authHelpers, "requireBusinessRole").mockResolvedValue({
         user: largeOwner,
-        membership: { role: "OWNER" } as any,
+        membership: { role: "OWNER" } as unknown as Membership,
         business: largeBiz,
         role: Role.OWNER,
       });

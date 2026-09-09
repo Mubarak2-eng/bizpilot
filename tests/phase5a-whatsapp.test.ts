@@ -1,5 +1,16 @@
 import "dotenv/config";
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
+import { LocalDeterministicAIProvider } from "../src/lib/ai/provider";
+
+// Use the existing local deterministic AI provider to make tests deterministic and avoid live AI network timeouts
+vi.mock("../src/lib/ai/provider", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../src/lib/ai/provider")>();
+  return {
+    ...actual,
+    getAIProvider: vi.fn(() => new LocalDeterministicAIProvider()),
+  };
+});
+import { NextRequest } from "next/server";
 import { prisma } from "../src/lib/prisma";
 import crypto from "crypto";
 import {
@@ -138,21 +149,21 @@ describe("Phase 5A: WhatsApp Foundation & Webhook Architecture", () => {
         process.env.WHATSAPP_VERIFY_TOKEN = "test_custom_verify_token_987";
 
         // 1. Matching token should return challenge (200)
-        const validReq = new Request("http://localhost:3000/api/webhook/whatsapp?hub.mode=subscribe&hub.verify_token=test_custom_verify_token_987&hub.challenge=test_challenge_12345");
-        const validRes = await GET(validReq as any);
+        const validReq = new NextRequest("http://localhost:3000/api/webhook/whatsapp?hub.mode=subscribe&hub.verify_token=test_custom_verify_token_987&hub.challenge=test_challenge_12345");
+        const validRes = await GET(validReq);
         expect(validRes.status).toBe(200);
         const validBody = await validRes.text();
         expect(validBody).toBe("test_challenge_12345");
 
         // 2. Mismatched token should return 403 Forbidden
-        const invalidReq = new Request("http://localhost:3000/api/webhook/whatsapp?hub.mode=subscribe&hub.verify_token=wrong_token&hub.challenge=test_challenge_12345");
-        const invalidRes = await GET(invalidReq as any);
+        const invalidReq = new NextRequest("http://localhost:3000/api/webhook/whatsapp?hub.mode=subscribe&hub.verify_token=wrong_token&hub.challenge=test_challenge_12345");
+        const invalidRes = await GET(invalidReq);
         expect(invalidRes.status).toBe(403);
 
         // 3. Missing configured token on server should return 403 Forbidden (no hardcoded fallback)
         delete process.env.WHATSAPP_VERIFY_TOKEN;
-        const noServerTokenReq = new Request("http://localhost:3000/api/webhook/whatsapp?hub.mode=subscribe&hub.verify_token=bizpilot_wa_verify_secret_2026&hub.challenge=test_challenge_12345");
-        const noServerTokenRes = await GET(noServerTokenReq as any);
+        const noServerTokenReq = new NextRequest("http://localhost:3000/api/webhook/whatsapp?hub.mode=subscribe&hub.verify_token=bizpilot_wa_verify_secret_2026&hub.challenge=test_challenge_12345");
+        const noServerTokenRes = await GET(noServerTokenReq);
         expect(noServerTokenRes.status).toBe(403);
       } finally {
         if (originalToken) process.env.WHATSAPP_VERIFY_TOKEN = originalToken;

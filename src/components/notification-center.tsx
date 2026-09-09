@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition, useRef } from "react";
+import { useState, useEffect, useCallback, useTransition, useRef } from "react";
 import Link from "next/link";
 import {
   getNotificationsAction,
@@ -20,20 +20,26 @@ export default function NotificationCenter({ businessId }: NotificationCenterPro
   const [isPending, startTransition] = useTransition();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const loadNotifications = async () => {
+  const loadNotifications = useCallback(async () => {
     const res = await getNotificationsAction(businessId);
     if (res.success) {
       setUnreadCount(res.unreadCount);
       setNotifications(res.notifications);
     }
-  };
+  }, [businessId]);
 
   useEffect(() => {
-    loadNotifications();
-    // Poll every 30 seconds for live updates
-    const interval = setInterval(loadNotifications, 30000);
-    return () => clearInterval(interval);
-  }, [businessId]);
+    queueMicrotask(() => {
+      void loadNotifications();
+    });
+    const interval = setInterval(() => {
+      void loadNotifications();
+    }, 30000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [loadNotifications]);
 
   // Close dropdown on click outside
   useEffect(() => {

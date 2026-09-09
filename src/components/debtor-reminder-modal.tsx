@@ -43,10 +43,16 @@ export default function DebtorReminderModal({
     if (!isOpen || !customerId) return;
 
     let isMounted = true;
-    setIsLoadingPreview(true);
-    setFeedback(null);
 
-    getDebtorReminderPreviewAction(businessId, customerId, saleId, tone).then((res) => {
+    queueMicrotask(() => {
+      if (isMounted) {
+        setIsLoadingPreview(true);
+        setFeedback(null);
+      }
+    });
+
+    void (async () => {
+      const res = await getDebtorReminderPreviewAction(businessId, customerId, saleId, tone);
       if (!isMounted) return;
       setIsLoadingPreview(false);
       if (res.success && res.customer) {
@@ -60,7 +66,7 @@ export default function DebtorReminderModal({
       } else {
         setFeedback({ error: res.error || "Failed to load debtor preview." });
       }
-    });
+    })();
 
     return () => {
       isMounted = false;

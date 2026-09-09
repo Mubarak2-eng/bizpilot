@@ -52,7 +52,7 @@ export function validateProductionEnv(
   const resendApiKey = env.RESEND_API_KEY?.trim();
   const hasEmail = Boolean(resendApiKey);
   if (isProduction && !hasEmail) {
-    errors.push("RESEND_API_KEY is required in production for Login PIN verification and transactional emails.");
+    errors.push("RESEND_API_KEY is required in production for transactional emails (campaigns, reminders).");
   } else if (!hasEmail) {
     warnings.push("RESEND_API_KEY is not configured (simulated mode in development).");
   }

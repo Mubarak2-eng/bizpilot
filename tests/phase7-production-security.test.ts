@@ -169,13 +169,13 @@ describe("Phase 7: Production Security & Launch Readiness Audit Suite", () => {
       const oldSecret = process.env.WHATSAPP_APP_SECRET;
 
       try {
-        (process.env as any).NODE_ENV = "production";
+        (process.env as Record<string, string | undefined>).NODE_ENV = "production";
         delete process.env.WHATSAPP_APP_SECRET;
 
         const isValid = verifyWhatsAppSignature(rawBody, "sha256=123456");
         expect(isValid).toBe(false);
       } finally {
-        (process.env as any).NODE_ENV = oldEnv;
+        (process.env as Record<string, string | undefined>).NODE_ENV = oldEnv;
         if (oldSecret) process.env.WHATSAPP_APP_SECRET = oldSecret;
       }
     });
@@ -415,12 +415,12 @@ describe("Phase 7: Production Security & Launch Readiness Audit Suite", () => {
       const oldSecret = process.env.PAYSTACK_SECRET_KEY;
 
       try {
-        (process.env as any).NODE_ENV = "production";
+        (process.env as Record<string, string | undefined>).NODE_ENV = "production";
         delete process.env.PAYSTACK_SECRET_KEY;
 
         expect(verifyPaystackWebhookSignature("{}", "sig")).toBe(false);
       } finally {
-        (process.env as any).NODE_ENV = oldEnv;
+        (process.env as Record<string, string | undefined>).NODE_ENV = oldEnv;
         if (oldSecret) process.env.PAYSTACK_SECRET_KEY = oldSecret;
       }
     });

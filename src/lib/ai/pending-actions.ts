@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../prisma";
 
 export type AIActionType = "CREATE_INVOICE" | "CREATE_SALE" | "CREATE_EXPENSE";
@@ -81,7 +82,7 @@ export async function createPendingAction(
       userId,
       businessId,
       actionType,
-      payload: payload as any,
+      payload: payload as unknown as Prisma.InputJsonValue,
       expiresAt,
     },
   });

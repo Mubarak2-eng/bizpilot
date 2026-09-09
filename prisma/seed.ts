@@ -22,22 +22,44 @@ async function main() {
 
   console.log("🌱 Seeding BizPilot database...\n");
 
-  // ── Clean existing data (in reverse dependency order) ──────────────────
-  await prisma.account.deleteMany();
-  await prisma.session.deleteMany();
-  await prisma.verificationToken.deleteMany();
-  await prisma.invoiceItem.deleteMany();
-  await prisma.invoice.deleteMany();
-  await prisma.creditPayment.deleteMany();
-  await prisma.notification.deleteMany();
-  await prisma.saleItem.deleteMany();
-  await prisma.sale.deleteMany();
-  await prisma.expense.deleteMany();
-  await prisma.product.deleteMany();
-  await prisma.customer.deleteMany();
-  await prisma.membership.deleteMany();
-  await prisma.business.deleteMany();
-  await prisma.user.deleteMany();
+  // ── Clean existing demo/seed data only (protecting real application data) ──
+  const demoUserEmails = ["demo@bizpilot.test", "admin@bizpilot.test", "staff@bizpilot.test"];
+  const demoBusinessSlugs = ["acme-electronics", "beta-retailers"];
+
+  const demoBusinesses = await prisma.business.findMany({
+    where: { slug: { in: demoBusinessSlugs } },
+    select: { id: true },
+  });
+  const demoBusinessIds = demoBusinesses.map((b) => b.id);
+
+  const demoUsers = await prisma.user.findMany({
+    where: { email: { in: demoUserEmails } },
+    select: { id: true },
+  });
+  const demoUserIds = demoUsers.map((u) => u.id);
+
+  if (demoUserIds.length > 0) {
+    await prisma.account.deleteMany({ where: { userId: { in: demoUserIds } } });
+    await prisma.session.deleteMany({ where: { userId: { in: demoUserIds } } });
+  }
+
+  if (demoBusinessIds.length > 0) {
+    await prisma.creditPayment.deleteMany({ where: { businessId: { in: demoBusinessIds } } });
+    await prisma.invoiceItem.deleteMany({ where: { invoice: { businessId: { in: demoBusinessIds } } } });
+    await prisma.invoice.deleteMany({ where: { businessId: { in: demoBusinessIds } } });
+    await prisma.notification.deleteMany({ where: { businessId: { in: demoBusinessIds } } });
+    await prisma.saleItem.deleteMany({ where: { sale: { businessId: { in: demoBusinessIds } } } });
+    await prisma.sale.deleteMany({ where: { businessId: { in: demoBusinessIds } } });
+    await prisma.expense.deleteMany({ where: { businessId: { in: demoBusinessIds } } });
+    await prisma.product.deleteMany({ where: { businessId: { in: demoBusinessIds } } });
+    await prisma.customer.deleteMany({ where: { businessId: { in: demoBusinessIds } } });
+    await prisma.membership.deleteMany({ where: { businessId: { in: demoBusinessIds } } });
+    await prisma.business.deleteMany({ where: { id: { in: demoBusinessIds } } });
+  }
+
+  if (demoUserIds.length > 0) {
+    await prisma.user.deleteMany({ where: { id: { in: demoUserIds } } });
+  }
   // ── Plans ───────────────────────────────────────────────────────────────
   const PLAN_DEFINITIONS = [
     {

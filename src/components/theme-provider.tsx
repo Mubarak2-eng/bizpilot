@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useSyncExternalStore } from "react";
 
 export type Theme = "light" | "dark" | "system";
 
@@ -14,23 +14,34 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 const STORAGE_KEY = "bizpilot-theme";
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("dark");
-  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("dark");
-  const [mounted, setMounted] = useState(false);
+function subscribe(callback: () => void) {
+  window.addEventListener("storage", callback);
+  window.addEventListener("bizpilot-theme-change", callback);
+  return () => {
+    window.removeEventListener("storage", callback);
+    window.removeEventListener("bizpilot-theme-change", callback);
+  };
+}
 
-  // Read initial stored theme on mount
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
-      if (stored === "light" || stored === "dark" || stored === "system") {
-        setThemeState(stored);
-      }
-    } catch {
-      // Ignore localStorage access issues
+function getSnapshot(): Theme {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
+    if (stored === "light" || stored === "dark" || stored === "system") {
+      return stored;
     }
-    setMounted(true);
-  }, []);
+  } catch {
+    // Ignore localStorage access issues
+  }
+  return "dark";
+}
+
+function getServerSnapshot(): Theme {
+  return "dark";
+}
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("dark");
 
   // Update DOM class and resolve theme
   useEffect(() => {
@@ -68,9 +79,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [theme]);
 
   const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme);
     try {
       localStorage.setItem(STORAGE_KEY, newTheme);
+      window.dispatchEvent(new Event("bizpilot-theme-change"));
     } catch {
       // Ignore localStorage write issues
     }

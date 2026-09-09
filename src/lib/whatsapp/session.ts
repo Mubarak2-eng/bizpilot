@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "../prisma";
 import { ChatMessage } from "../ai/types";
 import { WhatsAppSession } from "./types";
@@ -149,7 +150,7 @@ export async function addMessageToSession(
     await prisma.whatsAppConversationSession.update({
       where: { phoneNumber },
       data: {
-        history: cappedHistory as any,
+        history: cappedHistory as unknown as Prisma.InputJsonValue,
         lastActivity: new Date(),
       },
     });

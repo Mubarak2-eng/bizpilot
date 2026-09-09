@@ -3,7 +3,6 @@ import Credentials from "next-auth/providers/credentials";
 import { authConfig } from "./auth.config";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/password";
-import { verifyLoginPinChallenge } from "@/lib/auth/login-pin";
 
 /**
  * Core credential verification logic for NextAuth credentials provider.
@@ -49,34 +48,6 @@ export async function verifyUserCredentials(
   };
 }
 
-/**
- * Authorizes credentials submitted to NextAuth.
- * In production, strictly requires challengeId + pin (Email Login PIN Challenge).
- * In development/test, permits direct email + password for backward compatibility.
- */
-export async function authorizeCredentials(
-  credentials?: Record<string, unknown> | null
-) {
-  // 1. Email Verification PIN Challenge
-  if (credentials?.challengeId && credentials?.pin) {
-    return verifyLoginPinChallenge(
-      String(credentials.challengeId),
-      String(credentials.pin)
-    );
-  }
-
-  // 2. Direct Credentials (STRICTLY non-production only: for local testing & development)
-  if (
-    process.env.NODE_ENV !== "production" &&
-    credentials?.email &&
-    credentials?.password
-  ) {
-    return verifyUserCredentials(credentials.email, credentials.password);
-  }
-
-  return null;
-}
-
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   secret: process.env.AUTH_SECRET,
@@ -84,16 +55,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Credentials({
       name: "Credentials",
       credentials: {
-        challengeId: { label: "Challenge ID", type: "text" },
-        pin: { label: "Verification PIN", type: "text" },
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        return authorizeCredentials(credentials as Record<string, unknown>);
+        return verifyUserCredentials(credentials?.email, credentials?.password);
       },
     }),
   ],
 });
-
-

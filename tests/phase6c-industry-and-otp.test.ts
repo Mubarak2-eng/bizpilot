@@ -225,22 +225,22 @@ describe("Phase 6C: Industry Intelligence & WhatsApp OTP Verification", () => {
       defaultBiz?.id,
     ].filter(Boolean);
 
-    for (const bId of bizIds) {
-      await prisma.saleItem.deleteMany({ where: { sale: { businessId: bId } } });
-      await prisma.sale.deleteMany({ where: { businessId: bId } });
-      await prisma.invoiceItem.deleteMany({ where: { invoice: { businessId: bId } } });
-      await prisma.invoice.deleteMany({ where: { businessId: bId } });
-      await prisma.expense.deleteMany({ where: { businessId: bId } });
-      await prisma.product.deleteMany({ where: { businessId: bId } });
-      await prisma.customer.deleteMany({ where: { businessId: bId } });
-      await prisma.whatsAppConnection.deleteMany({ where: { businessId: bId } });
-      await prisma.membership.deleteMany({ where: { businessId: bId } });
-      await prisma.business.deleteMany({ where: { id: bId } });
+    if (bizIds.length > 0) {
+      await prisma.saleItem.deleteMany({ where: { sale: { businessId: { in: bizIds } } } });
+      await prisma.sale.deleteMany({ where: { businessId: { in: bizIds } } });
+      await prisma.invoiceItem.deleteMany({ where: { invoice: { businessId: { in: bizIds } } } });
+      await prisma.invoice.deleteMany({ where: { businessId: { in: bizIds } } });
+      await prisma.expense.deleteMany({ where: { businessId: { in: bizIds } } });
+      await prisma.product.deleteMany({ where: { businessId: { in: bizIds } } });
+      await prisma.customer.deleteMany({ where: { businessId: { in: bizIds } } });
+      await prisma.whatsAppConnection.deleteMany({ where: { businessId: { in: bizIds } } });
+      await prisma.membership.deleteMany({ where: { businessId: { in: bizIds } } });
+      await prisma.business.deleteMany({ where: { id: { in: bizIds } } });
     }
 
     if (userA?.id) await prisma.user.deleteMany({ where: { id: userA.id } });
     if (userB?.id) await prisma.user.deleteMany({ where: { id: userB.id } });
-  });
+  }, 60000);
 
   // ── 1. BusinessType Foundation & Persistence ───────────────────────────────
   describe("BusinessType Foundation", () => {

@@ -310,7 +310,7 @@ describe("Phase 8: Credit Sales & Customer Debt Tracking", () => {
     it("should reject 'CREDIT' as a repayment method", async () => {
       const res = await recordCreditPaymentAction(primaryBusiness.id, activeCreditSaleId, {
         amount: 10000,
-        paymentMethod: "CREDIT" as any,
+        paymentMethod: "CREDIT" as never,
       });
       expect(res.error).toMatch(/invalid repayment method/i);
     });

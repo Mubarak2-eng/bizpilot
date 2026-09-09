@@ -19,6 +19,18 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
+// Mock @/lib/email to be deterministic and avoid unverified domain errors in test environments
+vi.mock("@/lib/email", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/email")>();
+  return {
+    ...actual,
+    sendDebtorReminderEmail: vi.fn(async () => ({
+      success: true,
+      messageId: "mock-debtor-email-id",
+    })),
+  };
+});
+
 let mockUserId = "";
 
 vi.mock("@/lib/auth-helpers", () => ({

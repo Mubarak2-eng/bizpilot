@@ -1,17 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useTheme, Theme } from "@/components/theme-provider";
+import { useSyncExternalStore } from "react";
+import { useTheme } from "@/components/theme-provider";
+
+const emptySubscribe = () => () => {};
 
 export default function ThemeToggle() {
   const { theme, resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const isMounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
+  if (!isMounted) {
     return (
       <div
         className="w-8 h-8 rounded-xl bg-slate-200/50 dark:bg-white/[0.06] border border-slate-300 dark:border-white/[0.08] animate-pulse"
