@@ -134,7 +134,7 @@ describe("Phase 6D: Commercialization, Subscriptions, Paystack & AI Quotas", () 
       expect(Number(starter?.monthlyPrice)).toBe(5000);
       expect(starter?.aiMonthlyLimit).toBe(150);
 
-      expect(Number(pro?.monthlyPrice)).toBe(5000);
+      expect(Number(pro?.monthlyPrice)).toBe(12000);
       expect(pro?.aiMonthlyLimit).toBe(500);
 
       expect(Number(business?.monthlyPrice)).toBe(25000);

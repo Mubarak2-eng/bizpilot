@@ -120,10 +120,10 @@ describe("Phase 8: Payments & Monetization Security Suite", () => {
       expect(freePlan?.maxStaff).toBe(2);
     });
 
-    it("should have PRO plan configured at ₦5,000 with 500 AI queries quota", async () => {
+    it("should have PRO plan configured at ₦12,000 with 500 AI queries quota", async () => {
       const proPlan = await prisma.plan.findUnique({ where: { code: "PRO" } });
       expect(proPlan).toBeDefined();
-      expect(Number(proPlan?.monthlyPrice)).toBe(5000);
+      expect(Number(proPlan?.monthlyPrice)).toBe(12000);
       expect(proPlan?.currency).toBe("NGN");
       expect(proPlan?.aiMonthlyLimit).toBe(500);
       expect(proPlan?.maxStaff).toBe(10);
@@ -146,9 +146,9 @@ describe("Phase 8: Payments & Monetization Security Suite", () => {
 
   // ── 2. Payment Initialization & Server-Side Price Derivation ──────────────
   describe("2. Server-Side Price Derivation & Checkout Initialization", () => {
-    it("should derive exactly ₦5,000 (500,000 Kobo) for PRO without trusting client price", async () => {
+    it("should derive exactly ₦12,000 (1,200,000 Kobo) for PRO without trusting client price", async () => {
       const proPlan = await prisma.plan.findUnique({ where: { code: "PRO" } });
-      expect(Number(proPlan?.monthlyPrice)).toBe(5000);
+      expect(Number(proPlan?.monthlyPrice)).toBe(12000);
 
       const res = await initializePaystackTransaction({
         email: userOwnerA.email,
@@ -238,7 +238,7 @@ describe("Phase 8: Payments & Monetization Security Suite", () => {
 
   // ── 4. Webhook Processing: Success, Idempotency & Zero-Trust Validation ────
   describe("4. Webhook Processing & Zero-Trust Verification", () => {
-    it("should process valid ₦5,000 PRO charge.success and activate PRO subscription", async () => {
+    it("should process valid ₦12,000 PRO charge.success and activate PRO subscription", async () => {
       const oldKey = process.env.PAYSTACK_SECRET_KEY;
       process.env.PAYSTACK_SECRET_KEY = testSecretKey;
 
@@ -248,7 +248,7 @@ describe("Phase 8: Payments & Monetization Security Suite", () => {
         data: {
           reference,
           status: "success",
-          amount: 500000, // ₦5,000 in Kobo
+          amount: 1200000, // ₦12,000 in Kobo
           currency: "NGN",
           customer: { customer_code: "CUS_phase8_abc" },
           metadata: {
@@ -281,7 +281,7 @@ describe("Phase 8: Payments & Monetization Security Suite", () => {
       expect(subState.status).toBe("ACTIVE");
       expect(subState.planCode).toBe("PRO");
       expect(subState.isActive).toBe(true);
-      expect(subState.plan.monthlyPrice).toBe(5000);
+      expect(subState.plan.monthlyPrice).toBe(12000);
       expect(subState.plan.aiMonthlyLimit).toBe(500);
 
       // Verify Payment record
@@ -290,7 +290,7 @@ describe("Phase 8: Payments & Monetization Security Suite", () => {
       });
       expect(payment).toBeDefined();
       expect(payment?.status).toBe("SUCCESS");
-      expect(Number(payment?.amount)).toBe(5000);
+      expect(Number(payment?.amount)).toBe(12000);
       expect(payment?.currency).toBe("NGN");
 
       process.env.PAYSTACK_SECRET_KEY = oldKey;
@@ -306,7 +306,7 @@ describe("Phase 8: Payments & Monetization Security Suite", () => {
         data: {
           reference,
           status: "success",
-          amount: 500000,
+          amount: 1200000, // ₦12,000 in Kobo
           currency: "NGN",
           metadata: { businessId: testBizA.id, planCode: "PRO" },
         },
@@ -357,7 +357,7 @@ describe("Phase 8: Payments & Monetization Security Suite", () => {
         data: {
           reference,
           status: "success",
-          amount: 100000, // ₦1,000 (underpaid for ₦5,000 PRO plan)
+          amount: 100000, // ₦1,000 (underpaid for ₦12,000 PRO plan)
           currency: "NGN",
           metadata: { businessId: testBizB.id, planCode: "PRO" },
         },
@@ -399,7 +399,7 @@ describe("Phase 8: Payments & Monetization Security Suite", () => {
         data: {
           reference,
           status: "success",
-          amount: 500000,
+          amount: 1200000, // ₦12,000 in Kobo
           currency: "USD", // Invalid currency
           metadata: { businessId: testBizB.id, planCode: "PRO" },
         },
@@ -435,7 +435,7 @@ describe("Phase 8: Payments & Monetization Security Suite", () => {
         data: {
           reference,
           status: "success",
-          amount: 500000,
+          amount: 1200000, // ₦12,000 in Kobo
           currency: "NGN",
           metadata: { businessId: "nonexistent_tenant_id_999", planCode: "PRO" },
         },
