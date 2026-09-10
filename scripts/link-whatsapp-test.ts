@@ -55,8 +55,15 @@ async function linkWhatsAppTest() {
       process.exit(1);
     }
 
+    const existingForBiz = await prisma.whatsAppConnection.findUnique({
+      where: { businessId: business.id },
+    });
+    if (existingForBiz && existingForBiz.phoneNumber !== normalizedPhone) {
+      await prisma.whatsAppConnection.delete({ where: { id: existingForBiz.id } });
+    }
+
     const connection = await prisma.whatsAppConnection.upsert({
-      where: { phoneNumber: normalizedPhone },
+      where: { businessId: business.id },
       create: {
         phoneNumber: normalizedPhone,
         userId: user.id,
@@ -64,8 +71,8 @@ async function linkWhatsAppTest() {
         verified: true,
       },
       update: {
+        phoneNumber: normalizedPhone,
         userId: user.id,
-        businessId: business.id,
         verified: true,
       },
     });

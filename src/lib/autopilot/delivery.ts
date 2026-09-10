@@ -17,8 +17,8 @@ export interface OutboundDeliveryResult {
 export async function sendMorningBriefToWhatsApp(
   businessId: string
 ): Promise<OutboundDeliveryResult> {
-  const connection = await prisma.whatsAppConnection.findFirst({
-    where: { businessId, verified: true },
+  const connection = await prisma.whatsAppConnection.findUnique({
+    where: { businessId },
   });
 
   if (!connection || !connection.verified) {
@@ -54,8 +54,8 @@ export async function sendCriticalAlertToWhatsApp(
   alertExplanation: string,
   recommendedAction: string
 ): Promise<OutboundDeliveryResult> {
-  const connection = await prisma.whatsAppConnection.findFirst({
-    where: { businessId, verified: true },
+  const connection = await prisma.whatsAppConnection.findUnique({
+    where: { businessId },
   });
 
   if (!connection || !connection.verified) {

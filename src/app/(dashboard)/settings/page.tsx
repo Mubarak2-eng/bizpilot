@@ -111,7 +111,7 @@ export default async function SettingsPage(props: SettingsPageProps) {
     redirect("/login");
   }
 
-  const whatsAppConnection = await prisma.whatsAppConnection.findFirst({
+  const whatsAppConnection = await prisma.whatsAppConnection.findUnique({
     where: { businessId: activeContext.business.id },
     include: {
       user: {

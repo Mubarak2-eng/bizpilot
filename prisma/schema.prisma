@@ -140,7 +140,7 @@ model Business {
   sales                        Sale[]
   expenses                     Expense[]
   invoices                     Invoice[]
-  whatsAppConnections          WhatsAppConnection[]
+  whatsAppConnection           WhatsAppConnection?
   subscription                 Subscription?
   payments                     Payment[]
   creditPayments               CreditPayment[]
@@ -459,7 +459,7 @@ model WhatsAppConnection {
   id                      String    @id @default(cuid())
   phoneNumber             String    @unique // E.164 without '+' e.g. "2348012345678"
   userId                  String
-  businessId              String
+  businessId              String    @unique
   verified                Boolean   @default(false)
   verificationCodeHash    String?
   verificationExpiresAt   DateTime?
@@ -472,7 +472,6 @@ model WhatsAppConnection {
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([phoneNumber])
-  @@index([businessId])
   @@index([userId])
 }
 
@@ -634,4 +633,19 @@ model AIPendingAction {
   @@index([businessId])
   @@index([expiresAt])
 }
+
+// ─── WhatsApp Rate Limiting (Serverless Fixed/Sliding Window) ───────────────
+
+model WhatsAppRateLimit {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  count     Int      @default(1)
+  resetAt   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([key])
+  @@index([resetAt])
+}
+
 

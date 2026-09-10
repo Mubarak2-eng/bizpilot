@@ -4,6 +4,7 @@ export interface CleanupResult {
   deletedProcessedMessages: number;
   deletedOldSessions: number;
   deletedPendingActions: number;
+  deletedRateLimits: number;
 }
 
 /**
@@ -11,6 +12,7 @@ export interface CleanupResult {
  * 1. WhatsApp processed messages older than 2 hours (past the 1-hour deduplication window)
  * 2. Inactive WhatsApp conversation sessions older than 7 days
  * 3. AI pending actions that have expired for over 1 hour or were consumed over 24 hours ago
+ * 4. Expired WhatsApp rate limit windows older than 1 hour
  */
 export async function cleanupExpiredServerlessState(): Promise<CleanupResult> {
   const now = Date.now();
@@ -20,7 +22,7 @@ export async function cleanupExpiredServerlessState(): Promise<CleanupResult> {
   const oneDayAgo = new Date(now - 24 * 60 * 60 * 1000);
 
   try {
-    const [msgResult, sessionResult, actionResult] = await Promise.all([
+    const [msgResult, sessionResult, actionResult, rateLimitResult] = await Promise.all([
       prisma.whatsAppProcessedMessage.deleteMany({
         where: { createdAt: { lt: twoHoursAgo } },
       }),
@@ -35,12 +37,16 @@ export async function cleanupExpiredServerlessState(): Promise<CleanupResult> {
           ],
         },
       }),
+      prisma.whatsAppRateLimit.deleteMany({
+        where: { resetAt: { lt: oneHourAgo } },
+      }),
     ]);
 
     return {
       deletedProcessedMessages: msgResult.count,
       deletedOldSessions: sessionResult.count,
       deletedPendingActions: actionResult.count,
+      deletedRateLimits: rateLimitResult.count,
     };
   } catch (err) {
     console.error("[Maintenance Cleanup Error]", err);
@@ -48,6 +54,7 @@ export async function cleanupExpiredServerlessState(): Promise<CleanupResult> {
       deletedProcessedMessages: 0,
       deletedOldSessions: 0,
       deletedPendingActions: 0,
+      deletedRateLimits: 0,
     };
   }
 }

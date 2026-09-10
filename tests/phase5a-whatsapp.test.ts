@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
 import { LocalDeterministicAIProvider } from "../src/lib/ai/provider";
 
 // Use the existing local deterministic AI provider to make tests deterministic and avoid live AI network timeouts
@@ -184,14 +184,16 @@ describe("Phase 5A: WhatsApp Foundation & Webhook Architecture", () => {
       expect(await isMessageProcessed(messageId)).toBe(true);
     });
 
-    it("should enforce sliding-window rate limit per phone number", () => {
+    it("should enforce sliding-window rate limit per phone number", async () => {
       const spamPhone = "2348000000099";
+      await resetRateLimits(spamPhone);
       // Limit is 30 per minute
       for (let i = 0; i < 30; i++) {
-        expect(checkRateLimit(spamPhone, 30)).toBe(true);
+        expect(await checkRateLimit(spamPhone, 30)).toBe(true);
       }
       // 31st request must be rejected
-      expect(checkRateLimit(spamPhone, 30)).toBe(false);
+      expect(await checkRateLimit(spamPhone, 30)).toBe(false);
+      await resetRateLimits(spamPhone);
     });
   });
 
@@ -418,6 +420,10 @@ describe("Phase 5A: WhatsApp Foundation & Webhook Architecture", () => {
   });
 
   describe("5. WhatsApp Greetings, Menus & Non-Text Messages", () => {
+    beforeEach(async () => {
+      await resetRateLimits(phone1);
+    });
+
     it("1. 'Hello BizPilot' returns the greeting", async () => {
       const res = await handleIncomingWhatsAppMessage(phone1, "Hello BizPilot");
 
@@ -456,6 +462,10 @@ describe("Phase 5A: WhatsApp Foundation & Webhook Architecture", () => {
   });
 
   describe("6. Read-Only Business Queries via WhatsApp & Regression Routing", () => {
+    beforeEach(async () => {
+      await resetRateLimits(phone1);
+    });
+
     it("4. 'What were my sales today?' does NOT return greeting and reaches sales logic", async () => {
       const res = await handleIncomingWhatsAppMessage(phone1, "What were my sales today?");
 
@@ -531,8 +541,14 @@ describe("Phase 5A: WhatsApp Foundation & Webhook Architecture", () => {
   });
 
   describe("7. WhatsApp Write Intent Routing (Sale, Expense, Invoice)", () => {
-    beforeAll(() => {
-      resetRateLimits();
+    beforeEach(async () => {
+      await resetRateLimits(phone1);
+      if (sampleProduct?.id) {
+        await prisma.product.update({
+          where: { id: sampleProduct.id },
+          data: { stockQuantity: 100 },
+        });
+      }
     });
     it("should route 'Record a sale of 2 units of [product] for ₦5000' to PREPARE_ACTION preview", async () => {
       const res = await handleIncomingWhatsAppMessage(

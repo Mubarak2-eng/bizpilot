@@ -139,38 +139,81 @@ export async function markMessageProcessed(
 }
 
 
-// ─── 4. Sliding-Window Rate Limiter ──────────────────────────────────────────
+// ─── 4. Persistent PostgreSQL Rate Limiter (Serverless Safe) ─────────────────
 
-const rateLimitMap = new Map<string, number[]>();
-const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = 30; // Max 30 messages/minute per number
+export const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+export const MAX_REQUESTS_PER_WINDOW = 30; // Max 30 messages/minute per number
 
 /**
- * Checks if a phone number is exceeding the rate limit.
- * Returns true if allowed, false if rate limited.
+ * Atomically checks and records a rate-limited request in PostgreSQL.
+ * Uses atomic INSERT ... ON CONFLICT ("key") DO UPDATE with row-level locking
+ * to eliminate race conditions across concurrent Vercel serverless instances.
+ *
+ * Fail Behavior:
+ * If the database fails or is temporarily unavailable, FAILS CLOSED (returns false)
+ * and logs the error without exposing sensitive user information.
  */
-export function checkRateLimit(
+export async function checkRateLimit(
   phoneNumber: string,
   limit = MAX_REQUESTS_PER_WINDOW
-): boolean {
-  const now = Date.now();
-  const timestamps = rateLimitMap.get(phoneNumber) || [];
+): Promise<boolean> {
+  const normalized = normalizePhoneNumber(phoneNumber);
+  if (!normalized) return false;
 
-  // Filter timestamps within the current window
-  const validTimestamps = timestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
+  const key = `phone:${normalized}`;
+  const now = new Date();
+  const resetAt = new Date(now.getTime() + RATE_LIMIT_WINDOW_MS);
+  const cuid = "rl_" + crypto.randomUUID().replace(/-/g, "");
 
-  if (validTimestamps.length >= limit) {
+  try {
+    const rows = await prisma.$queryRaw<Array<{ count: number }>>`
+      INSERT INTO "WhatsAppRateLimit" ("id", "key", "count", "resetAt", "createdAt", "updatedAt")
+      VALUES (${cuid}, ${key}, 1, ${resetAt}, NOW(), NOW())
+      ON CONFLICT ("key") DO UPDATE
+      SET
+        "count" = CASE
+          WHEN "WhatsAppRateLimit"."resetAt" <= NOW() THEN 1
+          ELSE "WhatsAppRateLimit"."count" + 1
+        END,
+        "resetAt" = CASE
+          WHEN "WhatsAppRateLimit"."resetAt" <= NOW() THEN ${resetAt}
+          ELSE "WhatsAppRateLimit"."resetAt"
+        END,
+        "updatedAt" = NOW()
+      RETURNING "count";
+    `;
+
+    if (!rows || rows.length === 0) {
+      return false;
+    }
+
+    const currentCount = Number(rows[0].count);
+    return currentCount <= limit;
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : "Database error";
+    console.error("[WhatsApp Security Rate Limit] Database error during check:", errorMsg);
+    // Fail closed on database error to protect against unbounded spam during outages
     return false;
   }
-
-  validTimestamps.push(now);
-  rateLimitMap.set(phoneNumber, validTimestamps);
-  return true;
 }
 
 /**
- * Resets rate limit map (useful for test isolation).
+ * Resets rate limit records in PostgreSQL (for test isolation and administrative resets).
  */
-export function resetRateLimits(): void {
-  rateLimitMap.clear();
+export async function resetRateLimits(phoneNumber?: string): Promise<void> {
+  try {
+    if (phoneNumber) {
+      const normalized = normalizePhoneNumber(phoneNumber);
+      const key = `phone:${normalized}`;
+      await prisma.whatsAppRateLimit.deleteMany({
+        where: { key },
+      });
+    } else {
+      await prisma.whatsAppRateLimit.deleteMany({});
+    }
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : "Database error";
+    console.error("[WhatsApp Security Rate Limit] Error resetting rate limits:", errorMsg);
+  }
 }
+

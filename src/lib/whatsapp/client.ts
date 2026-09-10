@@ -13,12 +13,26 @@ export async function sendWhatsAppTextMessage(
   to: string,
   bodyText: string
 ): Promise<SendWhatsAppResult> {
-  const token = process.env.WHATSAPP_ACCESS_TOKEN;
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-  const apiVersion = process.env.WHATSAPP_API_VERSION || "v21.0";
+  const isProduction = process.env.NODE_ENV === "production";
+  const token = process.env.WHATSAPP_ACCESS_TOKEN?.trim();
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID?.trim();
+  const apiVersion = process.env.WHATSAPP_API_VERSION?.trim() || "v21.0";
 
-  // Simulation mode for testing / offline environments
-  if (!token || !phoneNumberId || token.trim() === "" || phoneNumberId.trim() === "") {
+  const hasCredentials = Boolean(token && phoneNumberId);
+
+  // In production, missing credentials must fail closed and NEVER silently simulate
+  if (isProduction && !hasCredentials) {
+    console.error(
+      "[WhatsApp Outbound Error] Critical: WHATSAPP_ACCESS_TOKEN or WHATSAPP_PHONE_NUMBER_ID is missing in production. Outbound message aborted (fail-closed)."
+    );
+    return {
+      success: false,
+      error: "WhatsApp API credentials are missing in production.",
+    };
+  }
+
+  // Simulation mode for testing / offline non-production environments
+  if (!hasCredentials) {
     const mockId = `sim_msg_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     console.log(`[WhatsApp Outbound Simulation] To: ${to}\n${bodyText}\n---`);
     return {

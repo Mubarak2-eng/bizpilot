@@ -15,6 +15,7 @@ import {
   RESEND_COOLDOWN_SECONDS,
 } from "@/lib/whatsapp/otp";
 import { sendWhatsAppTextMessage } from "@/lib/whatsapp/client";
+import { hasFeature } from "@/lib/subscriptions/service";
 
 export interface WhatsAppActionResult {
   success?: boolean;
@@ -37,6 +38,17 @@ export async function requestWhatsAppLinkAction(
 ): Promise<WhatsAppActionResult> {
   try {
     const context = await requireBusinessRole(businessId, Role.ADMIN);
+
+    // H1: Enforce the whatsapp_ai subscription feature gate.
+    // FREE-tier businesses are not entitled to WhatsApp AI integration.
+    const canUseWhatsApp = await hasFeature(context.business.id, "whatsapp_ai");
+    if (!canUseWhatsApp) {
+      return {
+        error:
+          "WhatsApp AI integration requires a paid subscription (Starter, Pro, or Business). " +
+          "Please upgrade your plan at Settings → Subscription.",
+      };
+    }
 
     const rawPhone = formData.get("phoneNumber")?.toString().trim();
     if (!rawPhone) {
@@ -63,7 +75,7 @@ export async function requestWhatsAppLinkAction(
     }
 
     // Check resend cooldown for the current business
-    const existingCurrent = await prisma.whatsAppConnection.findFirst({
+    const existingCurrent = await prisma.whatsAppConnection.findUnique({
       where: { businessId: context.business.id },
     });
 
@@ -84,7 +96,15 @@ export async function requestWhatsAppLinkAction(
     const otpHash = hashOTP(rawOtp);
     const expiresAt = new Date(Date.now() + OTP_EXPIRATION_MINUTES * 60 * 1000);
 
-    // If business had an older unverified connection with a different number, delete it
+    // 1. If another business had an unverified connection with this phone number, remove it
+    if (existingOther && existingOther.businessId !== context.business.id && !existingOther.verified) {
+      await prisma.whatsAppConnection.delete({
+        where: { id: existingOther.id },
+      });
+      await deleteWhatsAppSession(existingOther.phoneNumber);
+    }
+
+    // 2. If this business had an existing connection with a different phone number, remove it
     if (existingCurrent && existingCurrent.phoneNumber !== normalizedPhone) {
       await prisma.whatsAppConnection.delete({
         where: { id: existingCurrent.id },
@@ -92,9 +112,9 @@ export async function requestWhatsAppLinkAction(
       await deleteWhatsAppSession(existingCurrent.phoneNumber);
     }
 
-    // Upsert pending connection (verified = false)
+    // 3. Upsert unique connection for this business
     const connection = await prisma.whatsAppConnection.upsert({
-      where: { phoneNumber: normalizedPhone },
+      where: { businessId: context.business.id },
       create: {
         phoneNumber: normalizedPhone,
         userId: context.user.id,
@@ -106,8 +126,8 @@ export async function requestWhatsAppLinkAction(
         verificationRequestedAt: new Date(),
       },
       update: {
+        phoneNumber: normalizedPhone,
         userId: context.user.id,
-        businessId: context.business.id,
         verified: false,
         verificationCodeHash: otpHash,
         verificationExpiresAt: expiresAt,
@@ -152,7 +172,7 @@ export async function verifyWhatsAppOTPAction(
       return { error: "Please enter the complete 6-digit verification code." };
     }
 
-    const connection = await prisma.whatsAppConnection.findFirst({
+    const connection = await prisma.whatsAppConnection.findUnique({
       where: { businessId: context.business.id },
     });
 
@@ -236,7 +256,7 @@ export async function getWhatsAppStatusAction(businessId: string) {
   try {
     const context = await requireBusinessRole(businessId, Role.MEMBER);
 
-    const connection = await prisma.whatsAppConnection.findFirst({
+    const connection = await prisma.whatsAppConnection.findUnique({
       where: { businessId: context.business.id },
     });
 
@@ -275,7 +295,7 @@ export async function unlinkWhatsAppNumberAction(
   try {
     const context = await requireBusinessRole(businessId, Role.ADMIN);
 
-    const connection = await prisma.whatsAppConnection.findFirst({
+    const connection = await prisma.whatsAppConnection.findUnique({
       where: { businessId: context.business.id },
     });
 

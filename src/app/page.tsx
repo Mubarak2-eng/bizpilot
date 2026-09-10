@@ -117,8 +117,21 @@ export default async function HomePage() {
       </main>
 
       {/* Footer */}
-      <footer className="px-6 py-6 border-t border-slate-200/80 dark:border-white/[0.08] text-center text-xs text-slate-500 relative z-10">
-        © 2026 BizPilot AI. Production-ready autonomous multi-tenant business operating system.
+      <footer className="px-6 py-6 border-t border-slate-200/80 dark:border-white/[0.08] relative z-10 max-w-6xl mx-auto w-full flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+        <div>
+          © {new Date().getFullYear()} BizPilot AI. Production-ready autonomous multi-tenant business operating system.
+        </div>
+        <div className="flex items-center gap-4 font-medium">
+          <Link href="/privacy" className="hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
+            Privacy Policy
+          </Link>
+          <Link href="/terms" className="hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
+            Terms of Service
+          </Link>
+          <Link href="/data-deletion" className="hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
+            Data Deletion
+          </Link>
+        </div>
       </footer>
     </div>
   );

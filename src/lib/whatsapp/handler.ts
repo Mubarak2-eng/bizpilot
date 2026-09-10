@@ -19,6 +19,7 @@ import {
   formatActionPreviewForWhatsApp,
   formatActionSuccessForWhatsApp,
 } from "./client";
+import { getBusinessSubscription, hasFeature } from "../subscriptions/service";
 
 export interface HandleWhatsAppMessageResult {
   success: boolean;
@@ -44,7 +45,7 @@ export async function handleIncomingWhatsAppMessage(
   }
 
   // 1. Rate Limiting Check
-  if (!checkRateLimit(phoneNumber)) {
+  if (!(await checkRateLimit(phoneNumber))) {
     const rateMsg = "⏳ You are sending messages too fast. Please wait a moment before trying again.";
     await sendWhatsAppTextMessage(phoneNumber, rateMsg);
     return {
@@ -110,6 +111,30 @@ export async function handleIncomingWhatsAppMessage(
       replySent: reply,
       actionTaken: "ERROR",
       error: errMsg,
+    };
+  }
+
+  // H3: Verify the business has an active paid subscription with WhatsApp AI entitlement.
+  const subState = await getBusinessSubscription(connection.businessId);
+  const canUseWhatsApp = await hasFeature(connection.businessId, "whatsapp_ai");
+  if (!subState.isActive || !canUseWhatsApp) {
+    const statusNotice = !subState.isActive
+      ? `is currently *${subState.status}*`
+      : `is currently on the *Free* plan`;
+    const inactiveMsg =
+      `⚠️ *WhatsApp AI Unavailable*\n\n` +
+      `Your BizPilot subscription ${statusNotice}.\n\n` +
+      `The WhatsApp AI assistant is available on active Starter, Pro, and Business plans.\n\n` +
+      `Please renew or upgrade your subscription at:\nhttps://bizpilot.app/settings`;
+    await sendWhatsAppTextMessage(phoneNumber, inactiveMsg);
+    console.log(
+      `[WhatsApp Subscription Gate] msgId=${messageId || "n/a"} from=${phoneNumber} bizId=${connection.businessId} status=${subState.status} plan=${subState.planCode} BLOCKED`
+    );
+    return {
+      success: false,
+      replySent: inactiveMsg,
+      actionTaken: "ERROR",
+      error: `Subscription inactive or unentitled: status=${subState.status}, plan=${subState.planCode}`,
     };
   }
 
@@ -228,11 +253,29 @@ export async function handleIncomingWhatsAppMessage(
     const priorHistory = [...session.conversationHistory];
     await addMessageToSession(phoneNumber, userChatMessage);
 
+    // H2: runAIAssistant atomically enforces checkAndIncrementAIQuota per business.
     const aiResponse = await runAIAssistant(
       priorHistory,
       trimmed,
       context
     );
+
+    // If quota limit was reached, runAIAssistant returns providerUsed === "quota_enforcer"
+    if (aiResponse.providerUsed === "quota_enforcer") {
+      const quotaMsg =
+        `⚠️ *Monthly AI Limit Reached*\n\n` +
+        aiResponse.message.content +
+        `\n\nUpgrade your subscription at:\nhttps://bizpilot.app/settings`;
+      await sendWhatsAppTextMessage(phoneNumber, quotaMsg);
+      console.log(
+        `[WhatsApp Quota Gate] msgId=${messageId || "n/a"} from=${phoneNumber} bizId=${context.businessId} BLOCKED`
+      );
+      return {
+        success: true,
+        replySent: quotaMsg,
+        actionTaken: "RATE_LIMITED",
+      };
+    }
 
     let replyText = aiResponse.message.content;
 

@@ -23,6 +23,7 @@ import { GET as whatsappWebhookGetHandler } from "../src/app/api/webhook/whatsap
 import { POST as paystackWebhookHandler } from "../src/app/api/webhook/paystack/route";
 import { verifyPaystackWebhookSignature } from "../src/lib/payments/paystack";
 import { validateProductionEnv } from "../src/lib/env";
+import { sendWhatsAppTextMessage } from "../src/lib/whatsapp/client";
 
 describe("Phase 7: Production Security & Launch Readiness Audit Suite", () => {
   let ownerA: { id: string; email: string };
@@ -123,17 +124,24 @@ describe("Phase 7: Production Security & Launch Readiness Audit Suite", () => {
   });
 
   afterAll(async () => {
-    await prisma.whatsAppConnection.deleteMany({ where: { businessId: { in: [bizA.id, bizB.id] } } });
+    const bizIds = [bizA?.id, bizB?.id].filter(Boolean) as string[];
+    const userIds = [ownerA?.id, adminA?.id, staffA?.id, ownerB?.id].filter(Boolean) as string[];
+
+    if (bizIds.length > 0) {
+      await prisma.whatsAppConnection.deleteMany({ where: { businessId: { in: bizIds } } });
+      await prisma.aIPendingAction.deleteMany({ where: { businessId: { in: bizIds } } });
+      if (invoiceA?.id) await prisma.invoiceItem.deleteMany({ where: { invoiceId: invoiceA.id } });
+      await prisma.invoice.deleteMany({ where: { businessId: { in: bizIds } } });
+      await prisma.customer.deleteMany({ where: { businessId: { in: bizIds } } });
+      await prisma.expense.deleteMany({ where: { businessId: { in: bizIds } } });
+      await prisma.product.deleteMany({ where: { businessId: { in: bizIds } } });
+      await prisma.membership.deleteMany({ where: { businessId: { in: bizIds } } });
+      await prisma.business.deleteMany({ where: { id: { in: bizIds } } });
+    }
     await prisma.whatsAppConversationSession.deleteMany({ where: { phoneNumber: { in: [phoneA, unlinkedPhone] } } });
-    await prisma.aIPendingAction.deleteMany({ where: { businessId: { in: [bizA.id, bizB.id] } } });
-    await prisma.invoiceItem.deleteMany({ where: { invoiceId: invoiceA.id } });
-    await prisma.invoice.deleteMany({ where: { businessId: { in: [bizA.id, bizB.id] } } });
-    await prisma.customer.deleteMany({ where: { businessId: { in: [bizA.id, bizB.id] } } });
-    await prisma.expense.deleteMany({ where: { businessId: { in: [bizA.id, bizB.id] } } });
-    await prisma.product.deleteMany({ where: { businessId: { in: [bizA.id, bizB.id] } } });
-    await prisma.membership.deleteMany({ where: { businessId: { in: [bizA.id, bizB.id] } } });
-    await prisma.business.deleteMany({ where: { id: { in: [bizA.id, bizB.id] } } });
-    await prisma.user.deleteMany({ where: { id: { in: [ownerA.id, adminA.id, staffA.id, ownerB.id] } } });
+    if (userIds.length > 0) {
+      await prisma.user.deleteMany({ where: { id: { in: userIds } } });
+    }
     await prisma.$disconnect();
   });
 
@@ -215,12 +223,12 @@ describe("Phase 7: Production Security & Launch Readiness Audit Suite", () => {
       expect(res.replySent).not.toContain("Security Audit Biz A");
     });
 
-    it("should strictly enforce sliding-window rate limit per phone number", () => {
+    it("should strictly enforce sliding-window rate limit per phone number", async () => {
       const spamPhone = `2348000000${Math.floor(100 + Math.random() * 900)}`;
       for (let i = 0; i < 30; i++) {
-        expect(checkRateLimit(spamPhone, 30)).toBe(true);
+        expect(await checkRateLimit(spamPhone, 30)).toBe(true);
       }
-      expect(checkRateLimit(spamPhone, 30)).toBe(false);
+      expect(await checkRateLimit(spamPhone, 30)).toBe(false);
     });
 
     it("should normalize phone numbers reliably", () => {
@@ -435,6 +443,8 @@ describe("Phase 7: Production Security & Launch Readiness Audit Suite", () => {
         AUTH_SECRET: "abcdef0123456789abcdef0123456789", // 32 chars
         RESEND_API_KEY: "re_live_123456789",
         CRON_SECRET: "cron_secret_32_bytes_long_12345",
+        WHATSAPP_ACCESS_TOKEN: "wa_access_token_12345",
+        WHATSAPP_PHONE_NUMBER_ID: "109876543210987",
         WHATSAPP_APP_SECRET: "wa_secret_12345",
         WHATSAPP_VERIFY_TOKEN: "wa_verify_12345",
       };
@@ -446,6 +456,7 @@ describe("Phase 7: Production Security & Launch Readiness Audit Suite", () => {
       expect(result.configuredServices.auth).toBe(true);
       expect(result.configuredServices.email).toBe(true);
       expect(result.configuredServices.cron).toBe(true);
+      expect(result.configuredServices.whatsapp).toBe(true);
     });
 
     it("should fail validation if AUTH_SECRET is less than 32 characters in production", () => {
@@ -455,6 +466,10 @@ describe("Phase 7: Production Security & Launch Readiness Audit Suite", () => {
         AUTH_SECRET: "short_secret", // < 32 chars
         RESEND_API_KEY: "re_live_123456789",
         CRON_SECRET: "cron_secret_32_bytes_long_12345",
+        WHATSAPP_ACCESS_TOKEN: "wa_token_123",
+        WHATSAPP_PHONE_NUMBER_ID: "12345",
+        WHATSAPP_APP_SECRET: "wa_secret_123",
+        WHATSAPP_VERIFY_TOKEN: "wa_verify_123",
       };
 
       const result = validateProductionEnv(shortAuthEnv);
@@ -468,11 +483,143 @@ describe("Phase 7: Production Security & Launch Readiness Audit Suite", () => {
         DATABASE_URL: "postgresql://user:pass@localhost:5432/bizpilot",
         AUTH_SECRET: "abcdef0123456789abcdef0123456789",
         CRON_SECRET: "cron_secret_32_bytes_long_12345",
+        WHATSAPP_ACCESS_TOKEN: "wa_token_123",
+        WHATSAPP_PHONE_NUMBER_ID: "12345",
+        WHATSAPP_APP_SECRET: "wa_secret_123",
+        WHATSAPP_VERIFY_TOKEN: "wa_verify_123",
       };
 
       const result = validateProductionEnv(missingEmailEnv);
       expect(result.isValid).toBe(false);
       expect(result.errors.some((e) => e.includes("RESEND_API_KEY is required in production"))).toBe(true);
+    });
+
+    it("should fail validation if WHATSAPP_ACCESS_TOKEN is missing in production", () => {
+      const env = {
+        NODE_ENV: "production",
+        DATABASE_URL: "postgresql://user:pass@localhost:5432/bizpilot",
+        AUTH_SECRET: "abcdef0123456789abcdef0123456789",
+        RESEND_API_KEY: "re_live_123456789",
+        CRON_SECRET: "cron_secret_32_bytes_long_12345",
+        WHATSAPP_PHONE_NUMBER_ID: "109876543210987",
+        WHATSAPP_APP_SECRET: "wa_secret_12345",
+        WHATSAPP_VERIFY_TOKEN: "wa_verify_12345",
+      };
+
+      const result = validateProductionEnv(env);
+      expect(result.isValid).toBe(false);
+      expect(result.errors.some((e) => e.includes("WHATSAPP_ACCESS_TOKEN is required in production"))).toBe(true);
+    });
+
+    it("should fail validation if WHATSAPP_PHONE_NUMBER_ID is missing in production", () => {
+      const env = {
+        NODE_ENV: "production",
+        DATABASE_URL: "postgresql://user:pass@localhost:5432/bizpilot",
+        AUTH_SECRET: "abcdef0123456789abcdef0123456789",
+        RESEND_API_KEY: "re_live_123456789",
+        CRON_SECRET: "cron_secret_32_bytes_long_12345",
+        WHATSAPP_ACCESS_TOKEN: "wa_access_token_12345",
+        WHATSAPP_APP_SECRET: "wa_secret_12345",
+        WHATSAPP_VERIFY_TOKEN: "wa_verify_12345",
+      };
+
+      const result = validateProductionEnv(env);
+      expect(result.isValid).toBe(false);
+      expect(result.errors.some((e) => e.includes("WHATSAPP_PHONE_NUMBER_ID is required in production"))).toBe(true);
+    });
+
+    it("should fail validation if WHATSAPP_APP_SECRET is missing in production", () => {
+      const env = {
+        NODE_ENV: "production",
+        DATABASE_URL: "postgresql://user:pass@localhost:5432/bizpilot",
+        AUTH_SECRET: "abcdef0123456789abcdef0123456789",
+        RESEND_API_KEY: "re_live_123456789",
+        CRON_SECRET: "cron_secret_32_bytes_long_12345",
+        WHATSAPP_ACCESS_TOKEN: "wa_access_token_12345",
+        WHATSAPP_PHONE_NUMBER_ID: "109876543210987",
+        WHATSAPP_VERIFY_TOKEN: "wa_verify_12345",
+      };
+
+      const result = validateProductionEnv(env);
+      expect(result.isValid).toBe(false);
+      expect(result.errors.some((e) => e.includes("WHATSAPP_APP_SECRET is required in production"))).toBe(true);
+    });
+
+    it("should fail validation if WHATSAPP_VERIFY_TOKEN is missing in production", () => {
+      const env = {
+        NODE_ENV: "production",
+        DATABASE_URL: "postgresql://user:pass@localhost:5432/bizpilot",
+        AUTH_SECRET: "abcdef0123456789abcdef0123456789",
+        RESEND_API_KEY: "re_live_123456789",
+        CRON_SECRET: "cron_secret_32_bytes_long_12345",
+        WHATSAPP_ACCESS_TOKEN: "wa_access_token_12345",
+        WHATSAPP_PHONE_NUMBER_ID: "109876543210987",
+        WHATSAPP_APP_SECRET: "wa_secret_12345",
+      };
+
+      const result = validateProductionEnv(env);
+      expect(result.isValid).toBe(false);
+      expect(result.errors.some((e) => e.includes("WHATSAPP_VERIFY_TOKEN is required in production"))).toBe(true);
+    });
+
+    it("should allow development/test environments to run without WhatsApp credentials", () => {
+      const devEnv = {
+        NODE_ENV: "development",
+        DATABASE_URL: "postgresql://user:pass@localhost:5432/bizpilot",
+        AUTH_SECRET: "dev_secret_key_123",
+      };
+
+      const result = validateProductionEnv(devEnv);
+      expect(result.isValid).toBe(true);
+      expect(result.errors.length).toBe(0);
+      expect(result.warnings.length).toBeGreaterThan(0);
+      expect(result.warnings.some((w) => w.includes("WHATSAPP_ACCESS_TOKEN is not configured"))).toBe(true);
+      expect(result.configuredServices.whatsapp).toBe(false);
+    });
+  });
+
+  // ─── 7. WhatsApp Outbound Sending Production Safety ────────────────────────
+  describe("7. WhatsApp Outbound Sending Production Safety", () => {
+    it("should fail closed in production without simulating if WhatsApp credentials are missing", async () => {
+      const oldEnv = process.env.NODE_ENV;
+      const oldToken = process.env.WHATSAPP_ACCESS_TOKEN;
+      const oldPhoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+
+      try {
+        (process.env as Record<string, string | undefined>).NODE_ENV = "production";
+        delete process.env.WHATSAPP_ACCESS_TOKEN;
+        delete process.env.WHATSAPP_PHONE_NUMBER_ID;
+
+        const result = await sendWhatsAppTextMessage("2348012345678", "Hello Production");
+        expect(result.success).toBe(false);
+        expect(result.simulated).toBeUndefined();
+        expect(result.error).toContain("missing in production");
+      } finally {
+        (process.env as Record<string, string | undefined>).NODE_ENV = oldEnv;
+        if (oldToken) process.env.WHATSAPP_ACCESS_TOKEN = oldToken;
+        if (oldPhoneId) process.env.WHATSAPP_PHONE_NUMBER_ID = oldPhoneId;
+      }
+    });
+
+    it("should allow simulation mode in development/test when credentials are missing", async () => {
+      const oldEnv = process.env.NODE_ENV;
+      const oldToken = process.env.WHATSAPP_ACCESS_TOKEN;
+      const oldPhoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+
+      try {
+        (process.env as Record<string, string | undefined>).NODE_ENV = "development";
+        delete process.env.WHATSAPP_ACCESS_TOKEN;
+        delete process.env.WHATSAPP_PHONE_NUMBER_ID;
+
+        const result = await sendWhatsAppTextMessage("2348012345678", "Hello Development");
+        expect(result.success).toBe(true);
+        expect(result.simulated).toBe(true);
+        expect(result.messageId).toBeDefined();
+      } finally {
+        (process.env as Record<string, string | undefined>).NODE_ENV = oldEnv;
+        if (oldToken) process.env.WHATSAPP_ACCESS_TOKEN = oldToken;
+        if (oldPhoneId) process.env.WHATSAPP_PHONE_NUMBER_ID = oldPhoneId;
+      }
     });
   });
 });

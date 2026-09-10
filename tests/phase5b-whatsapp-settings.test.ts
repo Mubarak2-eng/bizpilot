@@ -1,7 +1,11 @@
 import "dotenv/config";
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
 import { prisma } from "../src/lib/prisma";
-import { normalizePhoneNumber } from "../src/lib/whatsapp/security";
+import {
+  normalizePhoneNumber,
+  checkRateLimit,
+  resetRateLimits,
+} from "../src/lib/whatsapp/security";
 import {
   getWhatsAppSession,
   addMessageToSession,
@@ -151,7 +155,7 @@ describe("Phase 5B: WhatsApp Settings UI Integration & Management", () => {
         },
       });
 
-      // Attempting to create the same phoneNumber for Business 2 should fail with unique constraint
+      // Attempting to create the same phoneNumber for Business 2 should fail with unique constraint on phoneNumber
       await expect(
         prisma.whatsAppConnection.create({
           data: {
@@ -162,6 +166,68 @@ describe("Phase 5B: WhatsApp Settings UI Integration & Management", () => {
           },
         })
       ).rejects.toThrow();
+    });
+
+    it("should enforce that one business cannot have two WhatsApp connections (M1 BusinessId Uniqueness)", async () => {
+      // Link first phone number to Business 1
+      await prisma.whatsAppConnection.create({
+        data: {
+          phoneNumber: testPhoneAcme,
+          userId: ownerUser.id,
+          businessId: biz1.id,
+          verified: true,
+        },
+      });
+
+      // Attempting to create a second connection for Business 1 with a different phoneNumber must fail with unique constraint on businessId
+      await expect(
+        prisma.whatsAppConnection.create({
+          data: {
+            phoneNumber: testPhoneBeta,
+            userId: ownerUser.id,
+            businessId: biz1.id,
+            verified: true,
+          },
+        })
+      ).rejects.toThrow();
+    });
+
+    it("should allow different businesses to each have their own WhatsApp connection", async () => {
+      // Business 1 connects Phone Acme
+      const conn1 = await prisma.whatsAppConnection.create({
+        data: {
+          phoneNumber: testPhoneAcme,
+          userId: ownerUser.id,
+          businessId: biz1.id,
+          verified: true,
+        },
+      });
+
+      // Business 2 connects Phone Beta
+      const conn2 = await prisma.whatsAppConnection.create({
+        data: {
+          phoneNumber: testPhoneBeta,
+          userId: adminUser.id,
+          businessId: biz2.id,
+          verified: true,
+        },
+      });
+
+      expect(conn1.businessId).toBe(biz1.id);
+      expect(conn1.phoneNumber).toBe(testPhoneAcme);
+      expect(conn2.businessId).toBe(biz2.id);
+      expect(conn2.phoneNumber).toBe(testPhoneBeta);
+
+      // Verify each business has exactly 1 connection via 1-to-1 unique query
+      const biz1Conn = await prisma.whatsAppConnection.findUnique({
+        where: { businessId: biz1.id },
+      });
+      const biz2Conn = await prisma.whatsAppConnection.findUnique({
+        where: { businessId: biz2.id },
+      });
+
+      expect(biz1Conn?.id).toBe(conn1.id);
+      expect(biz2Conn?.id).toBe(conn2.id);
     });
 
     it("should allow updating/re-linking the phone number for the same business", async () => {
@@ -275,6 +341,132 @@ describe("Phase 5B: WhatsApp Settings UI Integration & Management", () => {
       expect("WHATSAPP_VERIFY_TOKEN" in sanitized).toBe(false);
       expect("token" in sanitized).toBe(false);
       expect("secret" in sanitized).toBe(false);
+    });
+  });
+
+  // ─── 5. M2 Serverless PostgreSQL Rate Limiting & Concurrency Invariants ─────
+  describe("5. M2 Serverless PostgreSQL Rate Limiting & Concurrency Invariants", () => {
+    const ratePhoneA = "2348099991111";
+    const ratePhoneB = "2348099992222";
+
+    beforeEach(async () => {
+      await resetRateLimits();
+    });
+
+    afterAll(async () => {
+      await resetRateLimits();
+    });
+
+    it("should allow first request and enforce limit accurately up to configured threshold", async () => {
+      // First request allowed
+      expect(await checkRateLimit(ratePhoneA, 5)).toBe(true);
+
+      // Next 4 requests allowed (total 5)
+      for (let i = 2; i <= 5; i++) {
+        expect(await checkRateLimit(ratePhoneA, 5)).toBe(true);
+      }
+
+      // 6th request over limit must be rejected
+      expect(await checkRateLimit(ratePhoneA, 5)).toBe(false);
+    });
+
+    it("should maintain strict isolation between separate phone numbers", async () => {
+      // Exhaust limit on Phone A
+      for (let i = 0; i < 5; i++) {
+        expect(await checkRateLimit(ratePhoneA, 5)).toBe(true);
+      }
+      expect(await checkRateLimit(ratePhoneA, 5)).toBe(false);
+
+      // Phone B must NOT be blocked
+      expect(await checkRateLimit(ratePhoneB, 5)).toBe(true);
+    });
+
+    it("should persist state across separate function invocations via PostgreSQL", async () => {
+      // First invocation increments
+      await checkRateLimit(ratePhoneA, 10);
+      await checkRateLimit(ratePhoneA, 10);
+
+      // Verify directly in PostgreSQL
+      const record = await prisma.whatsAppRateLimit.findUnique({
+        where: { key: `phone:${ratePhoneA}` },
+      });
+      expect(record).not.toBeNull();
+      expect(record?.count).toBe(2);
+    });
+
+    it("should atomically handle high-concurrency requests without race condition bypass", async () => {
+      const concurrentPhone = "2348099993333";
+      const limit = 10;
+      const totalRequests = 25;
+
+      // Dispatch 25 simultaneous concurrent promises (simulating 25 serverless lambdas)
+      const results = await Promise.all(
+        Array.from({ length: totalRequests }, () => checkRateLimit(concurrentPhone, limit))
+      );
+
+      const allowedCount = results.filter((r) => r === true).length;
+      const rejectedCount = results.filter((r) => r === false).length;
+
+      // Exactly 10 requests allowed, 15 rejected
+      expect(allowedCount).toBe(limit);
+      expect(rejectedCount).toBe(totalRequests - limit);
+
+      // Verify row count in database equals totalRequests
+      const record = await prisma.whatsAppRateLimit.findUnique({
+        where: { key: `phone:${concurrentPhone}` },
+      });
+      expect(record?.count).toBe(totalRequests);
+    });
+
+    it("should reset counter when rate limit window expires", async () => {
+      const expiringPhone = "2348099994444";
+      const key = `phone:${expiringPhone}`;
+
+      // Create expired record in DB (resetAt in the past)
+      await prisma.whatsAppRateLimit.upsert({
+        where: { key },
+        create: {
+          key,
+          count: 50,
+          resetAt: new Date(Date.now() - 5000), // 5s ago
+        },
+        update: {
+          count: 50,
+          resetAt: new Date(Date.now() - 5000),
+        },
+      });
+
+      // Next request must detect expired window, reset count to 1, and be allowed
+      const allowed = await checkRateLimit(expiringPhone, 5);
+      expect(allowed).toBe(true);
+
+      const record = await prisma.whatsAppRateLimit.findUnique({ where: { key } });
+      expect(record?.count).toBe(1);
+    });
+
+    it("should support targeted reset for single phone number or full reset", async () => {
+      await checkRateLimit(ratePhoneA, 5);
+      await checkRateLimit(ratePhoneB, 5);
+
+      // Reset only Phone A
+      await resetRateLimits(ratePhoneA);
+      expect(await prisma.whatsAppRateLimit.findUnique({ where: { key: `phone:${ratePhoneA}` } })).toBeNull();
+      expect(await prisma.whatsAppRateLimit.findUnique({ where: { key: `phone:${ratePhoneB}` } })).not.toBeNull();
+
+      // Reset all
+      await resetRateLimits();
+      expect(await prisma.whatsAppRateLimit.findUnique({ where: { key: `phone:${ratePhoneB}` } })).toBeNull();
+    });
+
+    it("should fail closed if PostgreSQL is unavailable during rate limit check", async () => {
+      const failPhone = "2348099995555";
+      const spy = vi.spyOn(prisma, "$queryRaw").mockRejectedValueOnce(new Error("Database connection timeout"));
+
+      // Fail-closed must return false to protect from unconstrained spam
+      const result = await checkRateLimit(failPhone, 30);
+      expect(result).toBe(false);
+
+      spy.mockRestore();
     });
   });
 });

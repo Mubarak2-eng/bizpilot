@@ -194,10 +194,9 @@ export async function getDebtorReminderPreviewAction(
       : "";
 
     // Check if business has an active verified WhatsApp bot connection
-    const whatsAppConnection = await prisma.whatsAppConnection.findFirst({
+    const whatsAppConnection = await prisma.whatsAppConnection.findUnique({
       where: {
         businessId: context.business.id,
-        verified: true,
       },
     });
 
@@ -225,7 +224,7 @@ export async function getDebtorReminderPreviewAction(
       suggestedTone,
       message: messageText,
       clickToChatUrl,
-      hasVerifiedWhatsApp: Boolean(whatsAppConnection),
+      hasVerifiedWhatsApp: Boolean(whatsAppConnection && whatsAppConnection.verified),
       canSendWhatsApp,
       canSendEmail,
     };
@@ -290,14 +289,13 @@ export async function sendDebtorWhatsAppReminderAction(
     const clickToChatUrl = buildWhatsAppClickToChatUrl(normalizedPhone, finalMessage);
 
     // Check if business has a verified WhatsApp Cloud API connection
-    const whatsAppConnection = await prisma.whatsAppConnection.findFirst({
+    const whatsAppConnection = await prisma.whatsAppConnection.findUnique({
       where: {
         businessId: context.business.id,
-        verified: true,
       },
     });
 
-    if (whatsAppConnection) {
+    if (whatsAppConnection && whatsAppConnection.verified) {
       // Dispatch via Meta WhatsApp Cloud API
       const sendResult = await sendWhatsAppTextMessage(normalizedPhone, finalMessage);
 

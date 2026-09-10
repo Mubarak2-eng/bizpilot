@@ -67,10 +67,28 @@ export function validateProductionEnv(
   }
 
   // 5. WhatsApp Business Cloud API
+  const waAccessToken = env.WHATSAPP_ACCESS_TOKEN?.trim();
+  const waPhoneNumberId = env.WHATSAPP_PHONE_NUMBER_ID?.trim();
   const waSecret = env.WHATSAPP_APP_SECRET?.trim();
   const waVerifyToken = env.WHATSAPP_VERIFY_TOKEN?.trim();
-  const hasWhatsApp = Boolean(waSecret && waVerifyToken);
-  if (isProduction && !hasWhatsApp) {
+  const hasWhatsApp = Boolean(waAccessToken && waPhoneNumberId && waSecret && waVerifyToken);
+
+  if (isProduction) {
+    if (!waAccessToken) {
+      errors.push("WHATSAPP_ACCESS_TOKEN is required in production for outbound WhatsApp messaging.");
+    }
+    if (!waPhoneNumberId) {
+      errors.push("WHATSAPP_PHONE_NUMBER_ID is required in production for outbound WhatsApp messaging.");
+    }
+    if (!waSecret) {
+      errors.push("WHATSAPP_APP_SECRET is required in production for WhatsApp webhook signature verification.");
+    }
+    if (!waVerifyToken) {
+      errors.push("WHATSAPP_VERIFY_TOKEN is required in production for WhatsApp webhook challenge verification.");
+    }
+  } else {
+    if (!waAccessToken) warnings.push("WHATSAPP_ACCESS_TOKEN is not configured (simulated outbound messaging in development).");
+    if (!waPhoneNumberId) warnings.push("WHATSAPP_PHONE_NUMBER_ID is not configured (simulated outbound messaging in development).");
     if (!waSecret) warnings.push("WHATSAPP_APP_SECRET is not configured for WhatsApp webhook signature verification.");
     if (!waVerifyToken) warnings.push("WHATSAPP_VERIFY_TOKEN is not configured for WhatsApp webhook challenge verification.");
   }
