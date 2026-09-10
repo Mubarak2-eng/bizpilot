@@ -48,9 +48,18 @@ describe("Phase 5B: WhatsApp Settings UI Integration & Management", () => {
     // Clean up test phone connections before each test to guarantee test isolation
     await prisma.whatsAppConnection.deleteMany({
       where: {
-        phoneNumber: {
-          in: [testPhoneAcme, testPhoneBeta, testPhoneUpdate, "2348012345678", "15551234567"],
-        },
+        OR: [
+          {
+            phoneNumber: {
+              in: [testPhoneAcme, testPhoneBeta, testPhoneUpdate, "2348012345678", "15551234567"],
+            },
+          },
+          {
+            businessId: {
+              in: [biz1.id, biz2.id],
+            },
+          },
+        ],
       },
     });
   });
@@ -59,9 +68,18 @@ describe("Phase 5B: WhatsApp Settings UI Integration & Management", () => {
     // Clean up test connections
     await prisma.whatsAppConnection.deleteMany({
       where: {
-        phoneNumber: {
-          in: [testPhoneAcme, testPhoneBeta, testPhoneUpdate, "2348012345678", "15551234567"],
-        },
+        OR: [
+          {
+            phoneNumber: {
+              in: [testPhoneAcme, testPhoneBeta, testPhoneUpdate, "2348012345678", "15551234567"],
+            },
+          },
+          {
+            businessId: {
+              in: [biz1.id, biz2.id],
+            },
+          },
+        ],
       },
     });
     await prisma.$disconnect();

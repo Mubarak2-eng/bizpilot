@@ -16,10 +16,12 @@ import {
 } from "./session";
 import {
   sendWhatsAppTextMessage,
+  sendWhatsAppTextMessageForBusiness,
   formatActionPreviewForWhatsApp,
   formatActionSuccessForWhatsApp,
 } from "./client";
 import { getBusinessSubscription, hasFeature } from "../subscriptions/service";
+
 
 export interface HandleWhatsAppMessageResult {
   success: boolean;
@@ -31,11 +33,19 @@ export interface HandleWhatsAppMessageResult {
 /**
  * Handles incoming WhatsApp messages by resolving the sender identity against
  * BizPilot's database and delegating to the unified AI Assistant engine.
+ *
+ * Multi-tenant routing:
+ * 1. Primary: Look up WhatsAppConnection by sender phone number (works for all connection types).
+ * 2. Secondary (EMBEDDED_WABA only): If the primary lookup returns no result or returns a
+ *    different business than the receiving phone number's business, use receivingPhoneNumberId
+ *    to disambiguate — this handles the case where the same customer sends to multiple
+ *    BizPilot WABA numbers.
  */
 export async function handleIncomingWhatsAppMessage(
   fromRaw: string,
   messageText: string,
-  messageId?: string
+  messageId?: string,
+  receivingPhoneNumberId?: string
 ): Promise<HandleWhatsAppMessageResult> {
   const startTime = Date.now();
   const phoneNumber = normalizePhoneNumber(fromRaw);
@@ -56,7 +66,10 @@ export async function handleIncomingWhatsAppMessage(
   }
 
   // 2. Resolve WhatsApp Connection from Database (Zero Client Trust)
-  const connection = await prisma.whatsAppConnection.findUnique({
+  //    Primary: look up by sender phone number.
+  //    Secondary: if receivingPhoneNumberId is provided (WABA webhook metadata), use it as
+  //    a secondary lookup to ensure we route to the business that owns the receiving WABA number.
+  let connection = await prisma.whatsAppConnection.findUnique({
     where: { phoneNumber },
     include: {
       business: true,
@@ -69,6 +82,28 @@ export async function handleIncomingWhatsAppMessage(
       },
     },
   });
+
+  // Secondary routing: if receivingPhoneNumberId is provided and the primary lookup found
+  // no connection (or found an INTERNAL_ASSISTANT connection while we have a WABA number),
+  // try resolving by the receiving WABA phone number ID.
+  if (receivingPhoneNumberId && (!connection || connection.connectionType === "INTERNAL_ASSISTANT")) {
+    const wabaConnection = await prisma.whatsAppConnection.findUnique({
+      where: { phoneNumberId: receivingPhoneNumberId },
+      include: {
+        business: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+    if (wabaConnection) {
+      connection = wabaConnection;
+    }
+  }
 
   // If number is not linked or not verified
   if (!connection || !connection.verified) {
@@ -87,9 +122,20 @@ export async function handleIncomingWhatsAppMessage(
     };
   }
 
+
+  // ── Multi-tenant outbound routing helper ────────────────────────────────────
+  // All replies within this handler use this function, which automatically routes
+  // through the per-business WABA (EMBEDDED_WABA) or the global env vars (INTERNAL_ASSISTANT).
+  // businessId is server-verified from the DB connection — never from the client.
+  const sendReply = (to: string, text: string) =>
+    connection.connectionType === "EMBEDDED_WABA"
+      ? sendWhatsAppTextMessageForBusiness(connection.businessId, to, text)
+      : sendWhatsAppTextMessage(to, text);
+
   // 3. Verify Active Membership & Authorization Context
   let context: AuthenticatedAIContext;
   try {
+
     const membership = await verifyBusinessMembership(
       connection.businessId,
       connection.userId
@@ -105,7 +151,7 @@ export async function handleIncomingWhatsAppMessage(
   } catch (authErr: unknown) {
     const errMsg = authErr instanceof Error ? authErr.message : "Access denied";
     const reply = `⚠️ *Access Denied*: ${errMsg}. Please check your business membership.`;
-    await sendWhatsAppTextMessage(phoneNumber, reply);
+    await sendReply(phoneNumber, reply);
     return {
       success: false,
       replySent: reply,
@@ -126,7 +172,7 @@ export async function handleIncomingWhatsAppMessage(
       `Your BizPilot subscription ${statusNotice}.\n\n` +
       `The WhatsApp AI assistant is available on active Starter, Pro, and Business plans.\n\n` +
       `Please renew or upgrade your subscription at:\nhttps://bizpilot.app/settings`;
-    await sendWhatsAppTextMessage(phoneNumber, inactiveMsg);
+    await sendReply(phoneNumber, inactiveMsg);
     console.log(
       `[WhatsApp Subscription Gate] msgId=${messageId || "n/a"} from=${phoneNumber} bizId=${connection.businessId} status=${subState.status} plan=${subState.planCode} BLOCKED`
     );
@@ -143,7 +189,7 @@ export async function handleIncomingWhatsAppMessage(
 
   if (!trimmed) {
     const emptyMsg = `👋 Hello! I am your **BizPilot AI Assistant** for **${context.businessName}**.\n\nPlease send your question as text (e.g. *"What were my sales today?"* or *"Show low stock"*).`;
-    await sendWhatsAppTextMessage(phoneNumber, emptyMsg);
+    await sendReply(phoneNumber, emptyMsg);
     return {
       success: true,
       replySent: emptyMsg,
@@ -164,7 +210,7 @@ export async function handleIncomingWhatsAppMessage(
     if (!session.activeActionToken) {
       const reply =
         "There is no pending action to confirm. You can ask me a question or request a new action (e.g. 'Create an invoice for Chinedu for 2 power banks').";
-      await sendWhatsAppTextMessage(phoneNumber, reply);
+      await sendReply(phoneNumber, reply);
       return { success: true, replySent: reply, actionTaken: "QUERY" };
     }
 
@@ -192,7 +238,7 @@ export async function handleIncomingWhatsAppMessage(
         outcome
       );
 
-      await sendWhatsAppTextMessage(phoneNumber, reply);
+      await sendReply(phoneNumber, reply);
 
       console.log(
         `[WhatsApp Action Audit] type=${pendingRecord.actionType} from=${phoneNumber} bizId=${context.businessId} status=CONFIRMED recordId=${outcome.recordId} duration=${Date.now() - startTime}ms`
@@ -207,7 +253,7 @@ export async function handleIncomingWhatsAppMessage(
       await clearActiveActionToken(phoneNumber);
       const errMsg = err instanceof Error ? err.message : "Failed to execute confirmed action";
       const reply = `⚠️ *Execution Failed*: ${errMsg}`;
-      await sendWhatsAppTextMessage(phoneNumber, reply);
+      await sendReply(phoneNumber, reply);
 
       return {
         success: false,
@@ -232,7 +278,7 @@ export async function handleIncomingWhatsAppMessage(
     }
 
     const reply = "✕ Action was cancelled. No changes were made to your business records.";
-    await sendWhatsAppTextMessage(phoneNumber, reply);
+    await sendReply(phoneNumber, reply);
 
     return {
       success: true,
@@ -266,7 +312,7 @@ export async function handleIncomingWhatsAppMessage(
         `⚠️ *Monthly AI Limit Reached*\n\n` +
         aiResponse.message.content +
         `\n\nUpgrade your subscription at:\nhttps://bizpilot.app/settings`;
-      await sendWhatsAppTextMessage(phoneNumber, quotaMsg);
+      await sendReply(phoneNumber, quotaMsg);
       console.log(
         `[WhatsApp Quota Gate] msgId=${messageId || "n/a"} from=${phoneNumber} bizId=${context.businessId} BLOCKED`
       );
@@ -297,7 +343,7 @@ export async function handleIncomingWhatsAppMessage(
       content: replyText,
     });
 
-    await sendWhatsAppTextMessage(phoneNumber, replyText);
+    await sendReply(phoneNumber, replyText);
 
     console.log(
       `[WhatsApp AI Audit] msgId=${messageId || "n/a"} from=${phoneNumber} bizId=${context.businessId} action=${aiResponse.message.actionPreview ? "ACTION_PREVIEW" : "QUERY"} duration=${Date.now() - startTime}ms`
@@ -311,7 +357,7 @@ export async function handleIncomingWhatsAppMessage(
   } catch (err: unknown) {
     const errMsg = err instanceof Error ? err.message : "Error processing assistant request";
     const reply = `⚠️ *Assistant Error*: ${errMsg}`;
-    await sendWhatsAppTextMessage(phoneNumber, reply);
+    await sendReply(phoneNumber, reply);
 
     return {
       success: false,

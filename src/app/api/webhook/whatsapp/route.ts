@@ -69,6 +69,11 @@ export async function POST(req: NextRequest) {
           const value = change.value;
           if (!value || !Array.isArray(value.messages)) continue;
 
+          // Extract the receiving phone number ID from webhook metadata.
+          // This is used as a secondary routing key for EMBEDDED_WABA connections
+          // to route messages to the correct customer business.
+          const receivingPhoneNumberId = value.metadata?.phone_number_id ?? undefined;
+
           for (const msg of value.messages) {
             const messageId = msg.id;
 
@@ -92,8 +97,9 @@ export async function POST(req: NextRequest) {
             }
 
             if (msg.from) {
-              // Dispatch to core WhatsApp message handler
-              await handleIncomingWhatsAppMessage(msg.from, messageText, messageId);
+              // Dispatch to core WhatsApp message handler.
+              // receivingPhoneNumberId enables routing for multi-tenant EMBEDDED_WABA connections.
+              await handleIncomingWhatsAppMessage(msg.from, messageText, messageId, receivingPhoneNumberId);
             }
           }
         }
@@ -108,3 +114,4 @@ export async function POST(req: NextRequest) {
     return new Response("EVENT_RECEIVED", { status: 200 });
   }
 }
+

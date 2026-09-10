@@ -17,8 +17,11 @@ export interface EnvValidationResult {
     whatsapp: boolean;
     paystack: boolean;
     externalAi: boolean;
+    metaOAuth?: boolean;
   };
 }
+
+export { validateMetaOAuthEnv } from "./whatsapp/meta-oauth";
 
 export function validateProductionEnv(
   env: Record<string, string | undefined> = process.env
@@ -104,6 +107,11 @@ export function validateProductionEnv(
   const openaiKey = env.OPENAI_API_KEY?.trim();
   const hasExternalAi = Boolean(openaiKey);
 
+  // 8. Meta WhatsApp Embedded Signup OAuth
+  const metaAppId = env.META_APP_ID?.trim() || env.NEXT_PUBLIC_META_APP_ID?.trim();
+  const metaAppSecret = env.META_APP_SECRET?.trim() || env.WHATSAPP_APP_SECRET?.trim();
+  const hasMetaOAuth = Boolean(metaAppId && metaAppSecret);
+
   return {
     isValid: errors.length === 0,
     isProduction,
@@ -117,6 +125,7 @@ export function validateProductionEnv(
       whatsapp: hasWhatsApp,
       paystack: hasPaystack,
       externalAi: hasExternalAi,
+      metaOAuth: hasMetaOAuth,
     },
   };
 }

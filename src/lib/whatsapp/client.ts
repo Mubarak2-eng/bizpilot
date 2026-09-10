@@ -8,6 +8,9 @@ export interface SendWhatsAppResult {
 /**
  * Sends an outbound WhatsApp text message via Meta WhatsApp Cloud API.
  * Automatically falls back to simulation mode if API credentials are not set.
+ *
+ * This function uses GLOBAL env vars (WHATSAPP_ACCESS_TOKEN / WHATSAPP_PHONE_NUMBER_ID).
+ * For multi-tenant WABA connections, use sendWhatsAppTextMessageForBusiness() instead.
  */
 export async function sendWhatsAppTextMessage(
   to: string,
@@ -42,6 +45,91 @@ export async function sendWhatsAppTextMessage(
     };
   }
 
+  return _sendViaMetaAPI({ token: token!, phoneNumberId: phoneNumberId!, apiVersion, to, bodyText });
+}
+
+/**
+ * Sends an outbound WhatsApp text message through the per-business WABA connection.
+ *
+ * Multi-tenancy: Looks up the WhatsAppConnection for the given businessId to retrieve
+ * the correct phoneNumberId and metaAccessToken. Never uses global env vars for WABA connections.
+ *
+ * For INTERNAL_ASSISTANT connections (OTP-verified), falls back to the global env vars so
+ * existing functionality is not broken.
+ *
+ * Security:
+ * - businessId must be server-side verified before calling this function.
+ * - metaAccessToken is never logged or exposed; only passed to the Meta API.
+ */
+export async function sendWhatsAppTextMessageForBusiness(
+  businessId: string,
+  to: string,
+  bodyText: string
+): Promise<SendWhatsAppResult> {
+  // Import prisma lazily to avoid circular dependency issues at module load time
+  const { prisma } = await import("../prisma");
+
+  const connection = await prisma.whatsAppConnection.findUnique({
+    where: { businessId },
+    select: {
+      connectionType: true,
+      phoneNumberId: true,
+      metaAccessToken: true,
+      verified: true,
+      status: true,
+    },
+  });
+
+  if (!connection || !connection.verified) {
+    return { success: false, error: "No verified WhatsApp connection found for this business." };
+  }
+
+  if (connection.status === "DISCONNECTED" || connection.status === "RESTRICTED") {
+    return { success: false, error: `WhatsApp connection is ${connection.status.toLowerCase()}.` };
+  }
+
+  const isProduction = process.env.NODE_ENV === "production";
+  const apiVersion = process.env.WHATSAPP_API_VERSION?.trim() || "v21.0";
+
+  // EMBEDDED_WABA: use the per-business credentials stored in the DB
+  if (connection.connectionType === "EMBEDDED_WABA") {
+    const token = connection.metaAccessToken;
+    const phoneNumberId = connection.phoneNumberId;
+
+    if (!token || !phoneNumberId) {
+      if (isProduction) {
+        return { success: false, error: "WABA credentials are missing for this business connection." };
+      }
+      // Dev simulation
+      const mockId = `sim_waba_msg_${Date.now()}`;
+      console.log(`[WhatsApp WABA Simulation] bizId=${businessId} to=${to}\n${bodyText}\n---`);
+      return { success: true, messageId: mockId, simulated: true };
+    }
+
+    return _sendViaMetaAPI({ token, phoneNumberId, apiVersion, to, bodyText });
+  }
+
+  // INTERNAL_ASSISTANT: fall back to global env vars (existing OTP flow)
+  return sendWhatsAppTextMessage(to, bodyText);
+}
+
+/**
+ * Core Meta WhatsApp Cloud API HTTP call.
+ * Shared by both sendWhatsAppTextMessage and sendWhatsAppTextMessageForBusiness.
+ */
+async function _sendViaMetaAPI({
+  token,
+  phoneNumberId,
+  apiVersion,
+  to,
+  bodyText,
+}: {
+  token: string;
+  phoneNumberId: string;
+  apiVersion: string;
+  to: string;
+  bodyText: string;
+}): Promise<SendWhatsAppResult> {
   try {
     const url = `https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`;
     const payload = {
@@ -95,6 +183,7 @@ export async function sendWhatsAppTextMessage(
     };
   }
 }
+
 
 /**
  * Formats Action Previews strictly matching the requested WhatsApp UX.
