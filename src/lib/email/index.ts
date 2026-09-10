@@ -301,3 +301,88 @@ Sent by ${businessName} via BizPilot AI.
   });
 }
 
+/**
+ * Sends a 2-step login verification OTP email to a user attempting to sign in.
+ *
+ * Security:
+ * - High-conversion, dark-themed responsive template matching BizPilot AI design system.
+ * - Displays 6-digit code clearly in monospace with letter spacing.
+ * - States 10-minute expiration and anti-phishing security warning.
+ */
+export async function sendLoginVerificationEmail(params: {
+  to: string;
+  userName?: string | null;
+  code: string;
+}): Promise<EmailResult> {
+  const { to, userName, code } = params;
+  const safeName = userName ? escapeHtml(userName) : "there";
+  const safeCode = escapeHtml(code);
+  const subject = `🔐 Your BizPilot AI Login Code: ${safeCode}`;
+
+  const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #050816; color: #f8fafc; margin: 0; padding: 24px; }
+    .container { max-width: 520px; margin: 0 auto; background: #090e24; border: 1px solid #1e293b; border-radius: 24px; padding: 36px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6); }
+    .logo-badge { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #7c3aed, #06b6d4); color: #ffffff; font-weight: 900; font-size: 16px; margin-bottom: 20px; }
+    .title { font-size: 22px; font-weight: 800; color: #ffffff; margin: 0 0 8px 0; letter-spacing: -0.02em; }
+    .subtitle { font-size: 13px; color: #94a3b8; margin: 0 0 24px 0; line-height: 1.5; }
+    .otp-box { background: #050816; border: 1px solid #334155; border-radius: 16px; padding: 24px; margin: 24px 0; text-align: center; }
+    .otp-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #a78bfa; letter-spacing: 0.15em; margin-bottom: 8px; }
+    .otp-code { font-family: 'Courier New', Courier, monospace; font-size: 38px; font-weight: 900; color: #38bdf8; letter-spacing: 0.25em; margin: 0; padding: 4px 0; }
+    .otp-expiry { font-size: 11px; color: #cbd5e1; margin-top: 10px; font-weight: 500; }
+    .security-notice { background: rgba(244, 63, 94, 0.08); border: 1px solid rgba(244, 63, 94, 0.2); border-radius: 12px; padding: 14px 16px; margin: 24px 0; font-size: 12px; color: #fda4af; line-height: 1.5; }
+    .footer { border-top: 1px solid #1e293b; margin-top: 32px; padding-top: 20px; font-size: 11px; color: #64748b; text-align: center; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo-badge">BP</div>
+    <h1 class="title">Verify Your Login</h1>
+    <p class="subtitle">Hello ${safeName}, enter the 6-digit security code below to complete signing in to your BizPilot AI account.</p>
+    
+    <div class="otp-box">
+      <div class="otp-label">Verification Code</div>
+      <div class="otp-code">${safeCode}</div>
+      <div class="otp-expiry">⏱️ Valid for <strong>10 minutes</strong></div>
+    </div>
+
+    <div class="security-notice">
+      🔒 <strong>Security Tip:</strong> BizPilot will never ask for this code via phone, chat, or social media. If you did not attempt to sign in, please secure your password immediately.
+    </div>
+
+    <div class="footer">
+      This is an automated security email sent to <strong>${escapeHtml(to)}</strong>.<br>
+      © ${new Date().getFullYear()} BizPilot AI. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  const text = `
+BizPilot AI - Login Verification Code
+
+Your 6-digit verification code is: ${code}
+
+This code is valid for 10 minutes.
+
+Security Notice: Never share this code with anyone. If you did not attempt to sign in, please secure your account immediately.
+
+Sent to ${to} via BizPilot AI.
+  `.trim();
+
+  return sendEmail({
+    to,
+    subject,
+    html,
+    text,
+  });
+}
+
+

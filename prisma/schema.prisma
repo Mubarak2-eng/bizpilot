@@ -126,11 +126,12 @@ model User {
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
-  accounts            Account[]
-  sessions            Session[]
-  memberships         Membership[]
-  whatsAppConnections WhatsAppConnection[]
-  aiPendingActions    AIPendingAction[]
+  accounts                Account[]
+  sessions                Session[]
+  memberships             Membership[]
+  whatsAppConnections     WhatsAppConnection[]
+  aiPendingActions        AIPendingAction[]
+  loginVerificationTokens LoginVerificationToken[]
 
   @@index([email])
 }
@@ -668,5 +669,24 @@ model WhatsAppRateLimit {
   @@index([key])
   @@index([resetAt])
 }
+
+// ─── 2-Step Login Verification Token ─────────────────────────────────────────
+
+model LoginVerificationToken {
+  id          String    @id @default(cuid())
+  userId      String
+  tokenHash   String    // HMAC-SHA256 hash of the 6-digit OTP code (never plaintext)
+  expiresAt   DateTime  // 10-minute TTL
+  attempts    Int       @default(0) // Max 5 attempts
+  consumedAt  DateTime? // Single-use consumption timestamp
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
 
 

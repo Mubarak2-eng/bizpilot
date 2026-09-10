@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import { authConfig } from "./auth.config";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/password";
+import { verifyAndConsumeLoginOTP } from "@/lib/auth/login-verification";
 
 /**
  * Core credential verification logic for NextAuth credentials provider.
@@ -57,10 +58,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        challengeToken: { label: "Challenge Token", type: "text" },
+        otpCode: { label: "Verification Code", type: "text" },
       },
       async authorize(credentials) {
+        // 1. If 2-step verification OTP challenge is submitted
+        if (credentials?.challengeToken && credentials?.otpCode) {
+          const result = await verifyAndConsumeLoginOTP(
+            String(credentials.challengeToken),
+            String(credentials.otpCode)
+          );
+          if (result.success && result.user) {
+            return result.user;
+          }
+          return null;
+        }
+
+        // 2. Direct password credentials (fallback / internal tests)
         return verifyUserCredentials(credentials?.email, credentials?.password);
       },
     }),
   ],
 });
+
