@@ -142,50 +142,40 @@ describe("Phase 6D: Commercialization, Subscriptions, Paystack & AI Quotas", () 
     });
   });
 
-  // ── 2. Trial Lifecycle & Server-Side Fallback ──────────────────────────────
-  describe("14-Day STARTER Trial & Expiration Fallback", () => {
-    it("should provision a 14-day STARTER trial on newly registered businesses", async () => {
+  // ── 2. Registration Lifecycle & Tier Gates ──────────────────────────────────
+  describe("Default FREE Tier & Tier Feature Gates", () => {
+    it("should provision the default FREE tier on newly registered businesses", async () => {
       const subState = await getBusinessSubscription(testBizA.id);
 
-      expect(subState.planCode).toBe("STARTER");
-      expect(subState.status).toBe("TRIALING");
-      expect(subState.isTrialing).toBe(true);
+      expect(subState.planCode).toBe("FREE");
+      expect(subState.status).toBe("ACTIVE");
+      expect(subState.isTrialing).toBe(false);
       expect(subState.isTrialExpired).toBe(false);
       expect(subState.isActive).toBe(true);
-      expect(subState.plan.aiMonthlyLimit).toBe(150);
-
-      // Verify expiration date is ~14 days ahead
-      const diffDays = Math.round(
-        (subState.currentPeriodEnd.getTime() - subState.currentPeriodStart.getTime()) /
-          (1000 * 60 * 60 * 24)
-      );
-      expect(diffDays).toBe(14);
+      expect(subState.plan.aiMonthlyLimit).toBe(25);
+      expect(Number(subState.plan.monthlyPrice)).toBe(0);
     });
 
-    it("should dynamically fall back to FREE tier when trial is expired", async () => {
-      // Create a reference date 15 days in the future
-      const futureDate = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000);
-
+    it("should keep FREE tier active across billing periods", async () => {
+      const futureDate = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
       const subState = await getBusinessSubscription(testBizA.id, futureDate);
 
-      expect(subState.isTrialExpired).toBe(true);
-      expect(subState.isTrialing).toBe(false);
-      expect(subState.status).toBe("EXPIRED");
       expect(subState.planCode).toBe("FREE");
+      expect(subState.isActive).toBe(true);
       expect(subState.plan.aiMonthlyLimit).toBe(25);
     });
 
-    it("should enforce feature gates between FREE and STARTER tiers", async () => {
-      // During active trial (STARTER)
-      const hasBrainStarter = await hasFeature(testBizA.id, "business_brain_advanced");
-      const hasIndustry = await hasFeature(testBizA.id, "industry_intelligence");
-      expect(hasBrainStarter).toBe(true);
-      expect(hasIndustry).toBe(true);
+    it("should enforce feature gates between FREE and paid tiers", async () => {
+      // FREE tier access
+      const hasCore = await hasFeature(testBizA.id, "core_operations");
+      const hasBasicDashboard = await hasFeature(testBizA.id, "basic_dashboard");
+      const hasBrainAdvanced = await hasFeature(testBizA.id, "business_brain_advanced");
+      const hasAiActions = await hasFeature(testBizA.id, "ai_write_actions");
 
-      // When trial has expired (FREE fallback)
-      const futureDate = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000);
-      const hasBrainExpired = await hasFeature(testBizA.id, "business_brain_advanced", futureDate);
-      expect(hasBrainExpired).toBe(false);
+      expect(hasCore).toBe(true);
+      expect(hasBasicDashboard).toBe(true);
+      expect(hasBrainAdvanced).toBe(false);
+      expect(hasAiActions).toBe(false);
     });
   });
 
@@ -346,16 +336,16 @@ describe("Phase 6D: Commercialization, Subscriptions, Paystack & AI Quotas", () 
       expect(res.message.content).toContain("Upgrade your plan to continue using BizPilot AI");
     });
 
-    it("should enforce shared quota across WhatsApp and Web Assistant channels", async () => {
-      // Inbound WhatsApp query should also encounter the quota limit
+    it("should enforce WhatsApp AI paid feature gate on FREE tier businesses", async () => {
+      // Inbound WhatsApp query should be blocked on FREE tier
       const waResult = await handleIncomingWhatsAppMessage(
         testPhoneA,
         "What were my sales today?",
         `msg_quota_${Date.now()}`
       );
 
-      expect(waResult.success).toBe(true);
-      expect(waResult.replySent).toContain("reached your 150 AI queries");
+      expect(waResult.success).toBe(false);
+      expect(waResult.replySent).toContain("WhatsApp AI assistant is available on active Starter, Pro, and Business plans");
     });
 
     it("should roll over to zero count on a new monthly billing period", async () => {

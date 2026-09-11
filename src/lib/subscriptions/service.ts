@@ -139,7 +139,7 @@ export async function recordSuccessfulPaymentAndActivate(params: PaymentSuccessA
 }
 
 /**
- * Creates a default 14-Day STARTER Trial subscription for a newly registered business.
+ * Creates a default FREE tier subscription for a newly registered business.
  */
 export async function createInitialTrialSubscription(
   businessId: string,
@@ -147,33 +147,32 @@ export async function createInitialTrialSubscription(
 ) {
   await ensureDefaultPlans();
 
-  const starterPlan = await prisma.plan.findUnique({
-    where: { code: "STARTER" },
+  const freePlan = await prisma.plan.findUnique({
+    where: { code: "FREE" },
   });
 
-  if (!starterPlan) {
-    throw new Error("Starter plan definition not found in database.");
+  if (!freePlan) {
+    throw new Error("Free plan definition not found in database.");
   }
 
-  const trialPeriodDays = 14;
-  const trialEndsAt = new Date(now.getTime() + trialPeriodDays * 24 * 60 * 60 * 1000);
+  const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
   return prisma.subscription.upsert({
     where: { businessId },
     create: {
       businessId,
-      planId: starterPlan.id,
-      status: "TRIALING",
+      planId: freePlan.id,
+      status: "ACTIVE",
       currentPeriodStart: now,
-      currentPeriodEnd: trialEndsAt,
-      trialEndsAt,
+      currentPeriodEnd: thirtyDaysLater,
+      trialEndsAt: null,
     },
     update: {
-      planId: starterPlan.id,
-      status: "TRIALING",
+      planId: freePlan.id,
+      status: "ACTIVE",
       currentPeriodStart: now,
-      currentPeriodEnd: trialEndsAt,
-      trialEndsAt,
+      currentPeriodEnd: thirtyDaysLater,
+      trialEndsAt: null,
     },
     include: { plan: true },
   });
@@ -194,7 +193,7 @@ export async function getBusinessSubscription(
     include: { plan: true },
   });
 
-  // If no subscription exists (e.g. existing/backfilled business), provision the 14-day PRO trial
+  // If no subscription exists (e.g. existing/backfilled business), provision the default FREE tier
   if (!sub) {
     sub = await createInitialTrialSubscription(businessId, referenceDate);
   }
@@ -218,7 +217,8 @@ export async function getBusinessSubscription(
       effectivePlanCode = "FREE"; // Fallback to FREE tier
     }
   } else if (rawStatus === "ACTIVE") {
-    if (sub.currentPeriodEnd && referenceDate > sub.currentPeriodEnd) {
+    // If on a paid tier and period has lapsed, flag as PAST_DUE; FREE plan is always active
+    if (sub.plan.code !== "FREE" && sub.currentPeriodEnd && referenceDate > sub.currentPeriodEnd) {
       effectiveStatus = "PAST_DUE";
       isActive = false;
     }

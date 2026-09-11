@@ -238,7 +238,11 @@ export default function SettingsManager({
                 <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight">
                   {subscription?.planName || "BizPilot OS"}
                 </h2>
-                {subscription?.isTrialing ? (
+                {subscription?.planCode === "FREE" ? (
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-white/[0.1]">
+                    FREE TIER
+                  </span>
+                ) : subscription?.isTrialing ? (
                   <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
                     {subscription.planCode ? `14-DAY ${subscription.planCode} TRIAL` : "14-DAY TRIAL"}
                   </span>
