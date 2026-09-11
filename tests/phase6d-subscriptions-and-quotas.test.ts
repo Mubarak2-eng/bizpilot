@@ -143,16 +143,16 @@ describe("Phase 6D: Commercialization, Subscriptions, Paystack & AI Quotas", () 
   });
 
   // ── 2. Trial Lifecycle & Server-Side Fallback ──────────────────────────────
-  describe("14-Day PRO Trial & Expiration Fallback", () => {
-    it("should provision a 14-day PRO trial on newly registered businesses", async () => {
+  describe("14-Day STARTER Trial & Expiration Fallback", () => {
+    it("should provision a 14-day STARTER trial on newly registered businesses", async () => {
       const subState = await getBusinessSubscription(testBizA.id);
 
-      expect(subState.planCode).toBe("PRO");
+      expect(subState.planCode).toBe("STARTER");
       expect(subState.status).toBe("TRIALING");
       expect(subState.isTrialing).toBe(true);
       expect(subState.isTrialExpired).toBe(false);
       expect(subState.isActive).toBe(true);
-      expect(subState.plan.aiMonthlyLimit).toBe(500);
+      expect(subState.plan.aiMonthlyLimit).toBe(150);
 
       // Verify expiration date is ~14 days ahead
       const diffDays = Math.round(
@@ -175,17 +175,17 @@ describe("Phase 6D: Commercialization, Subscriptions, Paystack & AI Quotas", () 
       expect(subState.plan.aiMonthlyLimit).toBe(25);
     });
 
-    it("should enforce feature gates between FREE and PRO tiers", async () => {
-      // During active trial (PRO)
-      const hasBrainPro = await hasFeature(testBizA.id, "business_brain_advanced");
-      const hasAiActions = await hasFeature(testBizA.id, "ai_write_actions");
-      expect(hasBrainPro).toBe(true);
-      expect(hasAiActions).toBe(true);
+    it("should enforce feature gates between FREE and STARTER tiers", async () => {
+      // During active trial (STARTER)
+      const hasBrainStarter = await hasFeature(testBizA.id, "business_brain_advanced");
+      const hasIndustry = await hasFeature(testBizA.id, "industry_intelligence");
+      expect(hasBrainStarter).toBe(true);
+      expect(hasIndustry).toBe(true);
 
       // When trial has expired (FREE fallback)
       const futureDate = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000);
-      const hasAiActionsExpired = await hasFeature(testBizA.id, "ai_write_actions", futureDate);
-      expect(hasAiActionsExpired).toBe(false);
+      const hasBrainExpired = await hasFeature(testBizA.id, "business_brain_advanced", futureDate);
+      expect(hasBrainExpired).toBe(false);
     });
   });
 
@@ -331,7 +331,7 @@ describe("Phase 6D: Commercialization, Subscriptions, Paystack & AI Quotas", () 
       const quotaCheck = await checkAndIncrementAIQuota(testBizA.id);
       expect(quotaCheck.allowed).toBe(false);
       expect(quotaCheck.remaining).toBe(0);
-      expect(quotaCheck.message).toContain("reached your 500 AI queries for this month");
+      expect(quotaCheck.message).toContain(`reached your ${limit} AI queries for this month`);
 
       // Verify AI execution returns friendly upgrade message
       const res = await runAIAssistant([], "What were my sales today?", {
@@ -355,7 +355,7 @@ describe("Phase 6D: Commercialization, Subscriptions, Paystack & AI Quotas", () 
       );
 
       expect(waResult.success).toBe(true);
-      expect(waResult.replySent).toContain("reached your 500 AI queries");
+      expect(waResult.replySent).toContain("reached your 150 AI queries");
     });
 
     it("should roll over to zero count on a new monthly billing period", async () => {

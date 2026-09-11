@@ -139,7 +139,7 @@ export async function recordSuccessfulPaymentAndActivate(params: PaymentSuccessA
 }
 
 /**
- * Creates a default 14-Day PRO Trial subscription for a newly registered business.
+ * Creates a default 14-Day STARTER Trial subscription for a newly registered business.
  */
 export async function createInitialTrialSubscription(
   businessId: string,
@@ -147,12 +147,12 @@ export async function createInitialTrialSubscription(
 ) {
   await ensureDefaultPlans();
 
-  const proPlan = await prisma.plan.findUnique({
-    where: { code: "PRO" },
+  const starterPlan = await prisma.plan.findUnique({
+    where: { code: "STARTER" },
   });
 
-  if (!proPlan) {
-    throw new Error("Pro plan definition not found in database.");
+  if (!starterPlan) {
+    throw new Error("Starter plan definition not found in database.");
   }
 
   const trialPeriodDays = 14;
@@ -162,14 +162,14 @@ export async function createInitialTrialSubscription(
     where: { businessId },
     create: {
       businessId,
-      planId: proPlan.id,
+      planId: starterPlan.id,
       status: "TRIALING",
       currentPeriodStart: now,
       currentPeriodEnd: trialEndsAt,
       trialEndsAt,
     },
     update: {
-      planId: proPlan.id,
+      planId: starterPlan.id,
       status: "TRIALING",
       currentPeriodStart: now,
       currentPeriodEnd: trialEndsAt,

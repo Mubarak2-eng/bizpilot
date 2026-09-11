@@ -240,7 +240,7 @@ export default function SettingsManager({
                 </h2>
                 {subscription?.isTrialing ? (
                   <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
-                    14-DAY PRO TRIAL
+                    {subscription.planCode ? `14-DAY ${subscription.planCode} TRIAL` : "14-DAY TRIAL"}
                   </span>
                 ) : subscription?.status === "ACTIVE" ? (
                   <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
