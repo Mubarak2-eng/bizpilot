@@ -15,6 +15,7 @@ export interface EnvValidationResult {
     email: boolean;
     cron: boolean;
     whatsapp: boolean;
+    flutterwave: boolean;
     paystack: boolean;
     externalAi: boolean;
     metaOAuth?: boolean;
@@ -96,11 +97,21 @@ export function validateProductionEnv(
     if (!waVerifyToken) warnings.push("WHATSAPP_VERIFY_TOKEN is not configured for WhatsApp webhook challenge verification.");
   }
 
-  // 6. Paystack Payments
+  // 6. Flutterwave Payments (Primary) & Paystack Payments (Transitional Fallback)
+  const flwSecret = (env.FLW_SECRET_KEY || env.FLUTTERWAVE_SECRET_KEY)?.trim();
+  const flwWebhook = (
+    env.FLW_WEBHOOK_SECRET ||
+    env.FLUTTERWAVE_SECRET_HASH ||
+    env.FLW_SECRET_HASH ||
+    env.FLUTTERWAVE_WEBHOOK_SECRET
+  )?.trim();
+  const hasFlutterwave = Boolean(flwSecret);
+
   const paystackSecret = env.PAYSTACK_SECRET_KEY?.trim();
   const hasPaystack = Boolean(paystackSecret);
-  if (isProduction && !hasPaystack) {
-    warnings.push("PAYSTACK_SECRET_KEY is not configured for live billing.");
+
+  if (isProduction && !hasFlutterwave && !hasPaystack) {
+    warnings.push("Neither Flutterwave (FLW_SECRET_KEY) nor Paystack (PAYSTACK_SECRET_KEY) is configured for live billing.");
   }
 
   // 7. External AI LLM (Optional)
@@ -123,6 +134,7 @@ export function validateProductionEnv(
       email: hasEmail,
       cron: hasCron,
       whatsapp: hasWhatsApp,
+      flutterwave: hasFlutterwave,
       paystack: hasPaystack,
       externalAi: hasExternalAi,
       metaOAuth: hasMetaOAuth,

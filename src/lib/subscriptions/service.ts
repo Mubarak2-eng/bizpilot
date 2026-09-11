@@ -32,9 +32,13 @@ export interface PaymentSuccessActivationParams {
   planCode: PlanCode;
   amountNaira: number;
   currency?: string;
+  provider?: "FLUTTERWAVE" | "PAYSTACK";
   customerCode?: string | null;
   subscriptionCode?: string | null;
   planPaystackCode?: string | null;
+  flwRef?: string | null;
+  flwTransactionId?: string | number | null;
+  flwPlanId?: string | null;
   eventType?: string;
   metadata?: Record<string, unknown>;
 }
@@ -60,8 +64,9 @@ export async function recordSuccessfulPaymentAndActivate(params: PaymentSuccessA
     throw new Error(`Invalid payment currency: ${params.currency}. Only NGN is supported.`);
   }
 
-  // Validate Amount vs Plan Price (Zero Client Trust)
-  const expectedPrice = Number(plan.monthlyPrice);
+  // Validate Amount vs Canonical Plan Price (Zero Client Trust)
+  const canonicalPlan = PLAN_DEFINITIONS[params.planCode];
+  const expectedPrice = canonicalPlan ? canonicalPlan.monthlyPrice : Number(plan.monthlyPrice);
   if (params.amountNaira < expectedPrice) {
     throw new Error(
       `Invalid payment amount: received ₦${params.amountNaira}, expected ₦${expectedPrice} for plan ${params.planCode}.`

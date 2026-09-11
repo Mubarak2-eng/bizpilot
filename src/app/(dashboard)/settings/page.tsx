@@ -6,6 +6,7 @@ import {
   recordSuccessfulPaymentAndActivate,
 } from "@/lib/subscriptions/service";
 import { getAIUsage } from "@/lib/subscriptions/quotas";
+import { verifyFlutterwaveTransaction } from "@/lib/payments/flutterwave";
 import { verifyPaystackTransaction } from "@/lib/payments/paystack";
 import { PlanCode } from "@prisma/client";
 import SettingsManager, {
@@ -20,7 +21,13 @@ export const metadata = {
 };
 
 interface SettingsPageProps {
-  searchParams?: Promise<{ reference?: string; trxref?: string }>;
+  searchParams?: Promise<{
+    reference?: string;
+    trxref?: string;
+    tx_ref?: string;
+    transaction_id?: string;
+    status?: string;
+  }>;
 }
 
 export default async function SettingsPage(props: SettingsPageProps) {
@@ -35,51 +42,99 @@ export default async function SettingsPage(props: SettingsPageProps) {
   }
 
   const searchParams = props.searchParams ? await props.searchParams : {};
-  const queryRef = searchParams.reference || searchParams.trxref;
+  const queryRef = searchParams.tx_ref || searchParams.transaction_id || searchParams.reference || searchParams.trxref;
   let initialFeedback: { message?: string; error?: string } | null = null;
 
-  // Server-side synchronous verification fallback if returning from Paystack redirect
+  // Server-side synchronous verification fallback if returning from Flutterwave/Paystack redirect
   if (queryRef) {
     try {
-      const verifyRes = await verifyPaystackTransaction(queryRef);
-      if (verifyRes.success && verifyRes.data && verifyRes.data.status === "success") {
-        const data = verifyRes.data;
-        const metaBizId = data.metadata?.businessId as string | undefined;
-        const metaPlanCode = data.metadata?.planCode as PlanCode | undefined;
+      if (searchParams.status && searchParams.status === "cancelled") {
+        initialFeedback = {
+          error: "Payment was cancelled. Your subscription was not charged.",
+        };
+      } else if (queryRef.startsWith("bp_flw_") || searchParams.tx_ref || searchParams.transaction_id) {
+        const verifyRes = await verifyFlutterwaveTransaction(queryRef);
+        if (verifyRes.success && verifyRes.data) {
+          const data = verifyRes.data;
+          const status = data.status.toLowerCase();
 
-        // Zero-trust check: verify transaction metadata matches active business
-        if (!metaBizId || metaBizId === activeContext.business.id) {
-          const resolvedPlanCode: PlanCode = metaPlanCode || "PRO";
-          const amountNaira = (data.amount || 0) / 100;
-          const currency = (data.currency || "NGN").toUpperCase();
+          if (status === "successful" || status === "success") {
+            const metaBizId = data.meta?.businessId as string | undefined;
+            const metaPlanCode = data.meta?.planCode as PlanCode | undefined;
 
-          if (currency === "NGN") {
-            await recordSuccessfulPaymentAndActivate({
-              reference: data.reference || queryRef,
-              businessId: activeContext.business.id,
-              planCode: resolvedPlanCode,
-              amountNaira,
-              currency,
-              customerCode: data.customer?.customer_code,
-              subscriptionCode: data.subscription_code,
-              planPaystackCode: data.plan,
-              eventType: "charge.success",
-              metadata: data.metadata,
-            });
+            // Zero-trust check: verify transaction metadata matches active business
+            if (!metaBizId || metaBizId === activeContext.business.id) {
+              const resolvedPlanCode: PlanCode = metaPlanCode || "PRO";
+              const amountNaira = Number(data.amount || data.charged_amount || 0);
+              const currency = (data.currency || "NGN").toUpperCase();
 
+              if (currency === "NGN") {
+                await recordSuccessfulPaymentAndActivate({
+                  reference: data.tx_ref || queryRef,
+                  businessId: activeContext.business.id,
+                  planCode: resolvedPlanCode,
+                  amountNaira,
+                  currency,
+                  provider: "FLUTTERWAVE",
+                  flwRef: data.flw_ref,
+                  flwTransactionId: data.id,
+                  customerCode: data.customer?.id ? String(data.customer.id) : data.customer?.email,
+                  eventType: "charge.completed",
+                  metadata: data.meta,
+                });
+
+                initialFeedback = {
+                  message: `🎉 Payment confirmed! Your ${resolvedPlanCode} subscription is now ACTIVE.`,
+                };
+              }
+            } else {
+              initialFeedback = {
+                error: "Payment verification failed: Transaction belongs to another business workspace.",
+              };
+            }
+          } else {
             initialFeedback = {
-              message: `🎉 Payment confirmed! Your ${resolvedPlanCode} subscription is now ACTIVE.`,
+              error: `Payment status is ${data.status}. Subscription could not be activated.`,
             };
           }
-        } else {
-          initialFeedback = {
-            error: "Payment verification failed: Transaction belongs to another business workspace.",
-          };
         }
-      } else if (verifyRes.data && verifyRes.data.status !== "success") {
-        initialFeedback = {
-          error: `Payment status is ${verifyRes.data.status}. Subscription could not be activated.`,
-        };
+      } else {
+        // Fallback for legacy Paystack verification
+        const verifyRes = await verifyPaystackTransaction(queryRef);
+        if (verifyRes.success && verifyRes.data && verifyRes.data.status === "success") {
+          const data = verifyRes.data;
+          const metaBizId = data.metadata?.businessId as string | undefined;
+          const metaPlanCode = data.metadata?.planCode as PlanCode | undefined;
+
+          if (!metaBizId || metaBizId === activeContext.business.id) {
+            const resolvedPlanCode: PlanCode = metaPlanCode || "PRO";
+            const amountNaira = (data.amount || 0) / 100;
+            const currency = (data.currency || "NGN").toUpperCase();
+
+            if (currency === "NGN") {
+              await recordSuccessfulPaymentAndActivate({
+                reference: data.reference || queryRef,
+                businessId: activeContext.business.id,
+                planCode: resolvedPlanCode,
+                amountNaira,
+                currency,
+                customerCode: data.customer?.customer_code,
+                subscriptionCode: data.subscription_code,
+                planPaystackCode: data.plan,
+                eventType: "charge.success",
+                metadata: data.metadata,
+              });
+
+              initialFeedback = {
+                message: `🎉 Payment confirmed! Your ${resolvedPlanCode} subscription is now ACTIVE.`,
+              };
+            }
+          } else {
+            initialFeedback = {
+              error: "Payment verification failed: Transaction belongs to another business workspace.",
+            };
+          }
+        }
       }
     } catch (err: unknown) {
       console.error("[Settings Page Payment Verification Error]", err);

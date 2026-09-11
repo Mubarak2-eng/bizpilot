@@ -4,10 +4,22 @@ import { prisma } from "../prisma";
 import { requireBusinessRole } from "../auth-helpers";
 import { Role } from "../../types/auth";
 import { PlanCode } from "@prisma/client";
-import { initializePaystackTransaction } from "../payments/paystack";
-import { getBusinessSubscription, getBusinessPlan, recordSuccessfulPaymentAndActivate } from "../subscriptions/service";
+import {
+  initializeFlutterwaveTransaction,
+  verifyFlutterwaveTransaction,
+} from "../payments/flutterwave";
+import {
+  initializePaystackTransaction,
+  verifyPaystackTransaction,
+} from "../payments/paystack";
+import {
+  getBusinessSubscription,
+  getBusinessPlan,
+  recordSuccessfulPaymentAndActivate,
+  ensureDefaultPlans,
+} from "../subscriptions/service";
+import { PLAN_DEFINITIONS } from "../subscriptions/plans";
 import { getAIUsage } from "../subscriptions/quotas";
-import { verifyPaystackTransaction } from "../payments/paystack";
 
 export interface CheckoutActionResult {
   success?: boolean;
@@ -26,7 +38,7 @@ export interface VerifyPaymentActionResult {
 }
 
 /**
- * Initializes a secure Paystack checkout session to purchase or upgrade a subscription plan.
+ * Initializes a secure Flutterwave checkout session to purchase or upgrade a subscription plan.
  * The price and currency are ALWAYS derived server-side from the Plan database record.
  */
 export async function initializePlanCheckoutAction(
@@ -48,7 +60,10 @@ export async function initializePlanCheckoutAction(
       return { error: "Invalid subscription plan selected." };
     }
 
-    // Resolve plan price and configuration from database (Zero Client Trust)
+    // Ensure database plans are synced to latest definitions
+    await ensureDefaultPlans();
+
+    // Resolve plan price and configuration from database & canonical definitions (Zero Client Trust)
     const plan = await prisma.plan.findUnique({
       where: { code },
     });
@@ -57,13 +72,13 @@ export async function initializePlanCheckoutAction(
       return { error: "The requested subscription plan is currently unavailable." };
     }
 
-    const priceNaira = Number(plan.monthlyPrice);
+    const canonicalPlan = PLAN_DEFINITIONS[code];
+    const priceNaira = canonicalPlan ? canonicalPlan.monthlyPrice : Number(plan.monthlyPrice);
     if (priceNaira <= 0) {
       return { error: "Free plans do not require payment processing." };
     }
 
-    const amountInKobo = Math.round(priceNaira * 100);
-    const reference = `bp_sub_${context.business.id.slice(-6)}_${Date.now()}`;
+    const txRef = `bp_flw_${context.business.id.slice(-6)}_${Date.now()}`;
 
     const metadata = {
       businessId: context.business.id,
@@ -72,23 +87,25 @@ export async function initializePlanCheckoutAction(
       planId: plan.id,
     };
 
-    const paystackRes = await initializePaystackTransaction({
+    const flwRes = await initializeFlutterwaveTransaction({
       email: context.user.email,
-      amountInKobo,
-      reference,
-      callbackUrl,
+      name: context.user.name || undefined,
+      amountInNaira: priceNaira,
+      currency: "NGN",
+      txRef,
+      redirectUrl: callbackUrl,
       metadata,
     });
 
-    if (!paystackRes.success) {
-      return { error: paystackRes.error || "Failed to initialize payment gateway." };
+    if (!flwRes.success) {
+      return { error: flwRes.error || "Failed to initialize Flutterwave payment gateway." };
     }
 
     return {
       success: true,
-      authorizationUrl: paystackRes.authorizationUrl,
-      reference: paystackRes.reference,
-      simulated: paystackRes.simulated,
+      authorizationUrl: flwRes.paymentLink,
+      reference: flwRes.txRef,
+      simulated: flwRes.simulated,
     };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Checkout initialization failed";
@@ -97,7 +114,7 @@ export async function initializePlanCheckoutAction(
 }
 
 /**
- * Synchronously verifies a Paystack payment upon return redirect from checkout.
+ * Synchronously verifies a payment upon return redirect from Flutterwave checkout.
  * Enforces zero-trust authentication, tenant isolation, amount and currency checks.
  */
 export async function verifyPaymentAction(
@@ -111,27 +128,58 @@ export async function verifyPaymentAction(
       return { success: false, error: "Transaction reference is required." };
     }
 
-    // 1. Verify transaction with Paystack gateway
-    const verifyRes = await verifyPaystackTransaction(reference);
-    if (!verifyRes.success || !verifyRes.data) {
-      return {
-        success: false,
-        error: verifyRes.error || "Payment verification failed with payment gateway.",
-      };
+    // 1. Verify transaction with Flutterwave gateway (with fallback for legacy Paystack references)
+    let isSuccess = false;
+    let status = "failed";
+    let amountNaira = 0;
+    let currency = "NGN";
+    let verifiedRef = reference;
+    let metaBizId: string | undefined;
+    let metaPlanCode: string | undefined;
+    let flwRef: string | undefined;
+    let flwTransactionId: number | string | undefined;
+    let rawMetadata: Record<string, unknown> | undefined;
+
+    if (reference.startsWith("bp_flw_") || !reference.startsWith("bp_sub_")) {
+      const verifyRes = await verifyFlutterwaveTransaction(reference);
+      if (verifyRes.success && verifyRes.data) {
+        const d = verifyRes.data;
+        status = d.status.toLowerCase();
+        isSuccess = status === "successful" || status === "success";
+        amountNaira = Number(d.amount || d.charged_amount || 0);
+        currency = (d.currency || "NGN").toUpperCase();
+        verifiedRef = d.tx_ref || reference;
+        flwRef = d.flw_ref;
+        flwTransactionId = d.id;
+        rawMetadata = d.meta;
+        metaBizId = d.meta?.businessId as string | undefined;
+        metaPlanCode = d.meta?.planCode as string | undefined;
+      }
+    } else {
+      // Legacy Paystack fallback verification
+      const verifyRes = await verifyPaystackTransaction(reference);
+      if (verifyRes.success && verifyRes.data) {
+        const d = verifyRes.data;
+        status = d.status.toLowerCase();
+        isSuccess = status === "success";
+        amountNaira = (d.amount || 0) / 100;
+        currency = (d.currency || "NGN").toUpperCase();
+        verifiedRef = d.reference || reference;
+        rawMetadata = d.metadata;
+        metaBizId = d.metadata?.businessId as string | undefined;
+        metaPlanCode = d.metadata?.planCode as string | undefined;
+      }
     }
 
-    const txData = verifyRes.data;
-
     // 2. Validate status
-    if (txData.status !== "success") {
+    if (!isSuccess) {
       return {
         success: false,
-        error: `Payment status is '${txData.status}'. Only successful payments can activate a subscription.`,
+        error: `Payment status is '${status}'. Only successful payments can activate a subscription.`,
       };
     }
 
     // 3. Cross-Tenant Protection: Verify businessId in metadata matches authenticated business
-    const metaBizId = txData.metadata?.businessId as string | undefined;
     if (metaBizId && metaBizId !== context.business.id) {
       return {
         success: false,
@@ -140,16 +188,17 @@ export async function verifyPaymentAction(
     }
 
     // 4. Validate Currency (Must be NGN)
-    if (txData.currency && txData.currency.toUpperCase() !== "NGN") {
+    if (currency !== "NGN") {
       return {
         success: false,
-        error: `Invalid payment currency: ${txData.currency}. Only NGN is supported.`,
+        error: `Invalid payment currency: ${currency}. Only NGN is supported.`,
       };
     }
 
     // 5. Determine target plan (Default to PRO if unspecified)
-    const rawPlanCode = (txData.metadata?.planCode as string) || "PRO";
-    const planCode = rawPlanCode.toUpperCase() as PlanCode;
+    await ensureDefaultPlans();
+    const rawPlan = metaPlanCode || "PRO";
+    const planCode = rawPlan.toUpperCase() as PlanCode;
 
     const plan = await prisma.plan.findUnique({
       where: { code: planCode },
@@ -162,9 +211,9 @@ export async function verifyPaymentAction(
       };
     }
 
-    // 6. Validate Amount vs Plan Price
-    const amountNaira = (txData.amount || 0) / 100;
-    const expectedPrice = Number(plan.monthlyPrice);
+    // 6. Validate Amount vs Canonical Plan Price
+    const canonicalPlan = PLAN_DEFINITIONS[planCode];
+    const expectedPrice = canonicalPlan ? canonicalPlan.monthlyPrice : Number(plan.monthlyPrice);
     if (amountNaira < expectedPrice) {
       return {
         success: false,
@@ -174,22 +223,22 @@ export async function verifyPaymentAction(
 
     // 7. Idempotently record payment and activate subscription
     await recordSuccessfulPaymentAndActivate({
-      reference: txData.reference || reference,
+      reference: verifiedRef,
       businessId: context.business.id,
       planCode,
       amountNaira,
-      currency: txData.currency || "NGN",
-      customerCode: txData.customer?.customer_code,
-      subscriptionCode: txData.subscription_code,
-      planPaystackCode: txData.plan,
-      eventType: "charge.success",
-      metadata: txData.metadata,
+      currency,
+      provider: verifiedRef.startsWith("bp_flw_") ? "FLUTTERWAVE" : "PAYSTACK",
+      flwRef,
+      flwTransactionId,
+      eventType: "charge.completed",
+      metadata: rawMetadata,
     });
 
     return {
       success: true,
       planCode,
-      reference: txData.reference || reference,
+      reference: verifiedRef,
       message: `🎉 Payment confirmed! Your ${planCode} subscription is now ACTIVE.`,
     };
   } catch (err: unknown) {

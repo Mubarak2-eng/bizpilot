@@ -171,8 +171,9 @@ export async function initializePaystackTransaction(
 function getSimulatedAmount(reference: string): number {
   if (reference.includes("12000") || reference.includes("12k")) return 1200000;
   if (reference.includes("25000") || reference.includes("biz")) return 2500000;
+  if (reference.includes("5000") || reference.includes("starter")) return 500000;
   if (reference.includes("underpaid") || reference.includes("wrong_amount")) return 100000; // ₦1,000
-  return 500000; // ₦5,000 in Kobo
+  return 1200000; // ₦12,000 in Kobo (Pro plan default)
 }
 
 function getSimulatedCurrency(reference: string): string {

@@ -16,6 +16,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "BizPilot AI — Intelligent Business Operating System",
   description: "AI-powered business management, inventory, POS, and financial intelligence platform",
+  verification: {
+    other: {
+      "facebook-domain-verification": "5539k8z3irg1xz06mmmfsleqot68ba",
+    },
+  },
 };
 
 const themeScript = `

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "../../../../lib/prisma";
 import { verifyPaystackWebhookSignature } from "../../../../lib/payments/paystack";
 import { PlanCode } from "@prisma/client";
+import { PLAN_DEFINITIONS } from "../../../../lib/subscriptions/plans";
 import {
   ensureDefaultPlans,
   recordSuccessfulPaymentAndActivate,
@@ -93,8 +94,9 @@ export async function POST(req: NextRequest) {
       }
 
       // Validate amount vs plan monthly price (Zero Client Trust)
+      const canonicalPlan = PLAN_DEFINITIONS[planCode];
+      const expectedPrice = canonicalPlan ? canonicalPlan.monthlyPrice : Number(plan.monthlyPrice);
       const amountNaira = Number(data.amount) / 100;
-      const expectedPrice = Number(plan.monthlyPrice);
       if (amountNaira < expectedPrice) {
         console.warn(
           `[Paystack Webhook Security] Underpayment rejected: received ₦${amountNaira}, expected ₦${expectedPrice}`

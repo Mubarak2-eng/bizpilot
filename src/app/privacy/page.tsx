@@ -30,7 +30,7 @@ export default function PrivacyPolicyPage() {
             We collect only the data necessary to provide and secure our services, including business records and connected WhatsApp interactions.
           </li>
           <li>
-            We never sell your personal or business data. We use enterprise-grade subprocessors (Vercel, Neon, OpenAI, Meta, Paystack, Resend).
+            We never sell your personal or business data. We use enterprise-grade subprocessors (Vercel, Neon, OpenAI, Meta, Flutterwave, Resend).
           </li>
           <li>
             You retain full control of your data and can request complete deletion at any time via our{" "}
@@ -152,7 +152,7 @@ export default function PrivacyPolicyPage() {
             <p className="text-xs text-slate-500 dark:text-slate-400">WhatsApp Business Cloud API infrastructure for receiving webhooks and transmitting authorized customer messages.</p>
           </div>
           <div className="p-3.5 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.02] space-y-1">
-            <h3 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">Paystack Payments Limited</h3>
+            <h3 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">Flutterwave Payments Limited</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">PCI-DSS compliant payment processing for recurring subscriptions and billing. We do not store full payment card numbers.</p>
           </div>
           <div className="p-3.5 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.02] space-y-1">

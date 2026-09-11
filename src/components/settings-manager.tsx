@@ -598,7 +598,7 @@ export default function SettingsManager({
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-sm text-slate-900 dark:text-white">Pro</span>
-                    <span className="text-xs font-bold text-cyan-700 dark:text-cyan-300 font-mono">₦5,000/mo</span>
+                    <span className="text-xs font-bold text-cyan-700 dark:text-cyan-300 font-mono">₦12,000/mo</span>
                   </div>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
                     For growing businesses.
@@ -641,7 +641,7 @@ export default function SettingsManager({
 
             <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-white/[0.08]">
               <span className="text-xs text-slate-500 dark:text-slate-400">
-                🔒 Secured with Paystack payment gateway.
+                🔒 Secured with Flutterwave payment gateway.
               </span>
               <div className="flex items-center gap-2">
                 <button
@@ -658,7 +658,7 @@ export default function SettingsManager({
                   disabled={isPending}
                   className="px-5 py-2.5 text-xs font-bold rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white transition disabled:opacity-50 cursor-pointer shadow-md shadow-emerald-600/25"
                 >
-                  {isPending ? "Processing..." : `Proceed to Paystack (${selectedPlanCode})`}
+                  {isPending ? "Processing..." : `Proceed to Flutterwave (${selectedPlanCode})`}
                 </button>
               </div>
             </div>

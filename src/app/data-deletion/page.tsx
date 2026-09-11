@@ -148,7 +148,7 @@ export default function DataDeletionPage() {
           In limited circumstances mandated by applicable laws and regulatory obligations:
         </p>
         <ul className="list-disc list-inside space-y-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-          <li>Completed subscription payment audit records (processed through Paystack) and legal transaction receipts may be retained in an archived, pseudonymized format for statutory tax, accounting, and anti-money laundering compliance periods.</li>
+          <li>Completed subscription payment audit records (processed through Flutterwave) and legal transaction receipts may be retained in an archived, pseudonymized format for statutory tax, accounting, and anti-money laundering compliance periods.</li>
           <li>System security logs containing IP addresses may be retained for up to 90 days solely to protect the integrity of the platform against ongoing cyber threats or fraud investigations.</li>
         </ul>
       </section>

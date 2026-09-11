@@ -140,7 +140,7 @@ export default function TermsOfServicePage() {
         </p>
         <ul className="list-disc list-inside space-y-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
           <li><strong>Free Trials:</strong> New workspaces may receive a trial period. Upon expiration of the trial, an active paid plan is required to maintain access to premium features.</li>
-          <li><strong>Billing & Renewals:</strong> Subscriptions are billed on a recurring monthly basis via our payment partner (Paystack). Fees are non-refundable except where required by law.</li>
+          <li><strong>Billing & Renewals:</strong> Subscriptions are billed on a recurring monthly basis via our payment partner (Flutterwave). Fees are non-refundable except where required by law.</li>
           <li><strong>Quota Enforcement:</strong> AI queries and staff seats are subject to monthly plan limits. Excess usage may require upgrading to a higher tier.</li>
           <li><strong>Cancellation:</strong> You may cancel or downgrade your subscription at any time via Settings → Subscription. Your access to paid features will remain active until the end of the current billing cycle.</li>
         </ul>
