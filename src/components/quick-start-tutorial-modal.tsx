@@ -19,7 +19,7 @@ export function openQuickStartTutorial() {
 export default function QuickStartTutorialModal({
   businessId,
   businessName,
-  videoUrl = "https://youtu.be/Wbl6OoQTOYs",
+  videoUrl = "https://youtu.be/NuYGXklSpfY",
 }: QuickStartTutorialModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"VIDEO" | "STEPS">("VIDEO");
@@ -68,7 +68,7 @@ export default function QuickStartTutorialModal({
               Welcome to BizPilot AI, <span className="gradient-text-ai">{businessName}</span>! 🎉
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-              Get up and running in under 2 minutes with automated WhatsApp sales and AI operations.
+              Get up and running with automated WhatsApp sales, inventory tracking, and AI operations.
             </p>
           </div>
 
@@ -93,7 +93,7 @@ export default function QuickStartTutorialModal({
                 : "bg-slate-100 dark:bg-white/[0.05] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
-            🎥 2-Minute Video Tour
+            🎥 Video Walkthrough (7 min)
           </button>
           <button
             onClick={() => setActiveTab("STEPS")}

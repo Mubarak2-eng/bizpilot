@@ -9,9 +9,9 @@ interface TutorialVideoPlayerProps {
 }
 
 export default function TutorialVideoPlayer({
-  videoUrl = "https://youtu.be/Wbl6OoQTOYs",
+  videoUrl = "https://youtu.be/NuYGXklSpfY",
   title = "Run Your Entire Business on WhatsApp Autopilot",
-  subtitle = "Watch this 2-minute walkthrough to see how BizPilot AI automates your sales, stock, and debtor recovery in real-time.",
+  subtitle = "Watch this complete walkthrough to see how BizPilot AI automates your sales, stock, and debtor recovery in real-time.",
 }: TutorialVideoPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -46,7 +46,7 @@ export default function TutorialVideoPlayer({
       <div className="space-y-2">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/30 text-violet-700 dark:text-violet-300 text-xs font-bold tracking-wide">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          Quick 2-Minute Demo
+          Full Video Walkthrough
         </div>
         <h2 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight">
           {title}
@@ -100,7 +100,7 @@ export default function TutorialVideoPlayer({
                 Click to Watch Walkthrough
               </span>
               <span className="text-[11px] text-slate-400 font-mono">
-                Duration: 2 mins • Audio included
+                Duration: 7 mins • Audio included
               </span>
             </div>
           </div>
