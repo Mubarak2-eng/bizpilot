@@ -19,7 +19,7 @@ export function openQuickStartTutorial() {
 export default function QuickStartTutorialModal({
   businessId,
   businessName,
-  videoUrl = "https://www.youtube.com/embed/dQw4w9WgXcQ",
+  videoUrl = "https://youtu.be/Wbl6OoQTOYs",
 }: QuickStartTutorialModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"VIDEO" | "STEPS">("VIDEO");

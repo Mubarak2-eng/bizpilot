@@ -9,7 +9,7 @@ interface TutorialVideoPlayerProps {
 }
 
 export default function TutorialVideoPlayer({
-  videoUrl = "https://www.youtube.com/embed/dQw4w9WgXcQ",
+  videoUrl = "https://youtu.be/Wbl6OoQTOYs",
   title = "Run Your Entire Business on WhatsApp Autopilot",
   subtitle = "Watch this 2-minute walkthrough to see how BizPilot AI automates your sales, stock, and debtor recovery in real-time.",
 }: TutorialVideoPlayerProps) {
