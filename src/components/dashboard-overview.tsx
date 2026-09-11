@@ -4,6 +4,7 @@ import Link from "next/link";
 import { formatMoney } from "@/lib/money";
 import { Role } from "@/types/auth";
 import { DailyActionPlan, BusinessOpportunity } from "@/lib/autopilot/types";
+import QuickStartTutorialModal, { openQuickStartTutorial } from "./quick-start-tutorial-modal";
 
 export interface DashboardOverviewProps {
   business: {
@@ -65,6 +66,9 @@ export default function DashboardOverview({
 
   return (
     <div className="p-5 md:p-8 space-y-8 max-w-7xl mx-auto w-full">
+      {/* First-time login / on-demand Quick Start Tutorial Modal */}
+      <QuickStartTutorialModal businessId={business.id} businessName={business.name} />
+
       {/* AI Command Center Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-2">
         <div className="space-y-1.5">
@@ -89,6 +93,16 @@ export default function DashboardOverview({
 
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => openQuickStartTutorial()}
+            className="px-3 py-2.5 bg-violet-500/10 hover:bg-violet-500/20 text-violet-700 dark:text-violet-300 rounded-xl border border-violet-500/30 hover:border-violet-500/50 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+            title="Watch Quick Start Guide"
+          >
+            <span>💡</span>
+            <span>Quick Start Guide</span>
+          </button>
+
           <Link
             href="/sales"
             className="relative group px-4 py-2.5 bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-600/25 dark:shadow-[0_0_25px_-4px_rgba(99,102,241,0.5)] transition-all flex items-center gap-2 border border-violet-300/30 overflow-hidden"
