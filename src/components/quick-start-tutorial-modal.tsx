@@ -125,17 +125,17 @@ export default function QuickStartTutorialModal({
                   <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-black text-sm flex items-center justify-center">
                     1
                   </div>
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">Connect WhatsApp</h4>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">Record 1st Sale</h4>
                   <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                    Link your phone number so you and your staff can log sales & expenses by voice note or text.
+                    Log a quick cash, bank transfer, or credit sale and test instant receipt creation.
                   </p>
                 </div>
                 <Link
-                  href="/settings"
+                  href="/sales"
                   onClick={handleDismiss}
                   className="inline-flex items-center justify-center px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition"
                 >
-                  Go to Settings →
+                  Record Sale →
                 </Link>
               </div>
 

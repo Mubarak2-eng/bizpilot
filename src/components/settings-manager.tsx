@@ -377,113 +377,45 @@ export default function SettingsManager({
               </div>
             </div>
 
-            {whatsAppConnection && whatsAppConnection.verified ? (
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-beacon" />
-                VERIFIED
-              </span>
-            ) : (
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-slate-100 dark:bg-white/[0.04] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/[0.08]">
-                NOT CONNECTED
-              </span>
-            )}
+            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold border bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+              STILL IN DEVELOPMENT
+            </span>
           </div>
 
-          {whatsAppConnection && whatsAppConnection.verified ? (
-            <div className="p-4.5 bg-slate-50 dark:bg-[#050816] border border-slate-200 dark:border-white/[0.08] rounded-2xl space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="space-y-1">
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider block font-bold">
-                    Connected Number
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-mono font-black text-slate-900 dark:text-white tracking-wide">
-                      +{whatsAppConnection.phoneNumber}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold border border-emerald-500/30">
-                      Active
-                    </span>
-                  </div>
-                </div>
-
-                {canManage && (
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => {
-                        setInputPhone(whatsAppConnection.phoneNumber);
-                        setOtpStep("PHONE");
-                        setIsLinkModalOpen(true);
-                      }}
-                      disabled={isPending}
-                      className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-white dark:bg-white/[0.05] hover:bg-slate-100 dark:hover:bg-white/[0.1] text-slate-700 dark:text-slate-200 transition border border-slate-200 dark:border-white/[0.08] disabled:opacity-50 cursor-pointer shadow-xs"
-                    >
-                      Change Number
-                    </button>
-                    <button
-                      onClick={() => setIsDisconnectModalOpen(true)}
-                      disabled={isPending}
-                      className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-700 dark:text-rose-300 transition border border-rose-200 dark:border-rose-500/25 disabled:opacity-50 cursor-pointer shadow-xs"
-                    >
-                      Disconnect
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <div className="pt-3 border-t border-slate-200 dark:border-white/[0.06] grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-500 dark:text-slate-400">
-                <div>
-                  <span className="block text-[10px] text-slate-400 dark:text-slate-500 uppercase">Connected By:</span>
-                  <span className="text-slate-800 dark:text-slate-200 font-medium">
-                    {whatsAppConnection.linkedByUser?.name || whatsAppConnection.linkedByUser?.email || "Admin"}
-                  </span>
-                </div>
-                <div>
-                  <span className="block text-[10px] text-slate-400 dark:text-slate-500 uppercase">Linked Since:</span>
-                  <span className="text-slate-800 dark:text-slate-200 font-mono">
-                    {new Date(whatsAppConnection.createdAt).toLocaleDateString("en-GB", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </span>
-                </div>
-              </div>
-
-              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/20 rounded-xl border border-emerald-500/20 text-[11px] text-emerald-800 dark:text-emerald-200 leading-relaxed">
-                💡 <strong>Bot Ready:</strong> Send messages like <em>&quot;What were my sales today?&quot;</em> or <em>&quot;Record cash sale 3 Power Banks&quot;</em> from this WhatsApp number to interact with your AI business assistant.
-              </div>
-            </div>
-          ) : (
-            <div className="p-5 bg-slate-50 dark:bg-[#050816] border border-slate-200 dark:border-white/[0.08] rounded-2xl space-y-4">
-              <div className="space-y-1.5">
+          <div className="p-5 bg-slate-50 dark:bg-[#050816] border border-slate-200 dark:border-white/[0.08] rounded-2xl space-y-4">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
                 <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
-                  No WhatsApp Number Connected
+                  WhatsApp AI Bot & Auto Dispatch
                 </h3>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Link your WhatsApp phone number to enable instant natural-language sales recording, expense logging, stock lookups, and invoice generation directly from chat.
-                </p>
+                <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-bold border border-amber-500/20">
+                  Coming Soon
+                </span>
               </div>
-
-              {canManage ? (
-                <button
-                  onClick={() => {
-                    setInputPhone("");
-                    setInputOtp("");
-                    setOtpStep("PHONE");
-                    setIsLinkModalOpen(true);
-                  }}
-                  className="px-4 py-2.5 text-xs font-bold rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white transition flex items-center gap-2 shadow-md shadow-emerald-600/25 cursor-pointer"
-                >
-                  <span>Connect WhatsApp Number</span>
-                  <span>→</span>
-                </button>
-              ) : (
-                <p className="text-[11px] text-slate-500 italic">
-                  * Only business Owners and Admins can connect or modify WhatsApp integration.
-                </p>
-              )}
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                Direct WhatsApp multi-merchant bot integration is currently undergoing final Meta Business Platform verification. In the meantime, you can record sales, log expenses, manage stock, track debtors, and use your AI Copilot directly on the web dashboard.
+              </p>
             </div>
-          )}
+
+            <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 space-y-1">
+              <span className="font-bold flex items-center gap-1.5">
+                <span>🚧</span>
+                <span>Feature Under Active Development</span>
+              </span>
+              <p className="text-[11px] text-amber-700/90 dark:text-amber-400/90">
+                You will be notified as soon as phone number linking and voice note sales logging go live.
+              </p>
+            </div>
+
+            <button
+              onClick={() => setIsLinkModalOpen(true)}
+              className="px-4 py-2.5 text-xs font-bold rounded-xl bg-slate-200 dark:bg-white/[0.08] hover:bg-slate-300 dark:hover:bg-white/[0.12] text-slate-800 dark:text-slate-200 transition flex items-center gap-2 cursor-pointer"
+            >
+              <span>Connect WhatsApp (In Development)</span>
+              <span>→</span>
+            </button>
+          </div>
         </div>
 
         {/* Team Members & Roles */}
@@ -666,20 +598,19 @@ export default function SettingsManager({
         </div>
       )}
 
-      {/* Connect / Verify WhatsApp Modal (2-Step Flow) */}
+      {/* WhatsApp Feature In Development Modal */}
       {isLinkModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
-          <div className="bg-white dark:bg-[#090d24] border border-slate-200 dark:border-emerald-500/30 w-full max-w-md rounded-3xl p-6 space-y-5 shadow-2xl">
+          <div className="bg-white dark:bg-[#090d24] border border-slate-200 dark:border-amber-500/30 w-full max-w-md rounded-3xl p-6 space-y-5 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/[0.08]">
-              <h3 className="text-base font-black text-slate-900 dark:text-white">
-                {otpStep === "PHONE" ? "Link WhatsApp Number" : "Verify WhatsApp Code"}
-              </h3>
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🚧</span>
+                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                  WhatsApp Feature In Development
+                </h3>
+              </div>
               <button
-                onClick={() => {
-                  setIsLinkModalOpen(false);
-                  setOtpStep("PHONE");
-                }}
-                disabled={isPending}
+                onClick={() => setIsLinkModalOpen(false)}
                 aria-label="Close modal"
                 className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/[0.05] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center text-xs transition cursor-pointer"
               >
@@ -687,94 +618,42 @@ export default function SettingsManager({
               </button>
             </div>
 
-            {otpStep === "PHONE" ? (
-              <form onSubmit={handleRequestOtpSubmit} className="space-y-4">
-                <div className="space-y-1.5">
-                  <label htmlFor="whatsapp-phone-input" className="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block">
-                    WhatsApp Phone Number:
-                  </label>
-                  <input
-                    id="whatsapp-phone-input"
-                    type="tel"
-                    required
-                    value={inputPhone}
-                    onChange={(e) => setInputPhone(e.target.value)}
-                    placeholder="e.g. +234 801 234 5678 or 08012345678"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-emerald-500 rounded-xl text-slate-900 dark:text-white text-xs font-mono placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none transition shadow-xs"
-                  />
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    A 6-digit security code will be sent to this WhatsApp number.
-                  </p>
-                </div>
+            <div className="space-y-3.5 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              <p>
+                Our <strong>WhatsApp Business Cloud AI</strong> is currently undergoing Meta Business verification and compliance review.
+              </p>
 
-                <div className="flex items-center justify-end gap-2.5 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsLinkModalOpen(false)}
-                    disabled={isPending}
-                    className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-white/[0.05] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-slate-700 dark:text-slate-300 transition cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isPending || !inputPhone.trim()}
-                    className="px-4 py-2.5 text-xs font-bold rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white transition disabled:opacity-50 cursor-pointer shadow-md shadow-emerald-600/25"
-                  >
-                    {isPending ? "Sending Code..." : "Send Verification Code"}
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <form onSubmit={handleVerifyOtpSubmit} className="space-y-4">
-                <div className="space-y-1.5">
-                  <label htmlFor="whatsapp-otp-input" className="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block">
-                    Enter 6-Digit Code:
-                  </label>
-                  <input
-                    id="whatsapp-otp-input"
-                    type="text"
-                    required
-                    maxLength={6}
-                    value={inputOtp}
-                    onChange={(e) => setInputOtp(e.target.value.replace(/\D/g, ""))}
-                    placeholder="123456"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-emerald-500 rounded-xl text-slate-900 dark:text-white text-center text-lg font-mono tracking-widest placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none transition shadow-xs"
-                  />
-                  <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-1">
-                    <span className="font-mono">Sent to +{inputPhone}</span>
-                    <button
-                      type="button"
-                      onClick={() => setOtpStep("PHONE")}
-                      className="text-emerald-600 dark:text-emerald-400 hover:underline font-semibold cursor-pointer"
-                    >
-                      Change Number
-                    </button>
-                  </div>
-                </div>
+              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] space-y-2">
+                <h4 className="font-bold text-slate-900 dark:text-white text-[11px] uppercase tracking-wide">
+                  What will be available upon release:
+                </h4>
+                <ul className="space-y-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                  <li className="flex items-center gap-1.5">
+                    <span className="text-emerald-500">✓</span> Voice note sales recording & expense logging
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <span className="text-emerald-500">✓</span> Instant WhatsApp PDF receipt dispatch to customers
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <span className="text-emerald-500">✓</span> Daily automated morning briefings sent to your phone
+                  </li>
+                </ul>
+              </div>
 
-                <div className="flex items-center justify-end gap-2.5 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsLinkModalOpen(false);
-                      setOtpStep("PHONE");
-                    }}
-                    disabled={isPending}
-                    className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-white/[0.05] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-slate-700 dark:text-slate-300 transition cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isPending || inputOtp.length !== 6}
-                    className="px-4 py-2.5 text-xs font-bold rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white transition disabled:opacity-50 cursor-pointer shadow-md shadow-emerald-600/25"
-                  >
-                    {isPending ? "Verifying..." : "Verify Number"}
-                  </button>
-                </div>
-              </form>
-            )}
+              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-500/20 rounded-xl text-[11px] text-emerald-800 dark:text-emerald-300 leading-relaxed">
+                💡 In the meantime, <strong>100% of sales recording, stock tracking, invoices, debtor reminders, and AI Copilot</strong> are fully active directly on your web dashboard!
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setIsLinkModalOpen(false)}
+                className="px-5 py-2.5 text-xs font-bold rounded-xl bg-gradient-to-r from-violet-600 to-cyan-500 text-white transition hover:opacity-90 cursor-pointer shadow-md shadow-violet-600/25"
+              >
+                Got It, Continue to Dashboard
+              </button>
+            </div>
           </div>
         </div>
       )}
