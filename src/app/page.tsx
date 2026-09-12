@@ -226,6 +226,9 @@ export default async function HomePage() {
           <Link href="/data-deletion" className="hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
             Data Deletion
           </Link>
+          <a href="mailto:support@bizpilot.ng" className="hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
+            support@bizpilot.ng
+          </a>
         </div>
       </footer>
     </div>
