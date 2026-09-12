@@ -18,7 +18,10 @@ export const metadata: Metadata = {
   description: "AI-powered business management, inventory, POS, and financial intelligence platform",
   verification: {
     other: {
-      "facebook-domain-verification": "5539k8z3irg1xz06mmmfsleqot68ba",
+      "facebook-domain-verification": [
+        "sw16bgaj1th9eei2llcrdi5x3ue4i0",
+        "5539k8z3irg1xz06mmmfsleqot68ba",
+      ],
     },
   },
 };
