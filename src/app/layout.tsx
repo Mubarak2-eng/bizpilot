@@ -52,6 +52,8 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
+        <meta name="facebook-domain-verification" content="sw16bgaj1th9eei2llcrdi5x3ue4i0" />
+        <meta name="facebook-domain-verification" content="5539k8z3irg1xz06mmmfsleqot68ba" />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="min-h-full flex flex-col bg-slate-50 dark:bg-[#050711] text-slate-900 dark:text-slate-100 selection:bg-indigo-500/30 selection:text-indigo-900 dark:selection:text-indigo-200 antialiased">
