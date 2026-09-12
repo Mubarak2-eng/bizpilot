@@ -130,12 +130,26 @@ describe("Phase 8: Payments & Monetization Security Suite", () => {
     });
 
     it("should resolve expired trial to FREE tier default limits", async () => {
-      // Initialize trial at current time
-      await getBusinessSubscription(testBizB.id);
+      const proPlan = await prisma.plan.findUnique({ where: { code: "PRO" } });
+      if (proPlan) {
+        await prisma.subscription.upsert({
+          where: { businessId: testBizB.id },
+          update: {
+            planId: proPlan.id,
+            status: "TRIALING",
+            trialEndsAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
+          },
+          create: {
+            businessId: testBizB.id,
+            planId: proPlan.id,
+            status: "TRIALING",
+            trialEndsAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
+            currentPeriodEnd: new Date(Date.now() - 24 * 60 * 60 * 1000),
+          },
+        });
+      }
 
-      // Future date 30 days ahead (trial expired)
-      const futureDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-      const subState = await getBusinessSubscription(testBizB.id, futureDate);
+      const subState = await getBusinessSubscription(testBizB.id);
 
       expect(subState.isTrialExpired).toBe(true);
       expect(subState.planCode).toBe("FREE");

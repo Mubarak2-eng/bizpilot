@@ -2,6 +2,7 @@ import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/password";
 import { sendLoginVerificationEmail } from "@/lib/email";
+import { recordLoginEvent } from "@/lib/auth/login-tracker";
 
 export const LOGIN_OTP_EXPIRY_MINUTES = 10;
 export const MAX_LOGIN_OTP_ATTEMPTS = 5;
@@ -425,6 +426,12 @@ export async function verifyAndConsumeLoginOTP(
   const isMatch = verifyLoginOTPHash(cleanOtp, tokenRecord.tokenHash);
 
   if (!isMatch) {
+    // Record failed login audit event (never advances lastLoginAt)
+    await recordLoginEvent({
+      userId: tokenRecord.user.id,
+      status: "FAILED",
+    });
+
     const updatedAttempts = tokenRecord.attempts + 1;
     await prisma.loginVerificationToken.update({
       where: { id: tokenId },
@@ -453,6 +460,12 @@ export async function verifyAndConsumeLoginOTP(
   await prisma.loginVerificationToken.update({
     where: { id: tokenId },
     data: { consumedAt: new Date() },
+  });
+
+  // Record successful login audit event & advance user.lastLoginAt
+  await recordLoginEvent({
+    userId: tokenRecord.user.id,
+    status: "SUCCESS",
   });
 
   return {

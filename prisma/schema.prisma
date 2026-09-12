@@ -126,14 +126,19 @@ model User {
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
+  lastLoginAt             DateTime?
+  isPlatformAdmin         Boolean                  @default(false)
+
   accounts                Account[]
   sessions                Session[]
   memberships             Membership[]
   whatsAppConnections     WhatsAppConnection[]
   aiPendingActions        AIPendingAction[]
   loginVerificationTokens LoginVerificationToken[]
+  loginEvents             LoginEvent[]
 
   @@index([email])
+  @@index([isPlatformAdmin])
 }
 
 // ─── Business ────────────────────────────────────────────────────────────────
@@ -686,6 +691,23 @@ model LoginVerificationToken {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+// ─── Platform Login Event Tracking ──────────────────────────────────────────
+
+model LoginEvent {
+  id             String   @id @default(cuid())
+  userId         String
+  status         String   @default("SUCCESS") // "SUCCESS" | "FAILED"
+  ipHash         String?
+  userAgentLabel String?
+  createdAt      DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([status])
 }
 
 

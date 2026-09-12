@@ -38,6 +38,8 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
       name: true,
       email: true,
       image: true,
+      isPlatformAdmin: true,
+      lastLoginAt: true,
     },
   });
 

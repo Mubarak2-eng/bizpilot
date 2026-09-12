@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getActiveBusiness, getUserMemberships, requireAuth } from "@/lib/auth-helpers";
+import { isPlatformAdminUser } from "@/lib/auth/admin-guard";
 import AppShell from "@/components/app-shell";
 
 export default async function DashboardLayout({
@@ -14,6 +15,7 @@ export default async function DashboardLayout({
 
   const activeContext = await getActiveBusiness();
   const memberships = await getUserMemberships(user.id);
+  const isPlatformAdmin = isPlatformAdminUser(user);
 
   if (!activeContext) {
     return (
@@ -43,6 +45,7 @@ export default async function DashboardLayout({
       activeBusiness={activeContext.business}
       role={activeContext.role}
       memberships={memberships}
+      isPlatformAdmin={isPlatformAdmin}
     >
       {children}
     </AppShell>

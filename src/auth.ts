@@ -4,6 +4,7 @@ import { authConfig } from "./auth.config";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/password";
 import { verifyAndConsumeLoginOTP } from "@/lib/auth/login-verification";
+import { recordLoginEvent } from "@/lib/auth/login-tracker";
 
 /**
  * Core credential verification logic for NextAuth credentials provider.
@@ -37,8 +38,11 @@ export async function verifyUserCredentials(
 
   const isPasswordValid = await verifyPassword(password, user.password);
   if (!isPasswordValid) {
+    await recordLoginEvent({ userId: user.id, status: "FAILED" });
     return null;
   }
+
+  await recordLoginEvent({ userId: user.id, status: "SUCCESS" });
 
   // Return sanitized user object (never expose password)
   return {

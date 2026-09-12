@@ -31,7 +31,9 @@ export default function QuickStartTutorialModal({
 
     if (!hasCompleted) {
       // First-time login: automatically pop up the welcome tutorial modal
-      setIsOpen(true);
+      queueMicrotask(() => {
+        setIsOpen(true);
+      });
     }
 
     // Listen for manual rewatch triggers from dashboard header buttons
