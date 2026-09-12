@@ -166,7 +166,7 @@ export default function LegalShell({
             <div className="w-5 h-5 rounded-md bg-gradient-to-tr from-violet-600 to-cyan-400 flex items-center justify-center font-bold text-white text-[10px]">
               BP
             </div>
-            <span>© {new Date().getFullYear()} BizPilot AI. All rights reserved.</span>
+            <span>© {new Date().getFullYear()} Bizpilot (BizPilot AI). All rights reserved.</span>
           </div>
 
           <div className="flex items-center gap-5 font-medium">

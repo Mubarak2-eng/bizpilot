@@ -47,7 +47,7 @@ export default function PrivacyPolicyPage() {
           <span className="text-violet-600 dark:text-violet-400">1.</span> Introduction & Scope
         </h2>
         <p>
-          BizPilot AI (&quot;BizPilot&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) provides an intelligent, multi-tenant cloud-based business operating system and software-as-a-service (SaaS) platform. Our services include inventory intelligence, Point of Sale (POS) tools, invoice generation, expense tracking, autonomous AI copilot analytics, and automated messaging integrations.
+          <strong>Bizpilot</strong> (&quot;Company&quot;, &quot;BizPilot AI&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) is the legal business entity that owns and operates the BizPilot AI cloud-based business operating system and software-as-a-service (SaaS) platform (https://bizpilot.ng). Our services include inventory intelligence, Point of Sale (POS) tools, invoice generation, expense tracking, autonomous AI copilot analytics, and automated messaging integrations.
         </p>
         <p>
           This Privacy Policy applies to all users of the BizPilot AI web application, APIs, dashboard, and connected messaging channels (including the Meta WhatsApp Cloud API integration). By accessing or using BizPilot AI, you acknowledge that you have read and understood this Privacy Policy.
@@ -244,15 +244,18 @@ export default function PrivacyPolicyPage() {
       {/* 12. Contact */}
       <section className="space-y-3">
         <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-          <span className="text-violet-600 dark:text-violet-400">12.</span> Contact & Data Protection Officer
+          <span className="text-violet-600 dark:text-violet-400">12.</span> Legal Entity & Data Protection Contact
         </h2>
         <p>
-          If you have questions, feedback, or privacy requests regarding this policy or how your data is handled, please contact our data protection team:
+          If you have questions, feedback, or privacy requests regarding this policy or how your data is handled, please contact our legal entity and data protection team:
         </p>
-        <div className="p-4 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.02] text-xs sm:text-sm space-y-1">
-          <p><strong>BizPilot AI Privacy & Compliance</strong></p>
-          <p>Email: <a href="mailto:support@bizpilot.ng" className="text-violet-600 dark:text-violet-400 font-semibold underline">support@bizpilot.ng</a></p>
-          <p>Website: <a href="https://bizpilot.ng" className="text-violet-600 dark:text-violet-400 font-semibold underline">https://bizpilot.ng</a></p>
+        <div className="p-5 rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/80 dark:bg-white/[0.02] text-xs sm:text-sm space-y-2">
+          <p><strong>Legal Entity Name:</strong> Bizpilot</p>
+          <p><strong>Operating Brand:</strong> BizPilot AI</p>
+          <p><strong>Registered Address:</strong> 52 Igi Olugbin St, Bariga, Lagos, Nigeria</p>
+          <p><strong>Official Phone:</strong> <a href="tel:+2348163374311" className="text-violet-600 dark:text-violet-400 font-semibold underline">+2348163374311</a></p>
+          <p><strong>Privacy & Compliance Email:</strong> <a href="mailto:support@bizpilot.ng" className="text-violet-600 dark:text-violet-400 font-semibold underline">support@bizpilot.ng</a></p>
+          <p><strong>Website:</strong> <a href="https://bizpilot.ng" className="text-violet-600 dark:text-violet-400 font-semibold underline">https://bizpilot.ng</a></p>
         </div>
       </section>
     </LegalShell>

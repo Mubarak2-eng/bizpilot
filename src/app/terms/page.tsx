@@ -44,7 +44,7 @@ export default function TermsOfServicePage() {
           <span className="text-indigo-600 dark:text-indigo-400">1.</span> Acceptance of Terms
         </h2>
         <p>
-          These Terms of Service (&quot;Terms&quot;) constitute a legally binding agreement between you (&quot;User&quot;, &quot;Merchant&quot;, or &quot;Customer&quot;) and BizPilot AI (&quot;BizPilot&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;). These Terms apply to your use of the BizPilot AI website, applications, dashboard, APIs, and connected messaging integrations (including the WhatsApp Cloud API integration).
+          These Terms of Service (&quot;Terms&quot;) constitute a legally binding agreement between you (&quot;User&quot;, &quot;Merchant&quot;, or &quot;Customer&quot;) and <strong>Bizpilot</strong> (&quot;Company&quot;, &quot;BizPilot AI&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;), the legal business entity operating the BizPilot AI platform. These Terms apply to your use of the BizPilot AI website (https://bizpilot.ng), applications, dashboard, APIs, and connected messaging integrations (including the WhatsApp Cloud API integration).
         </p>
         <p>
           By creating an account, accessing, or using BizPilot AI, you agree to be bound by these Terms and our{" "}
@@ -212,13 +212,16 @@ export default function TermsOfServicePage() {
       {/* 14. Contact */}
       <section className="space-y-3">
         <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-          <span className="text-indigo-600 dark:text-indigo-400">14.</span> Contact Information
+          <span className="text-indigo-600 dark:text-indigo-400">14.</span> Legal Entity & Contact Information
         </h2>
-        <p>For questions or notices concerning these Terms of Service, please contact us:</p>
-        <div className="p-4 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.02] text-xs sm:text-sm space-y-1">
-          <p><strong>BizPilot AI Legal & Operations</strong></p>
-          <p>Email: <a href="mailto:support@bizpilot.ng" className="text-indigo-600 dark:text-indigo-400 font-semibold underline">support@bizpilot.ng</a></p>
-          <p>Website: <a href="https://bizpilot.ng" className="text-indigo-600 dark:text-indigo-400 font-semibold underline">https://bizpilot.ng</a></p>
+        <p>For questions, formal notices, or legal inquiries concerning these Terms of Service, please contact our legal entity:</p>
+        <div className="p-5 rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/80 dark:bg-white/[0.02] text-xs sm:text-sm space-y-2">
+          <p><strong>Legal Entity Name:</strong> Bizpilot</p>
+          <p><strong>Operating Brand:</strong> BizPilot AI</p>
+          <p><strong>Registered Address:</strong> 52 Igi Olugbin St, Bariga, Lagos, Nigeria</p>
+          <p><strong>Official Phone:</strong> <a href="tel:+2348163374311" className="text-indigo-600 dark:text-indigo-400 font-semibold underline">+2348163374311</a></p>
+          <p><strong>Support & Legal Email:</strong> <a href="mailto:support@bizpilot.ng" className="text-indigo-600 dark:text-indigo-400 font-semibold underline">support@bizpilot.ng</a></p>
+          <p><strong>Website:</strong> <a href="https://bizpilot.ng" className="text-indigo-600 dark:text-indigo-400 font-semibold underline">https://bizpilot.ng</a></p>
         </div>
       </section>
     </LegalShell>

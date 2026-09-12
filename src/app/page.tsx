@@ -211,24 +211,48 @@ export default async function HomePage() {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="px-6 py-6 border-t border-slate-200/80 dark:border-white/[0.08] relative z-10 max-w-6xl mx-auto w-full flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-        <div>
-          © {new Date().getFullYear()} BizPilot AI. Production-ready autonomous multi-tenant business operating system.
+      {/* Footer & Legal Business Identification */}
+      <footer className="px-6 py-10 border-t border-slate-200/80 dark:border-white/[0.08] relative z-10 max-w-6xl mx-auto w-full space-y-6 text-xs text-slate-500">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-6 border-b border-slate-200/60 dark:border-white/[0.05]">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-slate-900 dark:text-white text-sm">Bizpilot</span>
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-violet-500/10 text-violet-700 dark:text-violet-300 border border-violet-500/20">Legal Entity</span>
+            </div>
+            <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
+              Bizpilot is an autonomous multi-tenant business operating system providing inventory intelligence, POS, and financial management tools.
+            </p>
+          </div>
+          <div className="space-y-1 text-slate-600 dark:text-slate-400">
+            <p className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider">Registered Office</p>
+            <p>52 Igi Olugbin St, Bariga</p>
+            <p>Lagos, Nigeria</p>
+          </div>
+          <div className="space-y-1 text-slate-600 dark:text-slate-400">
+            <p className="font-bold text-slate-900 dark:text-white text-xs uppercase tracking-wider">Official Contact</p>
+            <p>Phone: <a href="tel:+2348163374311" className="text-violet-600 dark:text-violet-400 hover:underline font-medium">+2348163374311</a></p>
+            <p>Email: <a href="mailto:support@bizpilot.ng" className="text-violet-600 dark:text-violet-400 hover:underline font-medium">support@bizpilot.ng</a></p>
+            <p>Website: <a href="https://bizpilot.ng" className="text-violet-600 dark:text-violet-400 hover:underline font-medium">https://bizpilot.ng</a></p>
+          </div>
         </div>
-        <div className="flex items-center gap-4 font-medium">
-          <Link href="/privacy" className="hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
-            Privacy Policy
-          </Link>
-          <Link href="/terms" className="hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
-            Terms of Service
-          </Link>
-          <Link href="/data-deletion" className="hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
-            Data Deletion
-          </Link>
-          <a href="mailto:support@bizpilot.ng" className="hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
-            support@bizpilot.ng
-          </a>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            © {new Date().getFullYear()} Bizpilot (BizPilot AI). All rights reserved.
+          </div>
+          <div className="flex items-center gap-4 font-medium">
+            <Link href="/privacy" className="hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
+              Terms of Service
+            </Link>
+            <Link href="/data-deletion" className="hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
+              Data Deletion
+            </Link>
+            <a href="mailto:support@bizpilot.ng" className="hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
+              support@bizpilot.ng
+            </a>
+          </div>
         </div>
       </footer>
     </div>
