@@ -56,6 +56,8 @@ export default function LoginForm() {
     }
   })();
 
+  const displayErrorMessage = errorMessage || initialAuthError;
+
 
   // Step 1: Submit Credentials & Request OTP
   const handleSubmitCredentials = (e: React.FormEvent) => {
@@ -158,9 +160,9 @@ export default function LoginForm() {
         </div>
       )}
 
-      {errorMessage && (
+      {displayErrorMessage && (
         <div className="mb-5 p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-500/30 text-rose-800 dark:text-rose-300 text-xs font-medium relative z-10">
-          {errorMessage}
+          {displayErrorMessage}
         </div>
       )}
 
