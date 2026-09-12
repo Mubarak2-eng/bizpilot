@@ -67,7 +67,7 @@ const steps = [
   }
 ];
 
-export default function QuickSetupTour({ businessId, businessName }: QuickSetupTourProps) {
+  export default function QuickSetupTour({ businessId }: QuickSetupTourProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const router = useRouter();
@@ -127,7 +127,7 @@ export default function QuickSetupTour({ businessId, businessName }: QuickSetupT
         {isFinishedScreen ? (
           <div className="text-center py-6 space-y-6">
             <div className="text-6xl">🚀</div>
-            <h2 className="text-2xl font-black text-slate-900 dark:text-white">You're ready to run your business!</h2>
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white">You&apos;re ready to run your business!</h2>
             <p className="text-slate-600 dark:text-slate-400">
               Start by adding your products and customers, then record your first sale.
             </p>
