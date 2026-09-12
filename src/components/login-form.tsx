@@ -56,14 +56,6 @@ export default function LoginForm() {
     }
   })();
 
-  const activeErrorMessage = errorMessage || initialAuthError;
-
-
-  const handleQuickFill = (demoEmail: string) => {
-    setEmail(demoEmail);
-    setPassword("DemoPassword123!");
-    setErrorMessage(null);
-  };
 
   // Step 1: Submit Credentials & Request OTP
   const handleSubmitCredentials = (e: React.FormEvent) => {
@@ -186,7 +178,7 @@ export default function LoginForm() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="owner@bizpilot.test"
+              placeholder="name@company.com"
               className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-violet-500 rounded-xl text-slate-900 dark:text-white text-xs placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-violet-500 transition font-mono shadow-xs"
             />
           </div>
@@ -273,41 +265,6 @@ export default function LoginForm() {
             </button>
           </div>
         </form>
-      )}
-
-      {/* Quick Demo Credentials Switcher (Only in non-production on Step 1) */}
-      {process.env.NODE_ENV !== "production" && step === "CREDENTIALS" && (
-        <div className="mt-7 pt-5 border-t border-slate-200 dark:border-white/[0.08] relative z-10">
-          <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2.5">
-            Quick Demo Credentials:
-          </p>
-          <div className="grid grid-cols-3 gap-2 text-xs">
-            <button
-              type="button"
-              onClick={() => handleQuickFill("demo@bizpilot.test")}
-              className="px-2.5 py-2 bg-slate-50 dark:bg-white/[0.04] hover:bg-emerald-50 dark:hover:bg-emerald-500/15 border border-slate-200 dark:border-white/[0.08] hover:border-emerald-400/50 rounded-xl transition text-center cursor-pointer group shadow-xs"
-            >
-              <span className="font-bold text-[10px] text-emerald-600 dark:text-emerald-400 block tracking-wider">OWNER</span>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white font-mono truncate block">demo@...</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickFill("admin@bizpilot.test")}
-              className="px-2.5 py-2 bg-slate-50 dark:bg-white/[0.04] hover:bg-amber-50 dark:hover:bg-amber-500/15 border border-slate-200 dark:border-white/[0.08] hover:border-amber-400/50 rounded-xl transition text-center cursor-pointer group shadow-xs"
-            >
-              <span className="font-bold text-[10px] text-amber-600 dark:text-amber-400 block tracking-wider">ADMIN</span>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white font-mono truncate block">admin@...</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickFill("staff@bizpilot.test")}
-              className="px-2.5 py-2 bg-slate-50 dark:bg-white/[0.04] hover:bg-blue-50 dark:hover:bg-blue-500/15 border border-slate-200 dark:border-white/[0.08] hover:border-blue-400/50 rounded-xl transition text-center cursor-pointer group shadow-xs"
-            >
-              <span className="font-bold text-[10px] text-blue-600 dark:text-blue-400 block tracking-wider">STAFF</span>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white font-mono truncate block">staff@...</span>
-            </button>
-          </div>
-        </div>
       )}
 
       {step === "CREDENTIALS" && (

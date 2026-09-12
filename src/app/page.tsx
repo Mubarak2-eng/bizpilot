@@ -78,7 +78,7 @@ export default async function HomePage() {
             href={session?.user ? "/dashboard" : "/login"}
             className="w-full sm:w-auto px-7 py-3.5 bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 text-white font-bold text-sm rounded-xl shadow-md shadow-indigo-600/25 dark:shadow-[0_0_30px_rgba(99,102,241,0.5)] transition-all cursor-pointer border border-violet-300/30"
           >
-            {session?.user ? "Launch BizPilot" : "Sign In with Demo Credentials"}
+            {session?.user ? "Launch BizPilot" : "Sign In to Your Account"}
           </Link>
           <Link
             href="/signup"
