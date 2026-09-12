@@ -4,7 +4,7 @@ import { PaymentMethod, InvoiceStatus, CreditStatus } from "@prisma/client";
 export type RoleType = Role;
 
 export interface ActionPreviewData {
-  actionType: "CREATE_INVOICE" | "CREATE_SALE" | "CREATE_EXPENSE";
+  actionType: "CREATE_INVOICE" | "CREATE_SALE" | "CREATE_EXPENSE" | "CREATE_PRODUCT" | "CREATE_CUSTOMER";
   token: string;
   currency: string;
   preview: Record<string, unknown>;
@@ -149,3 +149,22 @@ export interface CustomerDebtParams {
   customerId?: string;
   phone?: string;
 }
+
+export interface PrepareProductParams {
+  name: string;
+  sellingPrice: number | string;
+  costPrice?: number | string;
+  stockQuantity?: number;
+  lowStockThreshold?: number;
+  sku?: string;
+  barcode?: string;
+  description?: string;
+}
+
+export interface PrepareCustomerParams {
+  name: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+}
+

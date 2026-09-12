@@ -189,7 +189,7 @@ async function _sendViaMetaAPI({
  * Formats Action Previews strictly matching the requested WhatsApp UX.
  */
 export function formatActionPreviewForWhatsApp(
-  actionType: "CREATE_INVOICE" | "CREATE_SALE" | "CREATE_EXPENSE",
+  actionType: "CREATE_INVOICE" | "CREATE_SALE" | "CREATE_EXPENSE" | "CREATE_PRODUCT" | "CREATE_CUSTOMER",
   preview: Record<string, unknown>
 ): string {
   if (actionType === "CREATE_INVOICE") {
@@ -233,6 +233,25 @@ export function formatActionPreviewForWhatsApp(
     return `Expense Preview\n\nCategory: ${category}\nAmount: ${amount}\nDescription: ${description}\nDate: ${date}\n\nReply 1 to confirm\nReply 2 to cancel`;
   }
 
+  if (actionType === "CREATE_PRODUCT") {
+    const name = String(preview.name || "Product");
+    const sellingPrice = String(preview.sellingPrice || "");
+    const costPrice = String(preview.costPrice || "");
+    const stock = String(preview.stockQuantity || "0");
+    const sku = String(preview.sku || "");
+
+    return `📦 Product Registration Preview\n\nProduct: ${name}\nSelling Price: ${sellingPrice}\nCost Price: ${costPrice}\nStock: ${stock} units\nSKU: ${sku}\n\nReply 1 to confirm\nReply 2 to cancel`;
+  }
+
+  if (actionType === "CREATE_CUSTOMER") {
+    const name = String(preview.name || "Customer");
+    const phone = String(preview.phone || "N/A");
+    const email = String(preview.email || "N/A");
+    const address = String(preview.address || "N/A");
+
+    return `👥 Customer Registration Preview\n\nCustomer: ${name}\nPhone: ${phone}\nEmail: ${email}\nAddress: ${address}\n\nReply 1 to confirm\nReply 2 to cancel`;
+  }
+
   return "Action Preview\n\nReply 1 to confirm\nReply 2 to cancel";
 }
 
@@ -240,7 +259,7 @@ export function formatActionPreviewForWhatsApp(
  * Formats Action Success notifications strictly matching the requested WhatsApp UX.
  */
 export function formatActionSuccessForWhatsApp(
-  actionType: "CREATE_INVOICE" | "CREATE_SALE" | "CREATE_EXPENSE",
+  actionType: "CREATE_INVOICE" | "CREATE_SALE" | "CREATE_EXPENSE" | "CREATE_PRODUCT" | "CREATE_CUSTOMER",
   outcome: {
     displayNumber?: string;
     customerName?: string;
@@ -260,6 +279,14 @@ export function formatActionSuccessForWhatsApp(
 
   if (actionType === "CREATE_EXPENSE") {
     return `✅ Expense recorded successfully!\n\nCategory: ${outcome.category || "Expense"}\nAmount: ${outcome.totalFormatted || ""}\nDescription: ${outcome.description || "Logged via WhatsApp"}`;
+  }
+
+  if (actionType === "CREATE_PRODUCT") {
+    return `✅ Product registered successfully!\n\nProduct: ${outcome.description || "Product"}\nSelling Price: ${outcome.totalFormatted || ""}\nSKU: ${outcome.displayNumber || "N/A"}`;
+  }
+
+  if (actionType === "CREATE_CUSTOMER") {
+    return `✅ Customer registered successfully!\n\nCustomer: ${outcome.customerName || "Customer"}`;
   }
 
   return "✅ Action confirmed and recorded successfully!";

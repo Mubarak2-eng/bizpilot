@@ -19,10 +19,10 @@ interface AssistantChatProps {
 const SUGGESTED_PROMPTS = [
   "What were my sales today?",
   "Show me my low-stock products.",
-  "What were my top-selling products this month?",
-  "How much did I spend this month?",
-  "Who are my top customers?",
+  "Add product: Nike Air Max, price 45000, stock 15",
+  "Add customer Chinedu Okafor, phone 08012345678",
   "How much do customers owe me?",
+  "How much did I spend this month?",
 ];
 
 export default function AssistantChat({ business, userRole }: AssistantChatProps) {
@@ -452,6 +452,66 @@ function ActionPreviewCard({
         </div>
       )}
 
+      {/* Product Preview */}
+      {action.actionType === "CREATE_PRODUCT" && (
+        <div className="space-y-2 text-xs">
+          <div className="flex justify-between">
+            <span className="text-slate-500 dark:text-slate-400">Product Name:</span>
+            <span className="text-slate-900 dark:text-white font-bold">{String(p.name)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-500 dark:text-slate-400">Selling Price:</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-mono font-bold">{String(p.sellingPrice)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-500 dark:text-slate-400">Cost Price:</span>
+            <span className="text-slate-700 dark:text-slate-300 font-mono">{String(p.costPrice)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-500 dark:text-slate-400">Initial Stock:</span>
+            <span className="px-2 py-0.5 rounded-full bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300 font-semibold text-[10px] border border-violet-200 dark:border-violet-500/30">
+              {String(p.stockQuantity)} units
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-500 dark:text-slate-400">SKU Code:</span>
+            <span className="font-mono text-slate-700 dark:text-slate-300">{String(p.sku)}</span>
+          </div>
+          {Boolean(p.warning) && (
+            <p className="text-[11px] text-amber-600 dark:text-amber-400 pt-1 border-t border-slate-200 dark:border-white/[0.06]">
+              ⚠️ {String(p.warning)}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Customer Preview */}
+      {action.actionType === "CREATE_CUSTOMER" && (
+        <div className="space-y-2 text-xs">
+          <div className="flex justify-between">
+            <span className="text-slate-500 dark:text-slate-400">Customer Name:</span>
+            <span className="text-slate-900 dark:text-white font-bold">{String(p.name)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-500 dark:text-slate-400">Phone Number:</span>
+            <span className="text-slate-700 dark:text-slate-300 font-mono">{String(p.phone)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-500 dark:text-slate-400">Email Address:</span>
+            <span className="text-slate-700 dark:text-slate-300">{String(p.email)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-500 dark:text-slate-400">Address:</span>
+            <span className="text-slate-700 dark:text-slate-300">{String(p.address)}</span>
+          </div>
+          {Boolean(p.warning) && (
+            <p className="text-[11px] text-amber-600 dark:text-amber-400 pt-1 border-t border-slate-200 dark:border-white/[0.06]">
+              ⚠️ {String(p.warning)}
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Action Buttons */}
       <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-200 dark:border-white/[0.08]">
         <button
@@ -472,6 +532,10 @@ function ActionPreviewCard({
             "Create Invoice"
           ) : action.actionType === "CREATE_SALE" ? (
             "Complete Sale"
+          ) : action.actionType === "CREATE_PRODUCT" ? (
+            "Add Product"
+          ) : action.actionType === "CREATE_CUSTOMER" ? (
+            "Add Customer"
           ) : (
             "Record Expense"
           )}

@@ -283,6 +283,204 @@ export function parseExpenseIntent(rawContent: string): {
 }
 
 /**
+ * Robust natural-language parser for product creation intents.
+ */
+export function parseProductIntent(rawContent: string): {
+  name: string;
+  sellingPrice: number;
+  costPrice?: number;
+  stockQuantity?: number;
+  lowStockThreshold?: number;
+  sku?: string;
+  barcode?: string;
+  description?: string;
+} | null {
+  const text = rawContent.trim();
+  const lower = text.toLowerCase();
+
+  // Guard: If it's a read query asking for reports, metrics, or summaries
+  if (
+    /^(?:what|how\s+much|how\s+many|how|show|give|list|view|display|check|report|who|can\s+you\s+show|tell\s+me|get)\b/i.test(lower) ||
+    lower.includes("show product") ||
+    lower.includes("list product") ||
+    lower.includes("top product") ||
+    lower.includes("best selling product") ||
+    lower.includes("low stock") ||
+    lower.includes("check stock") ||
+    lower.includes("product price") ||
+    lower.includes("product summary")
+  ) {
+    return null;
+  }
+
+  // Must have imperative action verb indicating product creation
+  const isProductCommand =
+    /^(?:add|create|new|register|save|insert|log)\s+(?:an?\s+)?(?:new\s+)?(?:product|item|inventory\s+item)\b/i.test(lower) ||
+    /(?:(?:add|create|new|register|save|insert)\s+(?:an?\s+)?(?:new\s+)?product\b)/i.test(lower) ||
+    /^new\s+product\b/i.test(lower) ||
+    /^add\s+item\b/i.test(lower);
+
+  if (!isProductCommand) {
+    return null;
+  }
+
+  // Extract Selling Price
+  let sellingPrice = 0;
+  const sellMatch = text.match(/(?:selling\s+price|sale\s+price|price|for|at|costs?|selling\s+for)\s*(?::|\s)\s*(?:₦|\$|£|€)?\s*([\d,]+(?:\.\d+)?)/i);
+  if (sellMatch) {
+    sellingPrice = parseFloat(sellMatch[1].replace(/,/g, ""));
+  } else {
+    // Check fallback numeric price: "₦50,000" or "$50"
+    const currMatch = text.match(/(?:₦|\$|£|€)\s*([\d,]+(?:\.\d+)?)/i);
+    if (currMatch) {
+      sellingPrice = parseFloat(currMatch[1].replace(/,/g, ""));
+    }
+  }
+
+  // Extract Cost Price
+  let costPrice: number | undefined = undefined;
+  const costMatch = text.match(/(?:cost\s+price|cost|buy\s+price|bought\s+for|purchase\s+price)\s*(?::|\s)\s*(?:₦|\$|£|€)?\s*([\d,]+(?:\.\d+)?)/i);
+  if (costMatch) {
+    costPrice = parseFloat(costMatch[1].replace(/,/g, ""));
+  }
+
+  // Extract Stock Quantity
+  let stockQuantity: number | undefined = undefined;
+  const stockMatch = text.match(/(?:stock(?:\s+quantity|\s+count)?|quantity|qty|units?|pieces?|pcs?|in\s+stock)\s*(?::|\s)\s*(\d+)/i) ||
+    text.match(/(\d+)\s*(?:units?|pieces?|pcs?|items?)\s*(?:in\s+stock)?/i);
+  if (stockMatch) {
+    stockQuantity = parseInt(stockMatch[1], 10);
+  }
+
+  // Extract Low Stock Threshold
+  let lowStockThreshold: number | undefined = undefined;
+  const threshMatch = text.match(/(?:low\s+stock|threshold|reorder(?:\s+at)?|min\s+stock)\s*(?::|\s)?\s*(\d+)/i);
+  if (threshMatch) {
+    lowStockThreshold = parseInt(threshMatch[1], 10);
+  }
+
+  // Extract SKU
+  let sku: string | undefined = undefined;
+  const skuMatch = text.match(/(?:sku|code)\s*(?::|\s)\s*([A-Za-z0-9-_]+)/i);
+  if (skuMatch) {
+    sku = skuMatch[1].trim();
+  }
+
+  // Extract Barcode
+  let barcode: string | undefined = undefined;
+  const barcodeMatch = text.match(/(?:barcode)\s*(?::|\s)\s*([A-Za-z0-9-_]+)/i);
+  if (barcodeMatch) {
+    barcode = barcodeMatch[1].trim();
+  }
+
+  // Extract Product Name:
+  // Remove the command prefix (e.g. "Add product:", "Create a new product")
+  let cleanName = text
+    .replace(/^(?:add|create|new|register|save|insert|log)\s+(?:an?\s+)?(?:new\s+)?(?:product|item|inventory\s+item)\s*(?::|named|called|-)?\s*/i, "")
+    .trim();
+
+  // Remove trailing price / cost / stock clauses
+  cleanName = cleanName
+    .replace(/(?:,|;)?\s*(?:selling\s+price|sale\s+price|price|cost\s+price|cost|stock|qty|quantity|sku|barcode|threshold|low\s+stock)\s*(?::|\s).*$/i, "")
+    .replace(/(?:,|;)?\s*(?:for|at)\s+(?:₦|\$|£|€)?\s*[\d,]+.*$/i, "")
+    .replace(/[.,;:]+$/, "")
+    .trim();
+
+  return {
+    name: cleanName || "New Product",
+    sellingPrice,
+    costPrice,
+    stockQuantity,
+    lowStockThreshold,
+    sku,
+    barcode,
+  };
+}
+
+/**
+ * Robust natural-language parser for customer creation intents.
+ */
+export function parseCustomerIntent(rawContent: string): {
+  name: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+} | null {
+  const text = rawContent.trim();
+  const lower = text.toLowerCase();
+
+  // Guard: If it's a read query asking for reports or listings
+  if (
+    /^(?:what|how\s+much|how\s+many|how|show|give|list|view|display|check|report|who|can\s+you\s+show|tell\s+me|get)\b/i.test(lower) ||
+    lower.includes("show customer") ||
+    lower.includes("list customer") ||
+    lower.includes("top customer") ||
+    lower.includes("who are my customers") ||
+    lower.includes("customer summary") ||
+    lower.includes("customer debt")
+  ) {
+    return null;
+  }
+
+  // Must have imperative action verb indicating customer creation
+  const isCustomerCommand =
+    /^(?:add|create|new|register|save|insert|log)\s+(?:an?\s+)?(?:new\s+)?(?:customer|client|buyer)\b/i.test(lower) ||
+    /(?:(?:add|create|new|register|save|insert)\s+(?:an?\s+)?(?:new\s+)?customer\b)/i.test(lower) ||
+    /^new\s+customer\b/i.test(lower) ||
+    /^add\s+client\b/i.test(lower);
+
+  if (!isCustomerCommand) {
+    return null;
+  }
+
+  // Extract Email
+  let email: string | undefined = undefined;
+  const emailMatch = text.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i);
+  if (emailMatch) {
+    email = emailMatch[1].trim();
+  }
+
+  // Extract Phone
+  let phone: string | undefined = undefined;
+  const phoneMatch = text.match(/(?:phone|tel|mobile|whatsapp|number)\s*(?::|\s)\s*(\+?[\d\s-]{10,16})/i) ||
+    text.match(/((?:\+?234|0)[789][01]\d{8})/i);
+  if (phoneMatch) {
+    phone = (phoneMatch[1] || phoneMatch[2] || "").trim().replace(/\s+/g, "");
+  }
+
+  // Extract Address
+  let address: string | undefined = undefined;
+  const addressMatch = text.match(/(?:address|location|city)\s*(?::|\s)\s*([^,\n;]+)/i) ||
+    text.match(/(?:in|at)\s+([A-Za-z0-9\s,.-]+?)(?=\s+(?:phone|tel|email|mobile|\+234|0[789]|\d{11})|$|[.,;])/i);
+  if (addressMatch) {
+    address = addressMatch[1].trim();
+  }
+
+  // Extract Customer Name:
+  // Remove command prefix
+  let cleanName = text
+    .replace(/^(?:add|create|new|register|save|insert|log)\s+(?:an?\s+)?(?:new\s+)?(?:customer|client|buyer)\s*(?::|named|called|-)?\s*/i, "")
+    .trim();
+
+  // Remove email, phone, and address segments
+  if (email) cleanName = cleanName.replace(email, "");
+  if (phone) cleanName = cleanName.replace(phone, "");
+  cleanName = cleanName
+    .replace(/(?:phone|tel|mobile|whatsapp|email|address|location|city)\s*(?::|\s)[^,;]*/gi, "")
+    .replace(/(?:in|at)\s+[A-Za-z0-9\s,.-]+$/i, "")
+    .replace(/[,;:]+$/, "")
+    .replace(/^[,\s;:]+/, "")
+    .trim();
+
+  return {
+    name: cleanName || "New Customer",
+    phone,
+    email,
+    address,
+  };
+}
+
+/**
  * Detects if a message is purely a greeting, help request, or capability question.
  * Ensures business questions containing keywords (e.g. sales, products, expenses, etc.)
  * are NEVER classified as greetings.
@@ -508,6 +706,70 @@ export class LocalDeterministicAIProvider implements AIProvider {
               customerName: parsedSale.customerName,
               items: parsedSale.items,
               paymentMethod: parsedSale.paymentMethod || "CASH",
+            },
+          },
+        ],
+        modelName: "bizpilot-local-copilot",
+        provider: "local_fallback",
+      };
+    }
+
+    // D. Action: ADD PRODUCT
+    const parsedProduct = parseProductIntent(rawContent);
+    if (parsedProduct !== null) {
+      if (!parsedProduct.name || parsedProduct.sellingPrice <= 0) {
+        return {
+          content:
+            "To add a product, please specify at least the **product name** and **selling price**.\n\n*Example*: `Add product: Nike Air Max, price ₦45,000, cost ₦30,000, stock 15` or `Create product iPhone 15 for 750000 with 5 in stock`",
+          modelName: "bizpilot-local-copilot",
+          provider: "local_fallback",
+        };
+      }
+
+      return {
+        content: "I have prepared the product registration voucher below. Please review and confirm to add it to your inventory:",
+        toolCalls: [
+          {
+            toolName: "prepare_product",
+            params: {
+              name: parsedProduct.name,
+              sellingPrice: parsedProduct.sellingPrice,
+              costPrice: parsedProduct.costPrice,
+              stockQuantity: parsedProduct.stockQuantity,
+              lowStockThreshold: parsedProduct.lowStockThreshold,
+              sku: parsedProduct.sku,
+              barcode: parsedProduct.barcode,
+              description: parsedProduct.description,
+            },
+          },
+        ],
+        modelName: "bizpilot-local-copilot",
+        provider: "local_fallback",
+      };
+    }
+
+    // E. Action: ADD CUSTOMER
+    const parsedCustomer = parseCustomerIntent(rawContent);
+    if (parsedCustomer !== null) {
+      if (!parsedCustomer.name) {
+        return {
+          content:
+            "To register a customer, please specify the **customer name**.\n\n*Example*: `Add customer Chinedu Okafor, phone 08012345678, email chinedu@gmail.com`",
+          modelName: "bizpilot-local-copilot",
+          provider: "local_fallback",
+        };
+      }
+
+      return {
+        content: "I have prepared the customer record below. Please review and confirm to save this customer:",
+        toolCalls: [
+          {
+            toolName: "prepare_customer",
+            params: {
+              name: parsedCustomer.name,
+              phone: parsedCustomer.phone,
+              email: parsedCustomer.email,
+              address: parsedCustomer.address,
             },
           },
         ],

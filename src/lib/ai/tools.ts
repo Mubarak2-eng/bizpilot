@@ -25,7 +25,7 @@ import {
   CreditSalesQueryParams,
   CustomerDebtParams,
 } from "./types";
-import { PaymentMethod, InvoiceStatus, CreditStatus } from "@prisma/client";
+import { PaymentMethod, InvoiceStatus } from "@prisma/client";
 
 // Maximum result limit for any tool query
 const MAX_QUERY_LIMIT = 50;
@@ -1364,6 +1364,40 @@ export const BIZPILOT_AI_TOOLS: ToolDefinition[] = [
         phone: { type: "string", description: "Customer phone number" },
         customerId: { type: "string", description: "Unique customer ID" },
       },
+    },
+  },
+  {
+    name: "prepare_product",
+    description:
+      "Create or register a new product in inventory with name, selling price, optional cost price, initial stock quantity, low-stock reorder threshold, and SKU.",
+    parameters: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Name of the product" },
+        sellingPrice: { type: "number", description: "Selling price of the product" },
+        costPrice: { type: "number", description: "Cost or purchase price of the product" },
+        stockQuantity: { type: "number", description: "Initial quantity in stock (default 0)" },
+        lowStockThreshold: { type: "number", description: "Low stock alert threshold (default 10)" },
+        sku: { type: "string", description: "Product SKU code" },
+        barcode: { type: "string", description: "Product barcode" },
+        description: { type: "string", description: "Product description" },
+      },
+      required: ["name", "sellingPrice"],
+    },
+  },
+  {
+    name: "prepare_customer",
+    description:
+      "Register a new customer with their name, phone number, email address, and physical address.",
+    parameters: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Customer full name" },
+        phone: { type: "string", description: "Customer phone number" },
+        email: { type: "string", description: "Customer email address" },
+        address: { type: "string", description: "Customer physical address or city" },
+      },
+      required: ["name"],
     },
   },
 ];

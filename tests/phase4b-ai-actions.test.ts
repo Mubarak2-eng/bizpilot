@@ -6,14 +6,17 @@ import {
   draft_invoice,
   prepare_expense,
   prepare_sale,
+  prepare_product,
+  prepare_customer,
   resolveCustomerCandidate,
 } from "../src/lib/ai/action-tools";
-import { parseInvoiceIntent } from "../src/lib/ai/provider";
+import { parseInvoiceIntent, parseProductIntent, parseCustomerIntent } from "../src/lib/ai/provider";
 import {
   createPendingAction,
   getAndConsumePendingAction,
   cancelPendingAction,
 } from "../src/lib/ai/pending-actions";
+import { executeConfirmedPendingAction } from "../src/lib/ai/action-executor";
 import { runAIAssistant } from "../src/lib/ai/executor";
 import { Role } from "../src/types/auth";
 import { toDecimalString } from "../src/lib/money";
@@ -25,13 +28,56 @@ describe("Phase 4B: Controlled AI Business Actions", () => {
   let sampleProduct: { id: string; name: string; sku: string; stockQuantity: number; sellingPrice: string };
 
   beforeAll(async () => {
-    const user = await prisma.user.findUnique({ where: { email: "demo@bizpilot.test" } });
-    const biz1 = await prisma.business.findUnique({ where: { slug: "acme-electronics" } });
-    const biz2 = await prisma.business.findUnique({ where: { slug: "beta-retailers" } });
-
-    if (!user || !biz1 || !biz2) {
-      throw new Error("Seeded test data missing for Phase 4B tests!");
+    let user = await prisma.user.findFirst();
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          email: "test-ai@bizpilot.test",
+          name: "Test AI User",
+        },
+      });
     }
+
+    let biz1 = await prisma.business.findFirst({ where: { slug: "acme-electronics" } });
+    if (!biz1) {
+      biz1 = await prisma.business.findFirst();
+    }
+    if (!biz1) {
+      biz1 = await prisma.business.create({
+        data: {
+          name: "Acme Electronics",
+          slug: "acme-electronics",
+          currency: "NGN",
+        },
+      });
+    }
+
+    let biz2 = await prisma.business.findFirst({ where: { slug: "beta-retailers" } });
+    if (!biz2) {
+      biz2 = await prisma.business.create({
+        data: {
+          name: "Beta Retailers",
+          slug: "beta-retailers",
+          currency: "NGN",
+        },
+      });
+    }
+
+    // Ensure membership exists for primary business
+    await prisma.membership.upsert({
+      where: {
+        userId_businessId: {
+          userId: user.id,
+          businessId: biz1.id,
+        },
+      },
+      update: { role: Role.OWNER },
+      create: {
+        userId: user.id,
+        businessId: biz1.id,
+        role: Role.OWNER,
+      },
+    });
 
     primaryContext = {
       userId: user.id,
@@ -49,16 +95,35 @@ describe("Phase 4B: Controlled AI Business Actions", () => {
       role: Role.OWNER,
     };
 
-    const cust = await prisma.customer.findFirst({ where: { businessId: biz1.id } });
-    if (!cust) throw new Error("Customer missing for Acme Electronics!");
+    let cust = await prisma.customer.findFirst({ where: { businessId: biz1.id } });
+    if (!cust) {
+      cust = await prisma.customer.create({
+        data: {
+          businessId: biz1.id,
+          name: "Chinedu Okafor",
+          phone: "08012345678",
+        },
+      });
+    }
     sampleCustomer = { id: cust.id, name: cust.name };
 
-    const prod = await prisma.product.findFirst({ where: { businessId: biz1.id } });
-    if (!prod) throw new Error("Product missing for Acme Electronics!");
+    let prod = await prisma.product.findFirst({ where: { businessId: biz1.id } });
+    if (!prod) {
+      prod = await prisma.product.create({
+        data: {
+          businessId: biz1.id,
+          name: "Power Bank 20000mAh",
+          sellingPrice: "15000.00",
+          costPrice: "10000.00",
+          stockQuantity: 50,
+          sku: "PB-20K",
+        },
+      });
+    }
     sampleProduct = {
       id: prod.id,
       name: prod.name,
-      sku: prod.sku,
+      sku: prod.sku || "PB-20K",
       stockQuantity: prod.stockQuantity,
       sellingPrice: prod.sellingPrice.toString(),
     };
@@ -527,6 +592,193 @@ describe("Phase 4B: Controlled AI Business Actions", () => {
       expect(res.message.actionPreview?.actionType).toBe("CREATE_INVOICE");
       const preview = res.message.actionPreview?.preview as { customer: { name: string } };
       expect(preview.customer.name).toBe(sampleCustomer.name);
+    });
+  });
+
+  describe("4. Action 4: Prepare & Create Product (AI Inventory Management)", () => {
+    it("should prepare a product registration voucher with price, cost, and stock count", async () => {
+      const res = await prepare_product(
+        {
+          name: "Wireless Bluetooth Speaker",
+          sellingPrice: 35000,
+          costPrice: 24000,
+          stockQuantity: 20,
+          lowStockThreshold: 5,
+          sku: "SPK-BT-001",
+        },
+        primaryContext
+      );
+
+      expect(res.isActionPreview).toBe(true);
+      expect(res.actionType).toBe("CREATE_PRODUCT");
+      expect(res.token).toBeDefined();
+      expect(res.preview.name).toBe("Wireless Bluetooth Speaker");
+      expect(res.preview.sellingPrice).toMatch(/[₦$£€]/);
+      expect(res.preview.stockQuantity).toBe(20);
+    });
+
+    it("should execute confirmed product creation and persist to database", async () => {
+      const testProdName = `Smart Watch Pro ${Date.now()}`;
+      const prep = await prepare_product(
+        {
+          name: testProdName,
+          sellingPrice: 48000,
+          costPrice: 32000,
+          stockQuantity: 15,
+        },
+        primaryContext
+      );
+
+      const consumed = await getAndConsumePendingAction(
+        prep.token,
+        primaryContext.userId,
+        primaryContext.businessId
+      );
+      expect(consumed).not.toBeNull();
+
+      const outcome = await executeConfirmedPendingAction(consumed!, primaryContext.currency);
+      expect(outcome.success).toBe(true);
+      expect(outcome.actionType).toBe("CREATE_PRODUCT");
+      expect(outcome.recordId).toBeDefined();
+
+      // Verify product in database
+      const created = await prisma.product.findUnique({
+        where: { id: outcome.recordId },
+      });
+      expect(created).not.toBeNull();
+      expect(created?.name).toBe(testProdName);
+      expect(Number(created?.sellingPrice.toString())).toBe(48000);
+      expect(Number(created?.costPrice.toString())).toBe(32000);
+      expect(created?.stockQuantity).toBe(15);
+      expect(created?.businessId).toBe(primaryContext.businessId);
+
+      // Cleanup
+      await prisma.product.delete({ where: { id: created!.id } });
+    });
+  });
+
+  describe("5. Action 5: Prepare & Create Customer (AI Customer Directory)", () => {
+    it("should prepare a customer registration voucher with phone, email, and address", async () => {
+      const res = await prepare_customer(
+        {
+          name: "Dr. Kemi Adeyemi",
+          phone: "08033221100",
+          email: "kemi.adeyemi@test.com",
+          address: "Victoria Island, Lagos",
+        },
+        primaryContext
+      );
+
+      expect(res.isActionPreview).toBe(true);
+      expect(res.actionType).toBe("CREATE_CUSTOMER");
+      expect(res.token).toBeDefined();
+      expect(res.preview.name).toBe("Dr. Kemi Adeyemi");
+      expect(res.preview.phone).toBe("08033221100");
+    });
+
+    it("should execute confirmed customer creation and persist to database", async () => {
+      const testCustName = `Alhaji Musa Danjuma ${Date.now()}`;
+      const prep = await prepare_customer(
+        {
+          name: testCustName,
+          phone: "08188990011",
+          email: "musa@danjuma.test",
+          address: "Abuja FCT",
+        },
+        primaryContext
+      );
+
+      const consumed = await getAndConsumePendingAction(
+        prep.token,
+        primaryContext.userId,
+        primaryContext.businessId
+      );
+      expect(consumed).not.toBeNull();
+
+      const outcome = await executeConfirmedPendingAction(consumed!, primaryContext.currency);
+      expect(outcome.success).toBe(true);
+      expect(outcome.actionType).toBe("CREATE_CUSTOMER");
+      expect(outcome.recordId).toBeDefined();
+
+      // Verify customer in database
+      const created = await prisma.customer.findUnique({
+        where: { id: outcome.recordId },
+      });
+      expect(created).not.toBeNull();
+      expect(created?.name).toBe(testCustName);
+      expect(created?.phone).toBe("08188990011");
+      expect(created?.email).toBe("musa@danjuma.test");
+      expect(created?.businessId).toBe(primaryContext.businessId);
+
+      // Cleanup
+      await prisma.customer.delete({ where: { id: created!.id } });
+    });
+  });
+
+  describe("6. Product & Customer Natural Language Parsing", () => {
+    it("should parse product creation intents correctly", () => {
+      const parsed1 = parseProductIntent("Add product: Nike Air Max, selling price ₦45,000, cost price ₦30,000, stock 15");
+      expect(parsed1).not.toBeNull();
+      expect(parsed1?.name).toBe("Nike Air Max");
+      expect(parsed1?.sellingPrice).toBe(45000);
+      expect(parsed1?.costPrice).toBe(30000);
+      expect(parsed1?.stockQuantity).toBe(15);
+
+      const parsed2 = parseProductIntent("Create product iPhone 15 Pro for 750000 with 5 in stock");
+      expect(parsed2).not.toBeNull();
+      expect(parsed2?.name).toBe("iPhone 15 Pro");
+      expect(parsed2?.sellingPrice).toBe(750000);
+      expect(parsed2?.stockQuantity).toBe(5);
+
+      // Should ignore read queries
+      expect(parseProductIntent("Show me my low stock products")).toBeNull();
+      expect(parseProductIntent("What is the price of iPhone 15?")).toBeNull();
+    });
+
+    it("should parse customer creation intents correctly", () => {
+      const parsed1 = parseCustomerIntent("Add customer Chinedu Okafor, phone 08012345678, email chinedu@gmail.com, address Ikeja Lagos");
+      expect(parsed1).not.toBeNull();
+      expect(parsed1?.name).toBe("Chinedu Okafor");
+      expect(parsed1?.phone).toBe("08012345678");
+      expect(parsed1?.email).toBe("chinedu@gmail.com");
+      expect(parsed1?.address).toBe("Ikeja Lagos");
+
+      const parsed2 = parseCustomerIntent("Create customer Blessing Adebayo with phone +2348163374311");
+      expect(parsed2).not.toBeNull();
+      expect(parsed2?.name).toBe("Blessing Adebayo");
+      expect(parsed2?.phone).toBe("+2348163374311");
+
+      // Should ignore read queries
+      expect(parseCustomerIntent("Who are my top customers?")).toBeNull();
+      expect(parseCustomerIntent("Show customer list")).toBeNull();
+    });
+
+    it("should run full copilot assistant pipeline for 'Add product: USB-C Fast Charger, price 8500, cost 5000, stock 30'", async () => {
+      const res = await runAIAssistant(
+        [],
+        "Add product: USB-C Fast Charger, price 8500, cost 5000, stock 30",
+        primaryContext
+      );
+
+      expect(res.message.actionPreview).toBeDefined();
+      expect(res.message.actionPreview?.actionType).toBe("CREATE_PRODUCT");
+      const preview = res.message.actionPreview?.preview as { name: string; stockQuantity: number };
+      expect(preview.name).toBe("USB-C Fast Charger");
+      expect(preview.stockQuantity).toBe(30);
+    });
+
+    it("should run full copilot assistant pipeline for 'Add customer Fatima Aliyu, phone 08099887766'", async () => {
+      const res = await runAIAssistant(
+        [],
+        "Add customer Fatima Aliyu, phone 08099887766",
+        primaryContext
+      );
+
+      expect(res.message.actionPreview).toBeDefined();
+      expect(res.message.actionPreview?.actionType).toBe("CREATE_CUSTOMER");
+      const preview = res.message.actionPreview?.preview as { name: string; phone: string };
+      expect(preview.name).toBe("Fatima Aliyu");
+      expect(preview.phone).toBe("08099887766");
     });
   });
 });

@@ -29,7 +29,10 @@ import {
   PrepareExpenseParams,
   prepare_sale,
   PrepareSaleParams,
+  prepare_product,
+  prepare_customer,
 } from "./action-tools";
+import { PrepareProductParams, PrepareCustomerParams } from "./types";
 import { getAIProvider } from "./provider";
 import { checkAndIncrementAIQuota } from "../subscriptions/quotas";
 
@@ -135,6 +138,14 @@ export async function executeToolCall(
 
       case "prepare_sale":
         resultData = await prepare_sale(params as unknown as PrepareSaleParams, context);
+        break;
+
+      case "prepare_product":
+        resultData = await prepare_product(params as unknown as PrepareProductParams, context);
+        break;
+
+      case "prepare_customer":
+        resultData = await prepare_customer(params as unknown as PrepareCustomerParams, context);
         break;
 
       default:
@@ -670,6 +681,39 @@ function formatToolResultsSummary(
                     )
                     .join("\n")
                 : "No credit transactions on file.")
+          );
+        }
+        break;
+      }
+
+      case "prepare_product": {
+        const prodPreview = (data as { preview?: { name: string; sellingPrice: string; costPrice: string; stockQuantity: number; sku: string; warning?: string | null } }).preview;
+        if (prodPreview) {
+          parts.push(
+            `### 📦 Product Registration Preview\n` +
+              `- **Product Name**: **${prodPreview.name}**\n` +
+              `- **Selling Price**: ${prodPreview.sellingPrice}\n` +
+              `- **Cost Price**: ${prodPreview.costPrice}\n` +
+              `- **Initial Stock**: ${prodPreview.stockQuantity} units\n` +
+              `- **SKU**: \`${prodPreview.sku}\`\n` +
+              (prodPreview.warning ? `\n⚠️ *${prodPreview.warning}*\n` : "\n") +
+              `*Please click **Confirm** below or reply **1** / **CONFIRM** to add this product to your inventory.*`
+          );
+        }
+        break;
+      }
+
+      case "prepare_customer": {
+        const custPreview = (data as { preview?: { name: string; phone: string; email: string; address: string; warning?: string | null } }).preview;
+        if (custPreview) {
+          parts.push(
+            `### 👥 Customer Registration Preview\n` +
+              `- **Customer Name**: **${custPreview.name}**\n` +
+              `- **Phone**: ${custPreview.phone}\n` +
+              `- **Email**: ${custPreview.email}\n` +
+              `- **Address**: ${custPreview.address}\n` +
+              (custPreview.warning ? `\n⚠️ *${custPreview.warning}*\n` : "\n") +
+              `*Please click **Confirm** below or reply **1** / **CONFIRM** to register this customer.*`
           );
         }
         break;

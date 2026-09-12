@@ -195,6 +195,84 @@ export async function executeConfirmedPendingAction(
       totalFormatted,
       message: `Sale recorded successfully!\n\nSale: ${saleDisplay}\nCustomer: ${saleData.customerName}\nTotal: ${totalFormatted}\nPayment Method: ${saleData.paymentMethod}`,
     };
+  } else if (pendingRecord.payload.type === "CREATE_PRODUCT") {
+    const prodData = pendingRecord.payload.data;
+
+    let finalSku = prodData.sku;
+    if (!finalSku) {
+      // Auto-generate unique SKU if none provided
+      const count = await prisma.product.count({ where: { businessId } });
+      finalSku = `SKU-${String(count + 1).padStart(4, "0")}`;
+      const existingSku = await prisma.product.findUnique({
+        where: { businessId_sku: { businessId, sku: finalSku } },
+      });
+      if (existingSku) {
+        finalSku = `SKU-${Date.now().toString().slice(-6)}`;
+      }
+    }
+
+    const product = await prisma.product.create({
+      data: {
+        businessId,
+        name: prodData.name,
+        sellingPrice: toDecimalString(prodData.sellingPrice),
+        costPrice: toDecimalString(prodData.costPrice),
+        stockQuantity: prodData.stockQuantity,
+        lowStockThreshold: prodData.lowStockThreshold || 10,
+        sku: finalSku,
+        barcode: prodData.barcode || null,
+        description: prodData.description || null,
+      },
+    });
+
+    try {
+      revalidatePath("/products");
+      revalidatePath("/sales");
+      revalidatePath("/dashboard");
+    } catch {
+      // Ignored outside Next.js request context
+    }
+
+    const priceFormatted = formatMoney(prodData.sellingPrice, currency);
+
+    return {
+      success: true,
+      actionType: "CREATE_PRODUCT",
+      recordId: product.id,
+      displayNumber: product.sku || undefined,
+      description: prodData.name,
+      totalFormatted: priceFormatted,
+      message: `Product added successfully!\n\nProduct: ${prodData.name}\nSelling Price: ${priceFormatted}\nStock: ${prodData.stockQuantity} units\nSKU: ${product.sku || "N/A"}`,
+    };
+  } else if (pendingRecord.payload.type === "CREATE_CUSTOMER") {
+    const custData = pendingRecord.payload.data;
+
+    const customer = await prisma.customer.create({
+      data: {
+        businessId,
+        name: custData.name,
+        phone: custData.phone || null,
+        email: custData.email || null,
+        address: custData.address || null,
+      },
+    });
+
+    try {
+      revalidatePath("/customers");
+      revalidatePath("/sales");
+      revalidatePath("/invoices");
+      revalidatePath("/dashboard");
+    } catch {
+      // Ignored outside Next.js request context
+    }
+
+    return {
+      success: true,
+      actionType: "CREATE_CUSTOMER",
+      recordId: customer.id,
+      customerName: customer.name,
+      message: `Customer created successfully!\n\nCustomer: ${customer.name}${customer.phone ? `\nPhone: ${customer.phone}` : ""}${customer.email ? `\nEmail: ${customer.email}` : ""}${customer.address ? `\nAddress: ${customer.address}` : ""}`,
+    };
   } else {
     throw new Error("Unsupported AI action type.");
   }

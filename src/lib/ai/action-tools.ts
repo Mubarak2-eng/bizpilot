@@ -3,12 +3,16 @@ import { verifyBusinessMembership } from "../membership";
 import { formatMoney } from "../money";
 import {
   AuthenticatedAIContext,
+  PrepareProductParams,
+  PrepareCustomerParams,
 } from "./types";
 import {
   createPendingAction,
   PendingExpensePayload,
   PendingInvoicePayload,
   PendingSalePayload,
+  PendingProductPayload,
+  PendingCustomerPayload,
 } from "./pending-actions";
 import { PaymentMethod } from "@prisma/client";
 
@@ -463,3 +467,169 @@ export async function prepare_sale(
     },
   };
 }
+
+/**
+ * 4. prepare_product
+ * Prepares a pending action voucher to create a new product inventory record.
+ */
+export async function prepare_product(
+  params: PrepareProductParams,
+  context: AuthenticatedAIContext
+) {
+  const membership = await verifyBusinessMembership(context.businessId, context.userId);
+  const businessId = membership.business.id;
+  const currency = membership.business.currency;
+
+  const rawName = (params.name || "").trim();
+  if (!rawName) {
+    throw new Error("Product name is required.");
+  }
+
+  // Parse selling price
+  const sellingPrice = Number(String(params.sellingPrice).replace(/[^0-9.]/g, ""));
+  if (isNaN(sellingPrice) || sellingPrice < 0) {
+    throw new Error("A valid non-negative selling price is required.");
+  }
+
+  // Parse cost price (defaults to 0 if omitted)
+  let costPrice = 0;
+  if (params.costPrice !== undefined && params.costPrice !== null && String(params.costPrice).trim() !== "") {
+    costPrice = Number(String(params.costPrice).replace(/[^0-9.]/g, ""));
+    if (isNaN(costPrice) || costPrice < 0) {
+      costPrice = 0;
+    }
+  }
+
+  // Parse stock quantity (defaults to 0)
+  let stockQuantity = 0;
+  if (params.stockQuantity !== undefined && params.stockQuantity !== null) {
+    const parsedQty = parseInt(String(params.stockQuantity), 10);
+    if (!isNaN(parsedQty) && parsedQty >= 0) {
+      stockQuantity = parsedQty;
+    }
+  }
+
+  // Parse low stock threshold (defaults to 10)
+  let lowStockThreshold = 10;
+  if (params.lowStockThreshold !== undefined && params.lowStockThreshold !== null) {
+    const parsedThresh = parseInt(String(params.lowStockThreshold), 10);
+    if (!isNaN(parsedThresh) && parsedThresh >= 0) {
+      lowStockThreshold = parsedThresh;
+    }
+  }
+
+  const sku = params.sku?.trim() || null;
+  const barcode = params.barcode?.trim() || null;
+  const description = params.description?.trim() || null;
+
+  // Check if a product with this name already exists in this business workspace
+  const existingProduct = await prisma.product.findFirst({
+    where: {
+      businessId,
+      name: { equals: rawName, mode: "insensitive" },
+    },
+  });
+
+  const payload: PendingProductPayload = {
+    name: rawName,
+    sellingPrice,
+    costPrice,
+    stockQuantity,
+    lowStockThreshold,
+    sku,
+    barcode,
+    description,
+  };
+
+  const token = await createPendingAction(
+    context.userId,
+    businessId,
+    "CREATE_PRODUCT",
+    { type: "CREATE_PRODUCT", data: payload }
+  );
+
+  return {
+    isActionPreview: true,
+    actionType: "CREATE_PRODUCT" as const,
+    token,
+    currency,
+    preview: {
+      name: rawName,
+      sellingPrice: formatMoney(sellingPrice, currency),
+      costPrice: formatMoney(costPrice, currency),
+      stockQuantity,
+      lowStockThreshold,
+      sku: sku || "Auto-generated",
+      barcode: barcode || "None",
+      description: description || "None",
+      warning: existingProduct
+        ? `Note: A product named "${existingProduct.name}" already exists in your inventory.`
+        : null,
+    },
+  };
+}
+
+/**
+ * 5. prepare_customer
+ * Prepares a pending action voucher to create a new customer record.
+ */
+export async function prepare_customer(
+  params: PrepareCustomerParams,
+  context: AuthenticatedAIContext
+) {
+  const membership = await verifyBusinessMembership(context.businessId, context.userId);
+  const businessId = membership.business.id;
+  const currency = membership.business.currency;
+
+  const rawName = (params.name || "").trim();
+  if (!rawName) {
+    throw new Error("Customer name is required.");
+  }
+
+  const phone = params.phone?.trim() || null;
+  const email = params.email?.trim().toLowerCase() || null;
+  const address = params.address?.trim() || null;
+
+  // Check if a customer with this exact name or phone already exists
+  const existingCustomer = await prisma.customer.findFirst({
+    where: {
+      businessId,
+      OR: [
+        { name: { equals: rawName, mode: "insensitive" } },
+        ...(phone ? [{ phone }] : []),
+        ...(email ? [{ email }] : []),
+      ],
+    },
+  });
+
+  const payload: PendingCustomerPayload = {
+    name: rawName,
+    phone,
+    email,
+    address,
+  };
+
+  const token = await createPendingAction(
+    context.userId,
+    businessId,
+    "CREATE_CUSTOMER",
+    { type: "CREATE_CUSTOMER", data: payload }
+  );
+
+  return {
+    isActionPreview: true,
+    actionType: "CREATE_CUSTOMER" as const,
+    token,
+    currency,
+    preview: {
+      name: rawName,
+      phone: phone || "Not specified",
+      email: email || "Not specified",
+      address: address || "Not specified",
+      warning: existingCustomer
+        ? `Note: A customer with matching details ("${existingCustomer.name}") already exists.`
+        : null,
+    },
+  };
+}
+

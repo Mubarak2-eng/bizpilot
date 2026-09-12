@@ -2,7 +2,12 @@ import crypto from "crypto";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../prisma";
 
-export type AIActionType = "CREATE_INVOICE" | "CREATE_SALE" | "CREATE_EXPENSE";
+export type AIActionType =
+  | "CREATE_INVOICE"
+  | "CREATE_SALE"
+  | "CREATE_EXPENSE"
+  | "CREATE_PRODUCT"
+  | "CREATE_CUSTOMER";
 
 export interface PendingInvoicePayload {
   customerId: string;
@@ -43,10 +48,30 @@ export interface PendingExpensePayload {
   date: string;
 }
 
+export interface PendingProductPayload {
+  name: string;
+  sellingPrice: number;
+  costPrice: number;
+  stockQuantity: number;
+  lowStockThreshold?: number;
+  sku?: string | null;
+  barcode?: string | null;
+  description?: string | null;
+}
+
+export interface PendingCustomerPayload {
+  name: string;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+}
+
 export type PendingActionPayload =
   | { type: "CREATE_INVOICE"; data: PendingInvoicePayload }
   | { type: "CREATE_SALE"; data: PendingSalePayload }
-  | { type: "CREATE_EXPENSE"; data: PendingExpensePayload };
+  | { type: "CREATE_EXPENSE"; data: PendingExpensePayload }
+  | { type: "CREATE_PRODUCT"; data: PendingProductPayload }
+  | { type: "CREATE_CUSTOMER"; data: PendingCustomerPayload };
 
 export interface PendingActionRecord {
   token: string;
