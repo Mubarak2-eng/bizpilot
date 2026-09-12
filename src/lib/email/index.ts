@@ -33,8 +33,8 @@ export function getResendClient(): Resend | null {
  */
 export async function sendEmail(options: SendEmailOptions): Promise<EmailResult> {
   const isProd = process.env.NODE_ENV === "production";
-  const fromAddress = process.env.FROM_EMAIL || "BizPilot AI <notifications@bizpilot.app>";
-  const supportEmail = process.env.SUPPORT_EMAIL || "support@bizpilot.app";
+  const fromAddress = process.env.FROM_EMAIL || "BizPilot AI <notifications@bizpilot.ng>";
+  const supportEmail = process.env.SUPPORT_EMAIL || "support@bizpilot.ng";
 
   const resend = getResendClient();
 

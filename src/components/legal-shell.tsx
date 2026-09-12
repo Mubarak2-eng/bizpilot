@@ -189,7 +189,7 @@ export default function LegalShell({
               Data Deletion
             </Link>
             <a
-              href="mailto:support@bizpilot.app"
+              href="mailto:support@bizpilot.ng"
               className="hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
             >
               Contact Support

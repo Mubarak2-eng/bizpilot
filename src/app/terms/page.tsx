@@ -217,8 +217,8 @@ export default function TermsOfServicePage() {
         <p>For questions or notices concerning these Terms of Service, please contact us:</p>
         <div className="p-4 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.02] text-xs sm:text-sm space-y-1">
           <p><strong>BizPilot AI Legal & Operations</strong></p>
-          <p>Email: <a href="mailto:support@bizpilot.app" className="text-indigo-600 dark:text-indigo-400 font-semibold underline">support@bizpilot.app</a></p>
-          <p>Website: <a href="https://bizpilot.app" className="text-indigo-600 dark:text-indigo-400 font-semibold underline">https://bizpilot.app</a></p>
+          <p>Email: <a href="mailto:support@bizpilot.ng" className="text-indigo-600 dark:text-indigo-400 font-semibold underline">support@bizpilot.ng</a></p>
+          <p>Website: <a href="https://bizpilot.ng" className="text-indigo-600 dark:text-indigo-400 font-semibold underline">https://bizpilot.ng</a></p>
         </div>
       </section>
     </LegalShell>

@@ -171,7 +171,7 @@ export async function handleIncomingWhatsAppMessage(
       `⚠️ *WhatsApp AI Unavailable*\n\n` +
       `Your BizPilot subscription ${statusNotice}.\n\n` +
       `The WhatsApp AI assistant is available on active Starter, Pro, and Business plans.\n\n` +
-      `Please renew or upgrade your subscription at:\nhttps://bizpilot.app/settings`;
+      `Please renew or upgrade your subscription at:\nhttps://bizpilot.ng/settings`;
     await sendReply(phoneNumber, inactiveMsg);
     console.log(
       `[WhatsApp Subscription Gate] msgId=${messageId || "n/a"} from=${phoneNumber} bizId=${connection.businessId} status=${subState.status} plan=${subState.planCode} BLOCKED`
@@ -311,7 +311,7 @@ export async function handleIncomingWhatsAppMessage(
       const quotaMsg =
         `⚠️ *Monthly AI Limit Reached*\n\n` +
         aiResponse.message.content +
-        `\n\nUpgrade your subscription at:\nhttps://bizpilot.app/settings`;
+        `\n\nUpgrade your subscription at:\nhttps://bizpilot.ng/settings`;
       await sendReply(phoneNumber, quotaMsg);
       console.log(
         `[WhatsApp Quota Gate] msgId=${messageId || "n/a"} from=${phoneNumber} bizId=${context.businessId} BLOCKED`

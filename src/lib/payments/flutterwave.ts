@@ -93,7 +93,7 @@ function isMockOrPlaceholderKey(key: string | undefined): boolean {
  */
 function sanitizeEmailForFlutterwave(email: string): string {
   const trimmed = (email || "").trim().toLowerCase();
-  if (!trimmed) return "customer@bizpilot.name.ng";
+  if (!trimmed) return "customer@bizpilot.ng";
   return trimmed.replace(/\.(test|example|local|invalid|internal|lan)$/i, ".com");
 }
 
@@ -157,7 +157,7 @@ export async function initializeFlutterwaveTransaction(
       customizations: {
         title: "BizPilot AI",
         description: `BizPilot AI ${params.metadata?.planCode || "Subscription"}`,
-        logo: "https://bizpilot.name.ng/bizpilot-logo.png",
+        logo: "https://bizpilot.ng/bizpilot-logo.png",
       },
       meta: {
         ...(params.metadata || {}),

@@ -48,7 +48,7 @@ describe("Owner-Only Platform Admin Dashboard & Login Tracking", () => {
 
   beforeEach(() => {
     vi.restoreAllMocks();
-    process.env.PLATFORM_ADMIN_EMAILS = "owner@bizpilot.name.ng,superadmin@bizpilot.ai";
+    process.env.PLATFORM_ADMIN_EMAILS = "owner@bizpilot.ng,superadmin@bizpilot.ai";
   });
 
   describe("1. Platform Admin Security & Authorization Guard", () => {
@@ -57,7 +57,7 @@ describe("Owner-Only Platform Admin Dashboard & Login Tracking", () => {
     });
 
     it("should authorize users matching PLATFORM_ADMIN_EMAILS config", () => {
-      expect(isPlatformAdminUser({ isPlatformAdmin: false, email: "owner@bizpilot.name.ng" })).toBe(true);
+      expect(isPlatformAdminUser({ isPlatformAdmin: false, email: "owner@bizpilot.ng" })).toBe(true);
       expect(isPlatformAdminUser({ isPlatformAdmin: false, email: "superadmin@bizpilot.ai" })).toBe(true);
     });
 

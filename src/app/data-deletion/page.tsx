@@ -61,7 +61,7 @@ export default function DataDeletionPage() {
             To immediately disconnect and remove your WhatsApp Business number from BizPilot without deleting your entire business workspace:
           </p>
           <ol className="list-decimal list-inside text-xs sm:text-sm text-slate-600 dark:text-slate-400 space-y-1 pl-1">
-            <li>Log in to your BizPilot dashboard at <a href="https://bizpilot.app/dashboard" className="text-violet-600 dark:text-violet-400 underline font-semibold">bizpilot.app/dashboard</a>.</li>
+            <li>Log in to your BizPilot dashboard at <a href="https://bizpilot.ng/dashboard" className="text-violet-600 dark:text-violet-400 underline font-semibold">bizpilot.ng/dashboard</a>.</li>
             <li>Navigate to <strong>Settings</strong> from the left sidebar.</li>
             <li>Scroll to the <strong>WhatsApp AI Integration</strong> section.</li>
             <li>Click <strong>Disconnect WhatsApp</strong> and confirm.</li>
@@ -83,7 +83,7 @@ export default function DataDeletionPage() {
             To request full permanent erasure of your user account, business workspace, customer database, sales history, and invoices:
           </p>
           <div className="p-3.5 rounded-lg bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] text-xs space-y-1">
-            <p><strong>Send an email to:</strong> <a href="mailto:support@bizpilot.app" className="text-violet-600 dark:text-violet-400 font-bold underline">support@bizpilot.app</a></p>
+            <p><strong>Send an email to:</strong> <a href="mailto:support@bizpilot.ng" className="text-violet-600 dark:text-violet-400 font-bold underline">support@bizpilot.ng</a></p>
             <p><strong>Subject Line:</strong> <code className="font-mono bg-white dark:bg-black/40 px-1 py-0.5 rounded">Data Deletion Request - [Your Registered Email]</code></p>
           </div>
         </div>
@@ -182,8 +182,8 @@ export default function DataDeletionPage() {
         <p>If you have any questions or require assistance with data deletion, please contact:</p>
         <div className="p-4 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.02] text-xs sm:text-sm space-y-1">
           <p><strong>BizPilot AI Support & Data Protection</strong></p>
-          <p>Email: <a href="mailto:support@bizpilot.app" className="text-violet-600 dark:text-violet-400 font-semibold underline">support@bizpilot.app</a></p>
-          <p>Website: <a href="https://bizpilot.app" className="text-violet-600 dark:text-violet-400 font-semibold underline">https://bizpilot.app</a></p>
+          <p>Email: <a href="mailto:support@bizpilot.ng" className="text-violet-600 dark:text-violet-400 font-semibold underline">support@bizpilot.ng</a></p>
+          <p>Website: <a href="https://bizpilot.ng" className="text-violet-600 dark:text-violet-400 font-semibold underline">https://bizpilot.ng</a></p>
         </div>
       </section>
     </LegalShell>
