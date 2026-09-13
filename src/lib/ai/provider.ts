@@ -283,7 +283,32 @@ export function parseExpenseIntent(rawContent: string): {
 }
 
 /**
- * Robust natural-language parser for product creation intents.
+ * Helper to parse numeric values with support for 'k', 'm', commas, and currency symbols.
+ * Examples: '250000' -> 250000, '250k' -> 250000, '1.5m' -> 1500000, '₦45,000' -> 45000
+ */
+export function parseNumericValue(raw: string): number {
+  if (!raw) return 0;
+  const clean = raw.trim().toLowerCase().replace(/,/g, "").replace(/[₦$£€]/g, "").trim();
+  if (clean.endsWith("k")) {
+    const n = parseFloat(clean.slice(0, -1));
+    return isNaN(n) ? 0 : n * 1000;
+  }
+  if (clean.endsWith("m")) {
+    const n = parseFloat(clean.slice(0, -1));
+    return isNaN(n) ? 0 : n * 1000000;
+  }
+  const n = parseFloat(clean);
+  return isNaN(n) ? 0 : n;
+}
+
+/**
+ * Robust, adaptable natural-language parser for product creation & inventory addition intents.
+ * Handles inputs like:
+ * - "Add Balenciaga shoes for 250000 each 25 in stock"
+ * - "Add product: Nike Air Max, price 45k, cost 30k, 15 in stock"
+ * - "Create product iPhone 15 Pro for 750000 with 5 in stock"
+ * - "Add 25 pairs of Balenciaga shoes for 250000 in stock"
+ * - "New product Basmati Rice 50kg 65000, 20 in stock"
  */
 export function parseProductIntent(rawContent: string): {
   name: string;
@@ -298,7 +323,7 @@ export function parseProductIntent(rawContent: string): {
   const text = rawContent.trim();
   const lower = text.toLowerCase();
 
-  // Guard: If it's a read query asking for reports, metrics, or summaries
+  // Guard 1: Read queries asking for reports, metrics, or summaries
   if (
     /^(?:what|how\s+much|how\s+many|how|show|give|list|view|display|check|report|who|can\s+you\s+show|tell\s+me|get)\b/i.test(lower) ||
     lower.includes("show product") ||
@@ -313,77 +338,97 @@ export function parseProductIntent(rawContent: string): {
     return null;
   }
 
-  // Must have imperative action verb indicating product creation
-  const isProductCommand =
-    /^(?:add|create|new|register|save|insert|log)\s+(?:an?\s+)?(?:new\s+)?(?:product|item|inventory\s+item)\b/i.test(lower) ||
-    /(?:(?:add|create|new|register|save|insert)\s+(?:an?\s+)?(?:new\s+)?product\b)/i.test(lower) ||
-    /^new\s+product\b/i.test(lower) ||
-    /^add\s+item\b/i.test(lower);
-
-  if (!isProductCommand) {
+  // Guard 2: Exclude explicit sale / expense / invoice / customer commands
+  if (
+    /^(?:sell|sold|i\s+sold|record\s+(?:a\s+)?sale|add\s+(?:a\s+)?sale|log\s+(?:a\s+)?sale)\b/i.test(lower) ||
+    /^(?:spent|i\s+spent|paid\s+for|record\s+(?:an?\s+)?expense|add\s+(?:an?\s+)?expense|log\s+(?:an?\s+)?expense)\b/i.test(lower) ||
+    /^(?:invoice|bill|draft\s+invoice|create\s+(?:an?\s+)?invoice)\b/i.test(lower) ||
+    /^(?:add\s+customer|create\s+customer|new\s+customer|register\s+customer)\b/i.test(lower)
+  ) {
     return null;
   }
 
-  // Extract Selling Price
+  // Check product action indicators:
+  // 1. Explicit keyword: "add product", "create product", "new product", "add item", "put into inventory", "add to stock"
+  // 2. Implicit command starting with Add/Create/New/Put/Register/Stock AND containing price/stock keywords
+  const hasExplicitProductVerb =
+    /^(?:add|create|new|register|save|insert|log|put|stock)\s+(?:an?\s+)?(?:new\s+)?(?:product|item|inventory\s+item)\b/i.test(lower) ||
+    /(?:(?:add|create|new|register|save|insert|put)\s+(?:an?\s+)?(?:new\s+)?(?:product|item)\b)/i.test(lower) ||
+    /(?:into|to)\s+(?:inventory|stock)\b/i.test(lower);
+
+  const hasImplicitProductPattern =
+    /^(?:add|create|new|save|register|put|stock)\s+/i.test(lower) &&
+    (/(?:in\s+stock|instock|stock|qty|quantity|units?|pieces?|pcs?|pairs?)\b/i.test(lower) ||
+      /(?:each|per\s+unit|selling\s+price|cost\s+price|for\s+(?:₦|\$|£|€)?\d+)\b/i.test(lower));
+
+  if (!hasExplicitProductVerb && !hasImplicitProductPattern) {
+    return null;
+  }
+
+  // 1. Extract Selling Price
   let sellingPrice = 0;
-  const sellMatch = text.match(/(?:selling\s+price|sale\s+price|price|for|at|costs?|selling\s+for)\s*(?::|\s)\s*(?:₦|\$|£|€)?\s*([\d,]+(?:\.\d+)?)/i);
+  const sellMatch =
+    text.match(/(?:selling\s+price|sale\s+price|price|for|at|costs?|selling\s+for)\s*(?::|\s)\s*(?:₦|\$|£|€)?\s*([\d,]+(?:\.\d+)?[kmKM]?)\s*(?:each|per\s+unit|per\s+piece|per\s+item|a\s+piece)?/i) ||
+    text.match(/\b([\d,]+(?:\.\d+)?[kmKM]?)\s*(?:each|per\s+unit|per\s+piece|per\s+item|a\s+piece)\b/i) ||
+    text.match(/(?:₦|\$|£|€)\s*([\d,]+(?:\.\d+)?[kmKM]?)/i) ||
+    text.match(/\b(\d+(?:\.\d+)?[kmKM])\b/i);
+
   if (sellMatch) {
-    sellingPrice = parseFloat(sellMatch[1].replace(/,/g, ""));
+    sellingPrice = parseNumericValue(sellMatch[1]);
+  }
+
+  // 2. Extract Cost Price
+  let costPrice: number | undefined = undefined;
+  const costMatch = text.match(/(?:cost\s+price|cost|buy\s+price|bought\s+for|purchase\s+price|bought\s+at|costing)\s*(?::|\s)\s*(?:₦|\$|£|€)?\s*([\d,]+(?:\.\d+)?[kmKM]?)/i);
+  if (costMatch) {
+    costPrice = parseNumericValue(costMatch[1]);
+  }
+
+  // 3. Extract Stock Quantity
+  let stockQuantity: number | undefined = undefined;
+
+  // Pattern A: "25 in stock", "25 units in stock", "25 pairs in stock", "with 5 in stock"
+  const stockMatchA = text.match(/(\d+)\s*(?:units?|pieces?|pcs?|pairs?|items?|cartons?|bottles?|packs?|boxes?)?\s*(?:in\s+stock|instock|available|stock)\b/i);
+  if (stockMatchA) {
+    stockQuantity = parseInt(stockMatchA[1], 10);
   } else {
-    // Check fallback numeric price: "₦50,000" or "$50"
-    const currMatch = text.match(/(?:₦|\$|£|€)\s*([\d,]+(?:\.\d+)?)/i);
-    if (currMatch) {
-      sellingPrice = parseFloat(currMatch[1].replace(/,/g, ""));
+    // Pattern B: "stock: 25", "quantity 25", "qty: 25", "with 5"
+    const stockMatchB = text.match(/(?:stock(?:\s+quantity|\s+count)?|quantity|qty)\s*(?::|\s)\s*(\d+)/i);
+    if (stockMatchB) {
+      stockQuantity = parseInt(stockMatchB[1], 10);
+    } else {
+      // Pattern C: Leading count "Add 25 pairs of Balenciaga shoes..."
+      const leadMatch = text.match(/^(?:add|create|new|save|put|stock)\s+(\d+)\s*(?:units?|pieces?|pcs?|pairs?|items?|cartons?|bottles?|packs?|boxes?)?\s*(?:of\s+)?/i);
+      if (leadMatch) {
+        stockQuantity = parseInt(leadMatch[1], 10);
+      }
     }
   }
 
-  // Extract Cost Price
-  let costPrice: number | undefined = undefined;
-  const costMatch = text.match(/(?:cost\s+price|cost|buy\s+price|bought\s+for|purchase\s+price)\s*(?::|\s)\s*(?:₦|\$|£|€)?\s*([\d,]+(?:\.\d+)?)/i);
-  if (costMatch) {
-    costPrice = parseFloat(costMatch[1].replace(/,/g, ""));
-  }
-
-  // Extract Stock Quantity
-  let stockQuantity: number | undefined = undefined;
-  const stockMatch = text.match(/(?:stock(?:\s+quantity|\s+count)?|quantity|qty|units?|pieces?|pcs?|in\s+stock)\s*(?::|\s)\s*(\d+)/i) ||
-    text.match(/(\d+)\s*(?:units?|pieces?|pcs?|items?)\s*(?:in\s+stock)?/i);
-  if (stockMatch) {
-    stockQuantity = parseInt(stockMatch[1], 10);
-  }
-
-  // Extract Low Stock Threshold
+  // 4. Extract Low Stock Threshold
   let lowStockThreshold: number | undefined = undefined;
-  const threshMatch = text.match(/(?:low\s+stock|threshold|reorder(?:\s+at)?|min\s+stock)\s*(?::|\s)?\s*(\d+)/i);
+  const threshMatch = text.match(/(?:low\s+stock|threshold|reorder(?:\s+at)?|min\s+stock|alert\s+at)\s*(?::|\s)?\s*(\d+)/i);
   if (threshMatch) {
     lowStockThreshold = parseInt(threshMatch[1], 10);
   }
 
-  // Extract SKU
-  let sku: string | undefined = undefined;
-  const skuMatch = text.match(/(?:sku|code)\s*(?::|\s)\s*([A-Za-z0-9-_]+)/i);
-  if (skuMatch) {
-    sku = skuMatch[1].trim();
-  }
+  // 5. Extract Product Name
+  let cleanName = text;
 
-  // Extract Barcode
-  let barcode: string | undefined = undefined;
-  const barcodeMatch = text.match(/(?:barcode)\s*(?::|\s)\s*([A-Za-z0-9-_]+)/i);
-  if (barcodeMatch) {
-    barcode = barcodeMatch[1].trim();
-  }
-
-  // Extract Product Name:
-  // Remove the command prefix (e.g. "Add product:", "Create a new product")
-  let cleanName = text
-    .replace(/^(?:add|create|new|register|save|insert|log)\s+(?:an?\s+)?(?:new\s+)?(?:product|item|inventory\s+item)\s*(?::|named|called|-)?\s*/i, "")
+  // Remove leading command words (e.g. "Add", "Create product:", "Add 25 pairs of")
+  cleanName = cleanName
+    .replace(/^(?:add|create|new|register|save|insert|log|put|stock)\s+(?:an?\s+)?(?:new\s+)?(?:product|item|inventory\s+item)?\s*(?::|named|called|-)?\s*/i, "")
+    .replace(/^(\d+)\s*(?:units?|pieces?|pcs?|pairs?|items?|cartons?|bottles?|packs?|boxes?)?\s*(?:of\s+)?/i, "")
     .trim();
 
-  // Remove trailing price / cost / stock clauses
+  // Strip trailing clauses (price, cost, stock, in stock, each, etc.)
   cleanName = cleanName
-    .replace(/(?:,|;)?\s*(?:selling\s+price|sale\s+price|price|cost\s+price|cost|stock|qty|quantity|sku|barcode|threshold|low\s+stock)\s*(?::|\s).*$/i, "")
-    .replace(/(?:,|;)?\s*(?:for|at)\s+(?:₦|\$|£|€)?\s*[\d,]+.*$/i, "")
-    .replace(/[.,;:]+$/, "")
+    .replace(/\s*(?:,|;)?\s*\b(?:for|at|with|having|selling\s+price|sale\s+price|price|cost\s+price|cost|costing|bought\s+for|stock|quantity|qty|in\s+stock|instock|available|each|into\s+stock|to\s+inventory|sku|barcode|low\s+stock|threshold|min\s+stock)\b.*$/i, "")
+    .replace(/\s+(?:₦|\$|£|€)\s*[\d,]+.*$/i, "")
+    .replace(/\s+\d+(?:\.\d+)?[kmKM]\b.*$/i, "")
+    .replace(/\s+\d+\s*(?:units?|pieces?|pcs?|pairs?|items?|cartons?|bottles?|packs?|boxes?)\b.*$/i, "")
+    .replace(/[.,;:\s]+$/, "")
+    .replace(/^[.,;:\s]+/, "")
     .trim();
 
   return {
@@ -392,13 +437,11 @@ export function parseProductIntent(rawContent: string): {
     costPrice,
     stockQuantity,
     lowStockThreshold,
-    sku,
-    barcode,
   };
 }
 
 /**
- * Robust natural-language parser for customer creation intents.
+ * Robust, adaptable natural-language parser for customer creation intents.
  */
 export function parseCustomerIntent(rawContent: string): {
   name: string;
@@ -409,7 +452,7 @@ export function parseCustomerIntent(rawContent: string): {
   const text = rawContent.trim();
   const lower = text.toLowerCase();
 
-  // Guard: If it's a read query asking for reports or listings
+  // Guard: Read queries
   if (
     /^(?:what|how\s+much|how\s+many|how|show|give|list|view|display|check|report|who|can\s+you\s+show|tell\s+me|get)\b/i.test(lower) ||
     lower.includes("show customer") ||
@@ -422,7 +465,7 @@ export function parseCustomerIntent(rawContent: string): {
     return null;
   }
 
-  // Must have imperative action verb indicating customer creation
+  // Must have imperative customer command
   const isCustomerCommand =
     /^(?:add|create|new|register|save|insert|log)\s+(?:an?\s+)?(?:new\s+)?(?:customer|client|buyer)\b/i.test(lower) ||
     /(?:(?:add|create|new|register|save|insert)\s+(?:an?\s+)?(?:new\s+)?customer\b)/i.test(lower) ||
@@ -440,36 +483,51 @@ export function parseCustomerIntent(rawContent: string): {
     email = emailMatch[1].trim();
   }
 
-  // Extract Phone
+  // Extract Phone (with prefix or standalone Nigerian/international phone number)
   let phone: string | undefined = undefined;
-  const phoneMatch = text.match(/(?:phone|tel|mobile|whatsapp|number)\s*(?::|\s)\s*(\+?[\d\s-]{10,16})/i) ||
-    text.match(/((?:\+?234|0)[789][01]\d{8})/i);
+  const phoneMatch =
+    text.match(/(?:phone|tel|mobile|whatsapp|number|call)\s*(?::|\s)\s*(\+?[\d\s-]{10,16})/i) ||
+    text.match(/(\+?234[789][01]\d{8}|0[789][01]\d{8})/i);
+
   if (phoneMatch) {
-    phone = (phoneMatch[1] || phoneMatch[2] || "").trim().replace(/\s+/g, "");
+    phone = (phoneMatch[1] || phoneMatch[2] || "").trim().replace(/[\s-]+/g, "");
   }
 
   // Extract Address
   let address: string | undefined = undefined;
-  const addressMatch = text.match(/(?:address|location|city)\s*(?::|\s)\s*([^,\n;]+)/i) ||
-    text.match(/(?:in|at)\s+([A-Za-z0-9\s,.-]+?)(?=\s+(?:phone|tel|email|mobile|\+234|0[789]|\d{11})|$|[.,;])/i);
+  const addressMatch =
+    text.match(/(?:address|location|city)\s*(?::|\s)\s*([^,\n;]+)/i) ||
+    text.match(/(?:\s+(?:in|at|living\s+at)\s+)([A-Za-z0-9\s,.-]+?)(?=\s+(?:phone|tel|email|mobile|\+234|0[789]|\d{11})|$|[.,;])/i);
+
   if (addressMatch) {
     address = addressMatch[1].trim();
   }
 
   // Extract Customer Name:
-  // Remove command prefix
+  // Strip leading command ("Add customer", "Create client:", etc.)
   let cleanName = text
     .replace(/^(?:add|create|new|register|save|insert|log)\s+(?:an?\s+)?(?:new\s+)?(?:customer|client|buyer)\s*(?::|named|called|-)?\s*/i, "")
     .trim();
 
-  // Remove email, phone, and address segments
-  if (email) cleanName = cleanName.replace(email, "");
-  if (phone) cleanName = cleanName.replace(phone, "");
+  // Strip trailing metadata clauses if tagged by labels
   cleanName = cleanName
-    .replace(/(?:phone|tel|mobile|whatsapp|email|address|location|city)\s*(?::|\s)[^,;]*/gi, "")
-    .replace(/(?:in|at)\s+[A-Za-z0-9\s,.-]+$/i, "")
-    .replace(/[,;:]+$/, "")
+    .replace(/\s*(?:,|;)?\s*\b(?:phone|tel|mobile|whatsapp|email|address|location|city|with\s+phone)\b.*$/i, "")
+    .trim();
+
+  // If email or phone are present without explicit labels, strip them
+  if (email) {
+    cleanName = cleanName.replace(email, "");
+  }
+  if (phone) {
+    cleanName = cleanName.replace(phone, "");
+  }
+
+  // Clean all residual punctuation and extra spaces
+  cleanName = cleanName
+    .replace(/[,;:]+/g, " ")
+    .replace(/\s+/g, " ")
     .replace(/^[,\s;:]+/, "")
+    .replace(/[,\s;:]+$/, "")
     .trim();
 
   return {

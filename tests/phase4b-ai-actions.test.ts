@@ -79,6 +79,22 @@ describe("Phase 4B: Controlled AI Business Actions", () => {
       },
     });
 
+    // Ensure membership exists for secondary business
+    await prisma.membership.upsert({
+      where: {
+        userId_businessId: {
+          userId: user.id,
+          businessId: biz2.id,
+        },
+      },
+      update: { role: Role.OWNER },
+      create: {
+        userId: user.id,
+        businessId: biz2.id,
+        role: Role.OWNER,
+      },
+    });
+
     primaryContext = {
       userId: user.id,
       businessId: biz1.id,
@@ -728,11 +744,29 @@ describe("Phase 4B: Controlled AI Business Actions", () => {
       expect(parsed2).not.toBeNull();
       expect(parsed2?.name).toBe("iPhone 15 Pro");
       expect(parsed2?.sellingPrice).toBe(750000);
-      expect(parsed2?.stockQuantity).toBe(5);
-
       // Should ignore read queries
       expect(parseProductIntent("Show me my low stock products")).toBeNull();
       expect(parseProductIntent("What is the price of iPhone 15?")).toBeNull();
+    });
+
+    it("should parse flexible real-world product commands like Balenciaga shoes", () => {
+      const parsed1 = parseProductIntent("Add Balenciaga shoes for 250000 each 25 in stock");
+      expect(parsed1).not.toBeNull();
+      expect(parsed1?.name).toBe("Balenciaga shoes");
+      expect(parsed1?.sellingPrice).toBe(250000);
+      expect(parsed1?.stockQuantity).toBe(25);
+
+      const parsed2 = parseProductIntent("Add 25 pairs of Nike shoes for 45k in stock");
+      expect(parsed2).not.toBeNull();
+      expect(parsed2?.name).toBe("Nike shoes");
+      expect(parsed2?.sellingPrice).toBe(45000);
+      expect(parsed2?.stockQuantity).toBe(25);
+
+      const parsed3 = parseProductIntent("Add iPhone 15 Pro 750k with 5 in stock");
+      expect(parsed3).not.toBeNull();
+      expect(parsed3?.name).toBe("iPhone 15 Pro");
+      expect(parsed3?.sellingPrice).toBe(750000);
+      expect(parsed3?.stockQuantity).toBe(5);
     });
 
     it("should parse customer creation intents correctly", () => {
@@ -747,6 +781,12 @@ describe("Phase 4B: Controlled AI Business Actions", () => {
       expect(parsed2).not.toBeNull();
       expect(parsed2?.name).toBe("Blessing Adebayo");
       expect(parsed2?.phone).toBe("+2348163374311");
+
+      const parsed3 = parseCustomerIntent("Add customer Emeka Obi 08123456789 emeka@biz.ng");
+      expect(parsed3).not.toBeNull();
+      expect(parsed3?.name).toBe("Emeka Obi");
+      expect(parsed3?.phone).toBe("08123456789");
+      expect(parsed3?.email).toBe("emeka@biz.ng");
 
       // Should ignore read queries
       expect(parseCustomerIntent("Who are my top customers?")).toBeNull();
