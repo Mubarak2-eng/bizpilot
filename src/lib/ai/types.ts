@@ -168,3 +168,8 @@ export interface PrepareCustomerParams {
   address?: string;
 }
 
+export interface MonthlySalesGrowthParams {
+  businessId?: string;
+  month?: string;
+  datePhrase?: string;
+}

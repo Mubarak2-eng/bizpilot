@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useRef, useEffect, useTransition, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ChatMessage, ActionPreviewData } from "@/lib/ai/types";
 import { askAssistantAction } from "@/lib/actions/assistant";
 import { confirmAIAction, cancelAIAction } from "@/lib/actions/assistant-actions";
@@ -17,6 +17,7 @@ interface AssistantChatProps {
 }
 
 const SUGGESTED_PROMPTS = [
+  "How can I increase sales this month?",
   "What were my sales today?",
   "Show me my low-stock products.",
   "Add product: Nike Air Max, price 45000, stock 15",
@@ -27,19 +28,16 @@ const SUGGESTED_PROMPTS = [
 
 export default function AssistantChat({ business, userRole }: AssistantChatProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputQuery, setInputQuery] = useState("");
   const [isPending, startTransition] = useTransition();
   const [actionPendingId, setActionPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const initialQueryHandled = useRef(false);
 
-  // Auto-scroll to bottom of chat
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isPending, actionPendingId]);
-
-  const handleSendMessage = (textToSend?: string) => {
+  const handleSendMessage = useCallback((textToSend?: string) => {
     const text = (textToSend || inputQuery).trim();
     if (!text || isPending) return;
 
@@ -47,24 +45,44 @@ export default function AssistantChat({ business, userRole }: AssistantChatProps
     setInputQuery("");
 
     const userMsg: ChatMessage = {
-      id: `usr-${messages.length + 1}`,
+      id: `usr-${Date.now()}`,
       role: "user",
       content: text,
       timestamp: new Date().toISOString(),
     };
 
-    const currentHistory = [...messages, userMsg];
-    setMessages(currentHistory);
+    setMessages((prev) => {
+      const currentHistory = [...prev, userMsg];
 
-    startTransition(async () => {
-      const res = await askAssistantAction(business.id, messages, text);
-      if (res.error) {
-        setError(res.error);
-      } else if (res.message) {
-        setMessages([...currentHistory, res.message]);
-      }
+      startTransition(async () => {
+        const res = await askAssistantAction(business.id, prev, text);
+        if (res.error) {
+          setError(res.error);
+        } else if (res.message) {
+          setMessages((p) => [...p, res.message]);
+        }
+      });
+
+      return currentHistory;
     });
-  };
+  }, [business.id, inputQuery, isPending]);
+
+  // Auto-scroll to bottom of chat
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isPending, actionPendingId]);
+
+  // Handle URL query param on mount
+  useEffect(() => {
+    if (initialQueryHandled.current) return;
+    const q = searchParams.get("query");
+    if (q && q.trim().length > 0) {
+      initialQueryHandled.current = true;
+      queueMicrotask(() => {
+        handleSendMessage(q.trim());
+      });
+    }
+  }, [searchParams, handleSendMessage]);
 
   const handleConfirmAction = (msgId: string, token: string) => {
     setActionPendingId(msgId);

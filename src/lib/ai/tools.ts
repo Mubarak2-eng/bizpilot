@@ -7,6 +7,7 @@ import {
   calculateBusinessHealth,
   evaluateNeedsAttention,
   generateRecommendations,
+  calculateMonthlySalesGrowthAnalysis,
 } from "../brain";
 import { evaluateBusinessAutopilot } from "../autopilot";
 import {
@@ -24,6 +25,7 @@ import {
   DebtorsQueryParams,
   CreditSalesQueryParams,
   CustomerDebtParams,
+  MonthlySalesGrowthParams,
 } from "./types";
 import { PaymentMethod, InvoiceStatus } from "@prisma/client";
 
@@ -1154,9 +1156,50 @@ export async function get_customer_debt(
 }
 
 /**
+ * 17. get_monthly_sales_growth_analysis
+ * Comprehensive monthly sales analysis with 5 grounded strategies to increase sales.
+ */
+export async function get_monthly_sales_growth_analysis(
+  params: MonthlySalesGrowthParams,
+  context: AuthenticatedAIContext
+) {
+  const membership = await verifyBusinessMembership(context.businessId, context.userId);
+  const businessId = membership.business.id;
+
+  let refDate = new Date();
+  if (params?.datePhrase === "last_month") {
+    refDate = new Date();
+    refDate.setMonth(refDate.getMonth() - 1);
+  }
+
+  const report = await calculateMonthlySalesGrowthAnalysis(businessId, refDate);
+
+  return {
+    success: true,
+    data: report,
+    formatted: report.formattedSummary,
+  };
+}
+
+/**
  * Tool metadata and JSON schemas for LLM function calling
  */
 export const BIZPILOT_AI_TOOLS: ToolDefinition[] = [
+  {
+    name: "get_monthly_sales_growth_analysis",
+    description:
+      "Analyze monthly sales performance, Average Order Value (AOV), best-sellers, dead-stock inventory, peak shopping hours/days, and generate 5 data-driven strategies to increase sales and revenue.",
+    parameters: {
+      type: "object",
+      properties: {
+        datePhrase: {
+          type: "string",
+          description: "Date phrase: this_month, last_month",
+          enum: ["this_month", "last_month"],
+        },
+      },
+    },
+  },
   {
     name: "get_daily_action_plan",
     description:

@@ -104,6 +104,15 @@ export default function DashboardOverview({
           </button>
 
           <Link
+            href="/assistant?query=How+can+I+increase+sales+this+month%3F"
+            className="px-3.5 py-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 rounded-xl border border-emerald-500/30 hover:border-emerald-500/50 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+            title="AI Sales Growth Advisor"
+          >
+            <span>📈</span>
+            <span>Sales Growth Advisor</span>
+          </Link>
+
+          <Link
             href="/sales"
             className="relative group px-4 py-2.5 bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-600/25 dark:shadow-[0_0_25px_-4px_rgba(99,102,241,0.5)] transition-all flex items-center gap-2 border border-violet-300/30 overflow-hidden"
           >

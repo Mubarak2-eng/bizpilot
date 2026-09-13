@@ -836,7 +836,43 @@ export class LocalDeterministicAIProvider implements AIProvider {
       };
     }
 
-    // ── 2. BUSINESS AUTOPILOT QUERIES ────────────────────────────────────────
+    // ── 2. BUSINESS AUTOPILOT & GROWTH ADVISOR QUERIES ─────────────────────────
+    if (
+      query.includes("increase sale") ||
+      query.includes("increase sales") ||
+      query.includes("increase sell") ||
+      query.includes("increase sells") ||
+      query.includes("boost sale") ||
+      query.includes("boost sales") ||
+      query.includes("boost revenue") ||
+      query.includes("grow sale") ||
+      query.includes("grow sales") ||
+      query.includes("grow revenue") ||
+      query.includes("ways to increase") ||
+      query.includes("how to increase") ||
+      query.includes("how can i increase") ||
+      query.includes("how to sell more") ||
+      query.includes("how can i sell more") ||
+      query.includes("how do i make more sales") ||
+      query.includes("how to make more sales") ||
+      query.includes("sales growth") ||
+      query.includes("growth strategy") ||
+      query.includes("growth strategies") ||
+      query.includes("growth playbook") ||
+      query.includes("sales intelligence") ||
+      (query.includes("analyze") && (query.includes("month") || query.includes("sales"))) ||
+      query.includes("monthly sales analysis") ||
+      query.includes("sales analysis")
+    ) {
+      const datePhrase = query.includes("last month") ? "last_month" : "this_month";
+      return {
+        content: "Here is your Monthly Sales Intelligence & Revenue Growth Report with 5 actionable strategies to increase sales:",
+        toolCalls: [{ toolName: "get_monthly_sales_growth_analysis", params: { datePhrase } }],
+        modelName: "bizpilot-local-copilot",
+        provider: "local_fallback",
+      };
+    }
+
     if (
       query.includes("action plan") ||
       query.includes("what should i do today") ||

@@ -4,4 +4,4 @@ export * from "./attention";
 export * from "./recommendations";
 export * from "./industry";
 export * from "./brief";
-
+export * from "./sales-growth";

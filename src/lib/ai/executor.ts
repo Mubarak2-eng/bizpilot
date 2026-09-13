@@ -21,6 +21,7 @@ import {
   get_debtors,
   get_credit_sales,
   get_customer_debt,
+  get_monthly_sales_growth_analysis,
 } from "./tools";
 import {
   draft_invoice,
@@ -64,6 +65,10 @@ export async function executeToolCall(
     let resultData: unknown = null;
 
     switch (toolName) {
+      case "get_monthly_sales_growth_analysis":
+        resultData = await get_monthly_sales_growth_analysis(params, context);
+        break;
+
       case "get_daily_action_plan":
         resultData = await get_daily_action_plan(params, context);
         break;
@@ -312,6 +317,13 @@ function formatToolResultsSummary(
     const data = tr.data as Record<string, unknown>;
 
     switch (tr.toolName) {
+      case "get_monthly_sales_growth_analysis": {
+        const repData = data as { formatted?: string; data?: { formattedSummary?: string } };
+        const text = repData.formatted || repData.data?.formattedSummary || "Here is your Monthly Sales Intelligence & Revenue Growth Report.";
+        parts.push(text);
+        break;
+      }
+
       case "get_daily_action_plan": {
         const planData = data as { data?: { formattedSummary?: string }; formattedSummary?: string };
         const text = planData.formattedSummary || planData.data?.formattedSummary || "Here is your Daily Action Plan.";
