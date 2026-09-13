@@ -51,21 +51,18 @@ export default function AssistantChat({ business, userRole }: AssistantChatProps
       timestamp: new Date().toISOString(),
     };
 
-    setMessages((prev) => {
-      const currentHistory = [...prev, userMsg];
+    setMessages((prev) => [...prev, userMsg]);
 
-      startTransition(async () => {
-        const res = await askAssistantAction(business.id, prev, text);
-        if (res.error) {
-          setError(res.error);
-        } else if (res.message) {
-          setMessages((p) => [...p, res.message]);
-        }
-      });
-
-      return currentHistory;
+    startTransition(async () => {
+      const res = await askAssistantAction(business.id, messages, text);
+      if (res.error) {
+        setError(res.error);
+      } else if (res.message) {
+        const assistantMsg = res.message;
+        setMessages((prev) => [...prev, assistantMsg]);
+      }
     });
-  }, [business.id, inputQuery, isPending]);
+  }, [business.id, inputQuery, isPending, messages]);
 
   // Auto-scroll to bottom of chat
   useEffect(() => {

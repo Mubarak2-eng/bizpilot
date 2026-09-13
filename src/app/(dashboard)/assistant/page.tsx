@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getActiveBusiness, requireAuth } from "@/lib/auth-helpers";
 import AssistantChat from "@/components/assistant-chat";
@@ -19,9 +20,11 @@ export default async function AssistantPage() {
   }
 
   return (
-    <AssistantChat
-      business={activeContext.business}
-      userRole={activeContext.role}
-    />
+    <Suspense fallback={<div className="p-8 text-center text-sm text-slate-400">Loading AI Assistant...</div>}>
+      <AssistantChat
+        business={activeContext.business}
+        userRole={activeContext.role}
+      />
+    </Suspense>
   );
 }
