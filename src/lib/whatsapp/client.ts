@@ -238,9 +238,8 @@ export function formatActionPreviewForWhatsApp(
     const sellingPrice = String(preview.sellingPrice || "");
     const costPrice = String(preview.costPrice || "");
     const stock = String(preview.stockQuantity || "0");
-    const sku = String(preview.sku || "");
 
-    return `📦 Product Registration Preview\n\nProduct: ${name}\nSelling Price: ${sellingPrice}\nCost Price: ${costPrice}\nStock: ${stock} units\nSKU: ${sku}\n\nReply 1 to confirm\nReply 2 to cancel`;
+    return `📦 Product Registration Preview\n\nProduct: ${name}\nSelling Price: ${sellingPrice}\nCost Price: ${costPrice}\nStock: ${stock} units\n\nReply 1 to confirm\nReply 2 to cancel`;
   }
 
   if (actionType === "CREATE_CUSTOMER") {
@@ -282,7 +281,7 @@ export function formatActionSuccessForWhatsApp(
   }
 
   if (actionType === "CREATE_PRODUCT") {
-    return `✅ Product registered successfully!\n\nProduct: ${outcome.description || "Product"}\nSelling Price: ${outcome.totalFormatted || ""}\nSKU: ${outcome.displayNumber || "N/A"}`;
+    return `✅ Product added successfully!\n\nProduct: ${outcome.description || "Product"}\nSelling Price: ${outcome.totalFormatted || ""}`;
   }
 
   if (actionType === "CREATE_CUSTOMER") {

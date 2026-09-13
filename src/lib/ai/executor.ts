@@ -687,7 +687,7 @@ function formatToolResultsSummary(
       }
 
       case "prepare_product": {
-        const prodPreview = (data as { preview?: { name: string; sellingPrice: string; costPrice: string; stockQuantity: number; sku: string; warning?: string | null } }).preview;
+        const prodPreview = (data as { preview?: { name: string; sellingPrice: string; costPrice: string; stockQuantity: number; warning?: string | null } }).preview;
         if (prodPreview) {
           parts.push(
             `### 📦 Product Registration Preview\n` +
@@ -695,7 +695,6 @@ function formatToolResultsSummary(
               `- **Selling Price**: ${prodPreview.sellingPrice}\n` +
               `- **Cost Price**: ${prodPreview.costPrice}\n` +
               `- **Initial Stock**: ${prodPreview.stockQuantity} units\n` +
-              `- **SKU**: \`${prodPreview.sku}\`\n` +
               (prodPreview.warning ? `\n⚠️ *${prodPreview.warning}*\n` : "\n") +
               `*Please click **Confirm** below or reply **1** / **CONFIRM** to add this product to your inventory.*`
           );

@@ -298,7 +298,7 @@ export default function ProductsManager({
                 <div className="w-8 h-8 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-700 dark:text-cyan-300 font-bold">
                   +
                 </div>
-                <h2 className="text-base font-black text-slate-900 dark:text-white">Add New Product SKU</h2>
+                <h2 className="text-base font-black text-slate-900 dark:text-white">Add New Product</h2>
               </div>
               <button
                 onClick={() => setIsCreateOpen(false)}
@@ -322,34 +322,6 @@ export default function ProductsManager({
                   placeholder="e.g. Wireless Ergonomic Mouse"
                   className="w-full px-3 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-cyan-500 rounded-xl text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none shadow-xs"
                 />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label htmlFor="create-product-sku" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
-                    SKU Code (Unique) *
-                  </label>
-                  <input
-                    id="create-product-sku"
-                    name="sku"
-                    type="text"
-                    required
-                    placeholder="e.g. ELEC-MOU-001"
-                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-cyan-500 rounded-xl text-xs text-slate-900 dark:text-white uppercase focus:outline-none font-mono shadow-xs"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="create-product-barcode" className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
-                    Barcode
-                  </label>
-                  <input
-                    id="create-product-barcode"
-                    name="barcode"
-                    type="text"
-                    placeholder="e.g. 600123456789"
-                    className="w-full px-3 py-2.5 bg-slate-50 dark:bg-[#050816] border border-slate-300 dark:border-white/[0.1] focus:border-cyan-500 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none font-mono shadow-xs"
-                  />
-                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -441,7 +413,7 @@ export default function ProductsManager({
                   disabled={isPending}
                   className="px-5 py-2 bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 text-white rounded-xl text-xs font-bold transition disabled:opacity-50 cursor-pointer shadow-md shadow-indigo-600/25"
                 >
-                  {isPending ? "Adding..." : "Add Product SKU"}
+                  {isPending ? "Adding..." : "Add Product"}
                 </button>
               </div>
             </form>

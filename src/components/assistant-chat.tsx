@@ -473,10 +473,6 @@ function ActionPreviewCard({
               {String(p.stockQuantity)} units
             </span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-slate-500 dark:text-slate-400">SKU Code:</span>
-            <span className="font-mono text-slate-700 dark:text-slate-300">{String(p.sku)}</span>
-          </div>
           {Boolean(p.warning) && (
             <p className="text-[11px] text-amber-600 dark:text-amber-400 pt-1 border-t border-slate-200 dark:border-white/[0.06]">
               ⚠️ {String(p.warning)}

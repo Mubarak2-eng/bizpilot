@@ -37,8 +37,37 @@ export async function createProductAction(
       return { error: "Product name is required (at least 2 characters)." };
     }
 
-    if (!sku || sku.length < 2) {
-      return { error: "Product SKU is required (at least 2 characters)." };
+    let finalSku = sku;
+    if (!finalSku || finalSku.length < 2) {
+      const count = await prisma.product.count({
+        where: { businessId: context.business.id },
+      });
+      finalSku = `SKU-${String(count + 1).padStart(4, "0")}`;
+      const existing = await prisma.product.findUnique({
+        where: {
+          businessId_sku: {
+            businessId: context.business.id,
+            sku: finalSku,
+          },
+        },
+      });
+      if (existing) {
+        finalSku = `SKU-${Date.now().toString().slice(-6)}`;
+      }
+    } else {
+      // Check SKU uniqueness within active business if custom SKU was passed
+      const existingSku = await prisma.product.findUnique({
+        where: {
+          businessId_sku: {
+            businessId: context.business.id,
+            sku: finalSku,
+          },
+        },
+      });
+
+      if (existingSku) {
+        return { error: `A product with SKU "${finalSku}" already exists in this business.` };
+      }
     }
 
     const sellingPrice = parseFloat(sellingPriceRaw || "0");
@@ -61,20 +90,6 @@ export async function createProductAction(
       return { error: "Low stock threshold must be a non-negative integer." };
     }
 
-    // Check SKU uniqueness within active business
-    const existingSku = await prisma.product.findUnique({
-      where: {
-        businessId_sku: {
-          businessId: context.business.id,
-          sku,
-        },
-      },
-    });
-
-    if (existingSku) {
-      return { error: `A product with SKU "${sku}" already exists in this business.` };
-    }
-
     // Check Barcode uniqueness if barcode provided
     if (barcode) {
       const existingBarcode = await prisma.product.findUnique({
@@ -95,7 +110,7 @@ export async function createProductAction(
       data: {
         businessId: context.business.id,
         name,
-        sku,
+        sku: finalSku,
         barcode,
         description,
         sellingPrice: toDecimalString(sellingPrice),
