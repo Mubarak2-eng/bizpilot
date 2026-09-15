@@ -1,36 +1,131 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Hi, I'm Mubarak 👋
 
-## Getting Started
+### Software Engineering Student · Full-Stack Developer · AI Product Builder
 
-First, run the development server:
+I’m a software engineering student focused on building **real-world products with modern web technologies and AI**.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+I enjoy taking an idea from **concept → architecture → development → deployment**, with a focus on building software that is practical, scalable, and useful.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🚀 Featured Project
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### BizPilot AI — AI-Powered Business Operating System
 
-## Learn More
+**BizPilot AI** is a SaaS platform built to help African SMEs manage their day-to-day operations from one place.
 
-To learn more about Next.js, take a look at the following resources:
+It combines a traditional business dashboard with an **AI business assistant and WhatsApp-based interactions**.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### What it does
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+* 📦 Inventory & product management
+* 💰 Sales & expense tracking
+* 👥 Customer management
+* 💳 Credit sales & customer debt tracking
+* 🧾 Invoices & receipts
+* 📊 Business analytics
+* 🤖 AI-powered business assistant
+* 💬 WhatsApp Cloud API integration
+* 🔐 Authentication & role-based access
+* 🏢 Multi-business / multi-tenant architecture
+* ✉️ Email verification & notifications
+* 💳 Subscription billing with Paystack
+* ☁️ Production deployment with Vercel
 
-## Deploy on Vercel
+### Engineering Highlights
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+* Designed a **multi-tenant architecture** with server-side business membership verification
+* Implemented **role-based access control** for business users
+* Built AI functionality using **tool calling** rather than simply generating text
+* Integrated external services including **OpenAI, Paystack, Resend and WhatsApp Cloud API**
+* Implemented email-based **OTP login verification**
+* Added AI usage quotas and subscription plans
+* Built automated testing around core application functionality
+* Deployed and configured the application for production
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Tech Stack**
+
+`Next.js` `React` `TypeScript` `Tailwind CSS` `PostgreSQL` `Prisma` `Auth.js` `OpenAI` `Paystack` `Resend` `WhatsApp Cloud API` `Vercel`
+
+🌐 **Live Application:**
+https://bizpilot-nu.vercel.app
+
+💻 **Source Code:**
+https://github.com/Mubarak2-eng/bizpilot
+
+---
+
+## 🧰 Technical Skills
+
+### Frontend
+
+`Next.js` · `React` · `TypeScript` · `JavaScript` · `Tailwind CSS`
+
+### Backend
+
+`Node.js` · `PostgreSQL` · `Prisma` · `REST APIs`
+
+### AI & Automation
+
+`OpenAI API` · `LLM Tool Calling` · `AI Assistants` · `Prompt Engineering`
+
+### Authentication & Security
+
+`Auth.js` · `OTP Authentication` · `RBAC` · `Multi-Tenancy` · `Tenant Isolation`
+
+### Integrations
+
+`WhatsApp Cloud API` · `Paystack` · `Resend`
+
+### DevOps & Tools
+
+`Git` · `GitHub` · `Vercel` · `Prisma Migrations` · `ESLint`
+
+---
+
+## 💡 What I Like Building
+
+I’m particularly interested in:
+
+* 🤖 AI-powered SaaS products
+* 🌍 Technology solving problems in African markets
+* 💻 Full-stack web applications
+* 🏗️ Scalable backend architecture
+* 🔌 API integrations
+* 📊 Business automation
+* 🚀 Turning ideas into deployed products
+
+---
+
+## 📈 Current Focus
+
+I'm currently focused on becoming a stronger **full-stack software engineer and AI product builder** by continuously shipping real projects.
+
+My approach is simple:
+
+> **Build → Ship → Learn → Improve**
+
+Rather than only building tutorials and demos, I’m interested in creating software that can actually be used by people.
+
+---
+
+## 🎯 Career Interests
+
+I'm open to opportunities involving:
+
+**Full-Stack Development · Backend Engineering · AI Engineering · SaaS · Software Engineering**
+
+I’m especially interested in teams where I can work on challenging problems, learn from experienced engineers, and contribute to products used by real users.
+
+---
+
+## 📫 Let's Connect
+
+If you're interested in software engineering, AI products, startups, or building technology for emerging markets, feel free to connect.
+
+**GitHub:**
+https://github.com/Mubarak2-eng
+
+---
+
+⭐ *Building useful software, one product at a time.*
